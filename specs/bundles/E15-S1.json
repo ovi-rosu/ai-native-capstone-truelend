@@ -30,6 +30,26 @@
     {
       "name": "Structured JSON logging, correlation id propagation, PII redaction and health endpoint",
       "status": "unknown"
+    },
+    {
+      "name": "JSONLogFormatter",
+      "status": "new"
+    },
+    {
+      "name": "RedactionFilter",
+      "status": "new"
+    },
+    {
+      "name": "CorrelationIdMiddleware",
+      "status": "new"
+    },
+    {
+      "name": "AppError (typed error base)",
+      "status": "new"
+    },
+    {
+      "name": "create_app (FastAPI app factory)",
+      "status": "new"
     }
   ],
   "approach": {
@@ -52,9 +72,21 @@
     "layer": "Config"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/config/settings.py",
+      " (drops PAN/Aadhaar/salary-document values) and a ",
+      "backend/src/config/logging.py",
+      "backend/src/types/errors.py",
+      "backend/src/api/middleware.py",
+      "backend/src/api/errors.py",
+      "GET /health",
+      "backend/src/api/platform/routes.py",
+      "backend/src/api/app.py",
+      "backend/tests/conftest.py",
+      "backend/tests/unit/test_log_redaction.py"
+    ],
+    "text": "1. Add base runtime settings (log level, service name) to `backend/src/config/settings.py` (new) via a Pydantic `BaseSettings` model.\n2. Define `JSONLogFormatter` and a `RedactionFilter` (drops PAN/Aadhaar/salary-document values) and a `configure_logging()` entry point in `backend/src/config/logging.py` (new); install the filter on every configured logger.\n3. Define typed error classes (`AppError` and subclasses) in `backend/src/types/errors.py` (new) for the single API-boundary error mapping.\n4. Define `CorrelationIdMiddleware` in `backend/src/api/middleware.py` (new): honour inbound `X-Request-ID`, else generate one, bind it to a contextvar for the request scope, and echo it on the response header.\n5. Define the global exception handler(s) mapping `AppError` subclasses to JSON responses in `backend/src/api/errors.py` (new).\n6. Define `GET /health` in `backend/src/api/platform/routes.py` (new), returning a 200 JSON readiness body.\n7. Wire `configure_logging()`, `CorrelationIdMiddleware`, the exception handlers and the platform router into the app factory `create_app()` in `backend/src/api/app.py` (new); expose a module-level `app = create_app()` importable by `uv run uvicorn`.\n8. Add shared pytest fixtures — a `TestClient` fixture and a log-capture fixture that installs a handler on the root logger — in `backend/tests/conftest.py` (new).\n9. Add redaction, correlation-id and `/health` tests in `backend/tests/unit/test_log_redaction.py` (new), covering AC1-AC5."
   },
   "safeguards": {
     "ids": [

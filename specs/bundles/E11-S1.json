@@ -25,6 +25,18 @@
     {
       "name": "Delinquency bucket ladder over days past due",
       "status": "unknown"
+    },
+    {
+      "name": "DelinquencyBucket (enum)",
+      "status": "new"
+    },
+    {
+      "name": "classify (pure classification function)",
+      "status": "new"
+    },
+    {
+      "name": "DPD floor boundaries (Config constants)",
+      "status": "new"
     }
   ],
   "approach": {
@@ -41,9 +53,17 @@
     "layer": "Types"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/config/delinquency.py",
+      "D-B/D3.",
+      "backend/src/types/delinquency.py",
+      "backend/tests/unit/test_bucket_ladder.py",
+      "gap/overlap",
+      "CURRENT/no-installment-past-due",
+      "fee/interest/charge"
+    ],
+    "text": "1. Define the DPD floor boundaries as Config-layer constants in `backend/src/config/delinquency.py` (new): CURRENT 0-29, DPD-30 30-59, DPD-60 60-89, DPD-90 90-179, NPA 180 or more, per D-B/D3.\n2. Define the `DelinquencyBucket` enum (five members, no sixth bucket, no orthogonal NPA flag) and a pure `classify(days_past_due: int) -> DelinquencyBucket` function in `backend/src/types/delinquency.py` (new), reading the floors from `backend/src/config/delinquency.py`; the function reads and writes no loan state and returns a bucket only.\n3. Add boundary and full-range tests in `backend/tests/unit/test_bucket_ladder.py` (new): the 35-day case (AC1), an exhaustive 0-400 sweep with no gap/overlap (AC2), the CURRENT/no-installment-past-due case (AC3), and an assertion that the result carries no fee/interest/charge field (AC4)."
   },
   "safeguards": {
     "ids": [

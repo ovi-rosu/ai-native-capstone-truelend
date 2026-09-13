@@ -289,6 +289,42 @@ Ordered, testable steps. The file each lands in feeds the Governs list.
 Per-story file ownership is in `component-map.md`.
 
 ---
+- TODO(canvas-sync): document the operation that lands in `.claude/state/failures.md`
+- TODO(canvas-sync): document the operation that lands in `.claude/state/iteration-log.md`
+- TODO(canvas-sync): document the operation that lands in `.claude/state/phase-cost-cursor.json`
+- TODO(canvas-sync): document the operation that lands in `.claude/state/phase-cost.json`
+- TODO(canvas-sync): document the operation that lands in `claude-progress.txt`
+- TODO(canvas-sync): document the operation that lands in `specs/bundles/E11-S1.json`
+- TODO(canvas-sync): document the operation that lands in `specs/bundles/E15-S1.json`
+- TODO(canvas-sync): document the operation that lands in `specs/bundles/E9-S1.json`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/contract-freeze.json`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/plan-seal.json`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/test-approval.json`
+- TODO(canvas-sync): document the operation that lands in `specs/stories/E11-S1.md`
+- TODO(canvas-sync): document the operation that lands in `specs/stories/E15-S1.md`
+- TODO(canvas-sync): document the operation that lands in `specs/stories/E9-S1.md`
+- TODO(canvas-sync): document the operation that lands in `specs/test_artefacts/test-plan.md`
+- TODO(canvas-sync): document the operation that lands in `specs/test_artefacts/verification-matrix.json`
+- TODO(canvas-sync): document the operation that lands in `sprint-contracts/A.json`
+- TODO(canvas-sync): document the operation that lands in `specs/design/reasons-canvas.md`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/sensor-waivers-verdict.json`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/sensor-waivers.json`
+- TODO(canvas-sync): document the operation that lands in `backend/src/__init__.py`
+- TODO(canvas-sync): document the operation that lands in `backend/src/api/errors.py`
+- TODO(canvas-sync): document the operation that lands in `backend/src/config/settings.py`
+- TODO(canvas-sync): document the operation that lands in `backend/src/types/errors.py`
+- TODO(canvas-sync): document the operation that lands in `backend/tests/__init__.py`
+- TODO(canvas-sync): document the operation that lands in `backend/tests/architecture/test_no_float_money.py`
+- TODO(canvas-sync): document the operation that lands in `backend/tests/conftest.py`
+- TODO(canvas-sync): document the operation that lands in `backend/tests/unit/test_bucket_ladder.py`
+- TODO(canvas-sync): document the operation that lands in `backend/tests/unit/test_log_redaction.py`
+- TODO(canvas-sync): document the operation that lands in `frontend/eslint.config.js`
+- TODO(canvas-sync): document the operation that lands in `frontend/package.json`
+- TODO(canvas-sync): document the operation that lands in `frontend/src/ui/components/MoneyText.tsx`
+- TODO(canvas-sync): document the operation that lands in `frontend/tests/unit/money.test.ts`
+- TODO(canvas-sync): document the operation that lands in `frontend/tsconfig.json`
+- TODO(canvas-sync): document the operation that lands in `frontend/vite.config.ts`
+- TODO(canvas-sync): document the operation that lands in `specs/design/amendments/group-a-implementation-sync.md`
 
 ## Norms
 
@@ -514,3 +550,31 @@ Source paths this design creates or modifies.
 - `Dockerfile.frontend`
 - `init.sh`
 - `project-manifest.json`
+- `.claude/state/failures.md`
+- `.claude/state/iteration-log.md`
+- `.claude/state/phase-cost-cursor.json`
+- `.claude/state/phase-cost.json`
+- `claude-progress.txt`
+- `specs/bundles/E11-S1.json`
+- `specs/bundles/E15-S1.json`
+- `specs/bundles/E9-S1.json`
+- `specs/reviews/contract-freeze.json`
+- `specs/reviews/plan-seal.json`
+- `specs/reviews/test-approval.json`
+- `specs/stories/E11-S1.md`
+- `specs/stories/E15-S1.md`
+- `specs/stories/E9-S1.md`
+- `specs/test_artefacts/test-plan.md`
+- `specs/test_artefacts/verification-matrix.json`
+- `sprint-contracts/A.json`
+- `specs/design/reasons-canvas.md`
+- `specs/reviews/sensor-waivers-verdict.json`
+- `specs/reviews/sensor-waivers.json`
+- `backend/src/__init__.py`
+- `backend/tests/__init__.py`
+- `frontend/eslint.config.js`
+- `frontend/package.json`
+- `frontend/tests/unit/money.test.ts`
+- `frontend/tsconfig.json`
+- `frontend/vite.config.ts`
+- `specs/design/amendments/group-a-implementation-sync.md`

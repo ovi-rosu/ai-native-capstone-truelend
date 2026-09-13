@@ -24,6 +24,22 @@
     {
       "name": "Money value type with fixed-point decimal arithmetic",
       "status": "unknown"
+    },
+    {
+      "name": "Money (backend Decimal value type)",
+      "status": "new"
+    },
+    {
+      "name": "MoneySerializer (Pydantic serializer, quoted 2dp string)",
+      "status": "new"
+    },
+    {
+      "name": "Money (frontend decimal.js wrapper)",
+      "status": "new"
+    },
+    {
+      "name": "MoneyText (frontend display component)",
+      "status": "new"
     }
   ],
   "approach": {
@@ -43,9 +59,22 @@
     "layer": "Types"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/types/money.py",
+      "backend/src/api/serializers.py",
+      "static/architecture",
+      "backend/tests/architecture/test_no_float_money.py",
+      "frontend/package.json",
+      "frontend/tsconfig.json",
+      "frontend/vite.config.ts",
+      "frontend/vitest.config.ts",
+      " as a dependency per D-G/D-J.\n5. Define the frontend ",
+      "frontend/src/types/money.ts",
+      "frontend/src/ui/components/MoneyText.tsx",
+      "frontend/tests/unit/money.test.ts"
+    ],
+    "text": "1. Define the `Money` value type in `backend/src/types/money.py` (new): wraps `decimal.Decimal`, quantizes to exactly 2 places on construction, and exposes `add`/`subtract`/`multiply`-style helpers that never touch `float`.\n2. Define the Pydantic serializer that emits `Money` as a quoted 2dp JSON string in `backend/src/api/serializers.py` (new) — the single module holding this conversion per the D-G coupling risk.\n3. Add a static/architecture check in `backend/tests/architecture/test_no_float_money.py` (new) that scans the backend money code paths (`backend/src/types/money.py`, `backend/src/api/serializers.py`) and asserts 0 float arithmetic operations.\n4. Scaffold the minimum frontend project needed to run these files: `frontend/package.json`, `frontend/tsconfig.json`, `frontend/vite.config.ts`, `frontend/vitest.config.ts` (all new) with `decimal.js` as a dependency per D-G/D-J.\n5. Define the frontend `Money` module in `frontend/src/types/money.ts` (new): wraps `decimal.js`, parses the quoted 2dp wire string, never converts to integer minor units, and never uses `number` arithmetic on the value.\n6. Define `MoneyText` in `frontend/src/ui/components/MoneyText.tsx` (new): a display component that formats a `Money` value for presentation.\n7. Add frontend unit tests in `frontend/tests/unit/money.test.ts` (new) covering AC3 (decimal-held, never-float) and a static grep-based check for float arithmetic in the money module."
   },
   "safeguards": {
     "ids": [
