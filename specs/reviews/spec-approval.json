@@ -1,0 +1,75 @@
+{
+  "phase": "spec",
+  "status": "approved",
+  "rounds": [
+    {
+      "round": 1,
+      "verdict": "changes-requested",
+      "feedback": [
+        "NFR timing: Move both earlier as ratchets — land E17-S1's axe+keyboard harness right after the first customer screen (E4-S3, wave G) and E15-S3's load harness right after the first read endpoints exist (~wave E), then let each later UI/read story inherit the check. Turns two terminal pass/fail gates into a ratchet that bites on the story that breaks it. Slice shape: Keep both splits as-is — the M1/M2 tracers already carry a thin end-to-end path through these seams, so E3-S1/E3-S2 and E4-S2/E4-S3 are depth behind an existing slice, which is the D8 pattern, not a layer ladder."
+      ],
+      "changes": [],
+      "declined": [],
+      "questions_asked": 2,
+      "answered": 2,
+      "recordedAt": "2026-09-13T14:02:06.595Z"
+    },
+    {
+      "round": 2,
+      "verdict": "approved",
+      "feedback": [],
+      "changes": [
+        "D28 recorded (basis: human, load_bearing): E17-S1 accessibility harness moved wave N -> H (depends only on E4-S3); E15-S3 SLO load harness moved wave N -> E (depends only on E2-S1). Five fan-in edges reversed so later surfaces take a contract edge on the harness: E8-S1 and E13-S1 -> E17-S1; E7-S1, E13-S1, E14-S1 -> E15-S3. Both criterion sets restated in the D16 registry-enumeration form with a fail-closed completeness assertion (E17-S1-AC3, E15-S3-AC3). Waves 14 -> 13; clusters 4 -> 6; C1 118 -> 103 points and 25 -> 21 stories. Separately, remapped the 28 NFR-derived acceptance-criterion traces from requirement ids FRD-18..FRD-29 to the acceptance ids FRD-57..FRD-68 that D25 promoted upstream, which cleared the spec-acceptance hard block on evidence with no waiver and no accepts_verdict."
+      ],
+      "declined": [
+        "Kept the E3-S1/E3-S2 and E4-S2/E4-S3 splits as-is per reviewer decision: the M1/M2 tracers already carry a thin end-to-end path through those seams, so both pairs are depth behind an existing vertical slice (the D8 pattern) rather than a layer ladder. Did not re-shape C1: it remains an oversized 103-point single-owner cluster per D26, and no parallelism is claimed for it or for the two non-cut contract edges (D27 and the new E15-S3 -> E13-S1). Did not add epic names to epics.md - cosmetic, left out of scope."
+      ],
+      "questions_asked": 2,
+      "answered": 2,
+      "recordedAt": "2026-09-13T14:06:33.017Z"
+    },
+    {
+      "round": 3,
+      "verdict": "approved",
+      "feedback": [
+        "Re-affirming the round-2 approved decomposition against the D-J amendment: the amended E9-S1/F011 plan is still the plan approved at the spec gate."
+      ],
+      "changes": [
+        "Re-pointed the spec receipt at the current artifact hashes. The only drift since the round-2 approval is design decision D-J: E9-S1-AC3 and F011 now require the frontend money value to be held as a decimal value and never a float, with a static check reporting 0 float arithmetic operations in that module. Verified the drift is confined to E9-S1 (1 of 29 stories) and F011; epics.md, dependency-graph.md and spec-decisions.json are byte-identical to the round-2 approval, so waves, clusters and the dependency graph are unchanged."
+      ],
+      "declined": [
+        "Did not re-run the spec review loop from scratch: the amendment was already reviewed and approved at the design gate (design-approval round 2), so a fresh spec challenge surface would duplicate rounds 1-2. Did not revert E9-S1/F011 to the round-2 wording, which would discard D-J and reopen the float-drift hole it closed."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-13T15:40:10.445Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "specs/stories/epics.md",
+      "sha256": "22f84fddf125b7492bf9ca36202f7ef56fae247271621a645b0f18e6fd01677a"
+    },
+    {
+      "path": "specs/stories/dependency-graph.md",
+      "sha256": "aa540d0978741d73ea45da39f292801558ef3f49eafebcdd895f392a72c94317"
+    },
+    {
+      "path": "specs/stories/stories.json",
+      "sha256": "5b28a5a8ada4d549052ab74389bf2b1fed9fefba7be1cd1a09925219617881f0"
+    },
+    {
+      "path": "features.json",
+      "sha256": "f7042c0399c9aa9fcc8a44ea0aa1bbd1feec4256d3b20fb614abd8b22497763d"
+    },
+    {
+      "path": "specs/decisions/spec-decisions.json",
+      "sha256": "af5275bceea636ea1ba2080cec3d7260f3bfa636b06155b99eb1815d55123e31"
+    }
+  ],
+  "low_engagement": false,
+  "waived_by": null,
+  "approvedAt": "2026-09-13T15:40:10.445Z",
+  "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
+  "in_session": false
+}

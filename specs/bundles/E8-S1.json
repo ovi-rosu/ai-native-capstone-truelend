@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "story_id": "E8-S1",
+  "sprint": 1,
+  "title": "Customer application tracking view",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E8-S1-AC1",
+      "E8-S1-AC2",
+      "E8-S1-AC3",
+      "E8-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-11"
+    ],
+    "br_acceptance_ids": [
+      "FRD-50"
+    ],
+    "scope_out": [
+      "must not send an email or SMS notification on any state change; must not expose another customer's application; must not show a decision section before the application is decided"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Customer application tracking view",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "frontend/src/ui/pages/Track.tsx",
+      "frontend/src/ui/components/StatusPill.tsx",
+      "frontend/tests/unit/Track.test.tsx"
+    ],
+    "layer": "UI"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-4"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-066",
+      "VM-067",
+      "VM-068",
+      "VM-069"
+    ],
+    "case_ids": [
+      "VM-066",
+      "VM-067",
+      "VM-068",
+      "VM-069"
+    ],
+    "layers": [
+      "e2e"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E8-S1.md",
+    "parents": [
+      "E5-S2",
+      "E6-S1",
+      "E17-S1"
+    ],
+    "tracker_key": null
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "story_id": "E3-S1",
+  "sprint": 1,
+  "title": "Append-only policy version store and destructive migration lint",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E3-S1-AC1",
+      "E3-S1-AC2",
+      "E3-S1-AC3",
+      "E3-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-19",
+      "FRD-22"
+    ],
+    "br_acceptance_ids": [
+      "FRD-58",
+      "FRD-61"
+    ],
+    "scope_out": [
+      "must not expose an update or delete method on the policy_version repository; must not restrict application.status, loan.outstanding_principal or loan.delinquency_bucket, which stay mutable per D5; must not add a destructive statement to any migration to simplify a schema change"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Append-only policy version store and destructive migration lint",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/repository/policy/policy_version_repository.py",
+      "backend/tests/architecture/test_policy_version_immutability.py",
+      "backend/tests/architecture/test_migration_lint.py",
+      "backend/migrations/versions/0003_policy_version_constraints.py"
+    ],
+    "layer": "Repository"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-8"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-020",
+      "VM-021",
+      "VM-022",
+      "VM-023"
+    ],
+    "case_ids": [
+      "VM-020",
+      "VM-021",
+      "VM-022",
+      "VM-023"
+    ],
+    "layers": [
+      "unit"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E3-S1.md",
+    "parents": [
+      "E9-S1",
+      "E1-S1"
+    ],
+    "tracker_key": null
+  }
+}

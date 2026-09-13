@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "story_id": "E13-S1",
+  "sprint": 1,
+  "title": "Customer loan view with schedule, outstanding principal, bucket and repayment posting",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E13-S1-AC1",
+      "E13-S1-AC2",
+      "E13-S1-AC3",
+      "E13-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-12"
+    ],
+    "br_acceptance_ids": [
+      "FRD-51"
+    ],
+    "scope_out": [
+      "must not offer an early settlement, foreclosure or prepayment quote; must not expose another customer's loan; must not compute outstanding principal client-side"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Customer loan view with schedule, outstanding principal, bucket and repayment posting",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "frontend/src/api/loans.ts",
+      "frontend/src/ui/pages/Repay.tsx",
+      "frontend/src/ui/components/BucketBadge.tsx",
+      "frontend/tests/unit/Repay.test.tsx"
+    ],
+    "layer": "UI"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-10"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-094",
+      "VM-095",
+      "VM-096",
+      "VM-097"
+    ],
+    "case_ids": [
+      "VM-094",
+      "VM-095",
+      "VM-096",
+      "VM-097"
+    ],
+    "layers": [
+      "e2e"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E13-S1.md",
+    "parents": [
+      "E11-S2",
+      "E17-S1",
+      "E15-S3"
+    ],
+    "tracker_key": null
+  }
+}

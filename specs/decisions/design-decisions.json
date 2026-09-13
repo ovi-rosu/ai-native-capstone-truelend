@@ -1,0 +1,329 @@
+{
+  "version": 1,
+  "phase": "design",
+  "source": "specs/stories/stories.json",
+  "confirmed_at": "2026-09-13T14:57:27.931Z",
+  "glossary": "specs/design/CONTEXT.md",
+  "inputs": {
+    "stories": 29,
+    "epics": 17,
+    "clusters": 6,
+    "dependency_edges": 45,
+    "features": 107,
+    "spec_approval": "specs/reviews/spec-approval.json",
+    "brd_risks_settled": [
+      "R-1",
+      "R-2",
+      "R-3",
+      "R-4"
+    ]
+  },
+  "stack": {
+    "backend": "Python 3.12 / FastAPI / uv (ruff, mypy, pytest)",
+    "frontend": "TypeScript 5.x / React + Vite / npm (eslint, tsc, vitest)",
+    "datastores": [
+      "PostgreSQL (primary, single database)"
+    ],
+    "deployment": "Docker Compose, self-hosted",
+    "layers": [
+      "Types",
+      "Config",
+      "Repository",
+      "Service",
+      "API",
+      "UI"
+    ]
+  },
+  "decisions": [
+    {
+      "id": "D-A",
+      "question": "FR-13 requires launching products and changing thresholds with no code change. How is a policy rule set represented?",
+      "options": [
+        "Versioned JSONB threshold document validated by a Pydantic schema, read by one fixed evaluator",
+        "Typed columns per threshold on the policy_version table",
+        "Expression DSL stored as text and parsed at evaluation"
+      ],
+      "proposed_default": "Versioned JSONB threshold document validated by a Pydantic schema, read by one fixed evaluator",
+      "chosen": "A policy_version row holds its Policy Rules as a JSONB threshold document validated by a Pydantic model; one threshold-driven evaluator reads it. A new Loan Product is an INSERT with no deploy.",
+      "rules_out": "No per-product code branches, no product-specific strategy classes, and no expression DSL, parser or eval sandbox. A new threshold KIND remains a schema change rather than a data change, so the business can retune existing thresholds and launch products without code but cannot invent new rule shapes. Also rules out ALTER TABLE per threshold, which NFR-22 would constrain.",
+      "rationale": "FRD-13 names a fixed threshold set (income, age, score, tenure, rate). A DSL buys rule shapes nobody asked for and adds a parser plus an injection surface.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D-B",
+      "question": "R-4: FR-09 names the delinquency buckets but no requirement fixes the day ranges or where NPA begins. Where do the boundaries sit?",
+      "options": [
+        "30/60/90/180 with NPA at 180+",
+        "30/60/90 with NPA at 90+ (RBI convention)",
+        "Bucket boundaries configurable per Policy Version"
+      ],
+      "proposed_default": "30/60/90/180 with NPA at 180+",
+      "chosen": "Days Past Due counts from the oldest unpaid Installment due date to the As-Of Date. CURRENT 0-29, DPD-30 30-59, DPD-60 60-89, DPD-90 90-179, NPA 180+. Boundaries are Config-layer constants.",
+      "rules_out": "Rules out NPA at 90 days, which would overlap DPD-90 and leave one of FR-09's five buckets unreachable. Rules out per-product configurable ageing, so boundaries are NOT part of the configurability story and the End-Of-Day Run never resolves a per-loan Policy Version. Also rules out DPD measured from disbursement or from the latest missed installment.",
+      "rationale": "The M3 milestone requires a 35-day-overdue loan to land in DPD-30, which fixes the first boundary at 30. All five buckets must stay reachable and distinct.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D-C",
+      "question": "R-1: rounded equal EMIs rarely sum to the unrounded total payable, yet FR-07 requires per-installment principal plus interest to equal total payable. Where is the rounding residual absorbed?",
+      "options": [
+        "Final Installment absorbs the accumulated residual",
+        "Residual distributed one paisa at a time across the earliest Installments",
+        "Store unrounded amounts and round only for display"
+      ],
+      "proposed_default": "Final Installment absorbs the accumulated residual",
+      "chosen": "Every Installment carries the 2dp rounded EMI except the last, which is adjusted by the accumulated Rounding Residual so the Repayment Schedule sums exactly to Total Payable. FR-07 is an exact-equality test with no epsilon.",
+      "rules_out": "Rules out an epsilon or tolerance in the FR-07 invariant test, which is how this requirement gets quietly loosened. Rules out storing unrounded money and rounding at the edge, so NFR-01's 2 decimal places describes stored money and not presentation. Rules out distributing cents across early installments, keeping a schedule recomputable from principal, rate and tenure plus one adjustment.",
+      "rationale": "Standard lending practice, and it confines the residual to one auditable place instead of smearing it across the schedule.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D-D",
+      "question": "R-3: a new Policy Version can activate mid-flight (FR-13), but FR-04 requires reason codes to come from the version named on the application. When is that version pinned?",
+      "options": [
+        "At submission",
+        "At decision time",
+        "Re-resolved from the Active Policy Version on every evaluation"
+      ],
+      "proposed_default": "At submission",
+      "chosen": "A Loan Application stores policy_version_id when created. The Document Checklist, Credit Score evaluation, Underwriting Decision and any Override all read that pinned row. An activation never retargets an in-flight application.",
+      "rules_out": "Rules out reading the Active Policy Version anywhere in the decision path, and rules out pinning at decision time — which would let the FR-02 checklist and the FR-04 decision disagree about required documents. Rules out an application whose decision is not reproducible from stored data, and forecloses any 'latest rules win' retroactive re-decisioning of submitted applications.",
+      "rationale": "FR-04 requires a named version to cite. One pin point at submission keeps checklist, decision and audit trail consistent and the decision replayable.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D-E",
+      "question": "R-2: NFR-02/NFR-05 make policy versions and schedules append-only, yet an Override changes a decision (FR-10) and a Repayment changes outstanding principal (FR-09). Where is the immutable/mutable line?",
+      "options": [
+        "Append-only facts with stored, replay-checkable projections",
+        "Full event sourcing with every value derived on read",
+        "Append-only only for policy_version and repayment_schedule"
+      ],
+      "proposed_default": "Append-only facts with stored, replay-checkable projections",
+      "chosen": "Insert-only: policy_version, repayment_schedule, installment, decision (an Override is a new row with supersedes_id), repayment, disbursement, audit_entry. Mutable projections: application.status, loan.outstanding_principal, loan.delinquency_bucket.",
+      "rules_out": "Rules out any update or delete method on the repositories for the append-only tables — an NFR-25 architecture test, not a convention. Rules out overwriting a decision on Override, so the prior decision stays structured data rather than audit prose. Rules out full event sourcing: projections are stored, so the Portfolio Summary never replays every loan's history.",
+      "rationale": "Keeps the FR-10 override and FR-09 balance change auditable while leaving reads cheap enough for NFR-26. Projections stay reconcilable by replay against the facts.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D-F",
+      "question": "FRD-16/FRD-21 require role-based access enforced at the controller layer. What is the auth mechanism?",
+      "options": [
+        "JWT bearer token with a role claim plus a require_roles FastAPI dependency",
+        "Server-side session behind an HttpOnly cookie",
+        "JWT carried inside an HttpOnly cookie"
+      ],
+      "proposed_default": "JWT bearer token with a role claim plus a require_roles FastAPI dependency",
+      "chosen": "Login returns a signed JWT carrying sub, role and exp. A single require_roles(...) dependency guards every non-public router, giving one enforcement point at the API layer.",
+      "rules_out": "Rules out per-route hand-written role checks and any authorization in the Service layer, so authz cannot drift below the controller boundary. Rules out a session store or Redis service in the Compose stack and the CSRF surface a cookie would add. Accepts the trade-off that the token is reachable from JS, so no long-lived refresh token is issued in v1.",
+      "rationale": "One dependency is one testable enforcement point: the NFR-25 architecture test can assert every non-public route carries require_roles.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D-G",
+      "question": "NFR-01 requires fixed-point money end to end and JavaScript numbers are IEEE-754 floats. How does money cross the API boundary?",
+      "options": [
+        "Quoted 2dp decimal string",
+        "Integer minor units (paise)",
+        "Unquoted JSON number"
+      ],
+      "proposed_default": "Quoted 2dp decimal string",
+      "chosen": "NUMERIC(14,2) in Postgres, Decimal in Python, a quoted 2dp string in JSON via a Pydantic serializer, parsed with a decimal library in TypeScript. No float touches a monetary value at any hop.",
+      "rules_out": "Rules out float and JSON numbers for money across all six layers, and rules out integer minor units with their scale/unscale conversions at both edges. Rules out any frontend arithmetic on money using native numbers, so the UI must use the decimal library. Fixes the wire contract as a string, so a later change to numbers is a breaking API change.",
+      "rationale": "Keeps NFR-18 verifiable end to end and keeps amounts readable in logs and test fixtures. A JSON number becomes a float the moment the browser parses it.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D-H",
+      "question": "How are schema and API contract names bound to the domain vocabulary?",
+      "options": [
+        "Every data-model $def and components.schemas key is a CONTEXT.md term",
+        "Domain terms for entities, free DTO suffixes for request/response bodies"
+      ],
+      "proposed_default": "Every data-model $def and components.schemas key is a CONTEXT.md term",
+      "chosen": "Every $defs key in data-models.schema.json and every components.schemas key in api-contracts.schema.json must be a term in specs/design/CONTEXT.md. A needed new name is added to CONTEXT.md first, then to the schema.",
+      "rules_out": "Rules out DTO-suffixed schema names (ApplicationCreateRequest, DecisionResponse) that vocabulary-check.js reports as UNDOCUMENTED hard blocks, since it does no suffix stripping. Request bodies compose via $ref against the domain schema instead.",
+      "rationale": "specs/design/CONTEXT.md did not exist before this session and was seeded here. The vocabulary-check sensor fails closed on any candidate name absent from it.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D-I",
+      "question": "What module boundaries should the package layout follow?",
+      "options": [
+        "One package per bounded context inside each architectural layer",
+        "One package per architectural layer only"
+      ],
+      "proposed_default": "One package per bounded context inside each architectural layer",
+      "chosen": "The five bounded contexts in the modularity block below (policy, origination, servicing, delinquency, identity) each get their own module within the Repository, Service and API layers, so file ownership splits by context as well as by layer.",
+      "rules_out": "Rules out a single flat services/ or repositories/ package where every story touches the same files, which is what makes the oversized C1 cluster serialize. Cross-context reads go through the owning context's service, not its repository.",
+      "rationale": "Cluster C1 still holds 21 stories at 103 points with no bridge to split on, so the design must supply the file-ownership separation the story graph cannot.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D-J",
+      "question": "U-1: D-G rules out integer minor units but FRD-57 and E9-S1-AC3 require the frontend to hold money as integer minor units. Which side gives?",
+      "chosen": "E9-S1-AC3 and FRD-57 are amended to \"held as a decimal value, never a float\". D-G stands: frontend money wraps a decimal library over the quoted 2dp wire string. E9-S1s bundle and features.json entry are re-rendered from the amended AC.",
+      "rules_out": "Rules out integer minor units anywhere in the frontend, including a scale/unscale helper at the browser edge. Rules out reading E9-S1-AC3 literally as a representation assertion, so no implementer may add a minor-unit conversion to satisfy the old wording. The amended AC is the only oracle for E9-S1.",
+      "rationale": "D-G was recorded load-bearing with a stated rationale; the AC predates it. Amending the AC leaves one oracle instead of two contradictory ones.",
+      "basis": "human",
+      "load_bearing": true,
+      "resolves": "U-1"
+    },
+    {
+      "id": "D-K",
+      "question": "U-2: how does a Repayment smaller than one Installment split into principal and interest?",
+      "chosen": "Within the oldest unpaid Installment a partial Repayment applies to interest first, then principal. FIFO across whole Installments is unchanged. applied_principal + applied_interest = amount stays a CHECK constraint.",
+      "rules_out": "Rules out pro-rata splitting by the Installments stored components, and rules out refusing a non-whole-installment payment with a 422 — the API keeps accepting underpayments. Rules out reducing outstanding principal by the full payment amount, which is the arithmetic error E11-S2-AC1 exists to catch.",
+      "rationale": "Standard lending practice and the least surprising allocation to audit.",
+      "basis": "human",
+      "load_bearing": true,
+      "resolves": "U-2"
+    },
+    {
+      "id": "D-L",
+      "question": "U-6: is MANUAL_REVIEW an Application Status, or only a Decision Outcome with a query alias?",
+      "chosen": "MANUAL_REVIEW is added to the Application Status term in specs/design/CONTEXT.md and to the ApplicationStatus enum, so the workbench filter is a plain status filter. The enum moves from six states to seven.",
+      "rules_out": "Rules out the documented query-filter alias and the divergence between the two staff mockups (which label it a status) and the schema. Rules out rewording E6-S2-AC1 and E7-S1. The CONTEXT.md edit must land before the schema change, per D-Hs ordering.",
+      "rationale": "It matches how both stories and both mockups already read, and is the simplest surface for the implementer.",
+      "basis": "human",
+      "load_bearing": true,
+      "resolves": "U-6"
+    },
+    {
+      "id": "D-M",
+      "question": "U-3: what is the JWT token lifetime, given D-F issues no refresh token?",
+      "chosen": "Settings.jwt_ttl_seconds = 3600 (60 minutes). With no refresh token per D-F, that is the whole session length.",
+      "rules_out": "Rules out a working-day (8-hour) token and the theft window it carries, and rules out a 30-minute TTL that forces mid-shift re-login. Rules out introducing a refresh token to compensate, which D-F already forecloses for v1.",
+      "rationale": "Balances a bounded theft window against re-login friction for back-office underwriter workflows.",
+      "basis": "human",
+      "load_bearing": true,
+      "resolves": "U-3"
+    },
+    {
+      "id": "D-N",
+      "question": "U-4: which role may disburse a Loan (FRD-8) and trigger the End-Of-Day Run (FRD-14)?",
+      "chosen": "ADMIN for both. Both routes carry require_roles(ADMIN), and E1-S2s generated 401/403 suite asserts UNDERWRITER and APPLICANT are rejected.",
+      "rules_out": "Rules out UNDERWRITER disbursement, so approving an application and moving the money stay separate privileges. Rules out a second shape in the require_roles matrix for privileged money-adjacent operations.",
+      "rationale": "Both are privileged, money-adjacent operations; one role keeps the enforcement matrix and its 403 coverage single-shaped.",
+      "basis": "human",
+      "load_bearing": true,
+      "resolves": "U-4"
+    },
+    {
+      "id": "D-O",
+      "question": "U-5: does v1 ship any rate limit, quota or throttle?",
+      "chosen": "No. v1 ships no throttling middleware and api-contracts.md states none per endpoint, including POST /auth/login, which therefore has no attempt throttle.",
+      "rules_out": "Rules out throttling middleware in the app factory and any per-endpoint quota, so no test asserts one. Accepts that login has no attempt throttle, pairing with the already-absent lockout policy — a credential-stuffing gap recorded as accepted rather than overlooked.",
+      "rationale": "No requirement or NFR defines request volume; NFR-09 constrains latency and error rate. Inventing a figure would read as decided.",
+      "basis": "human",
+      "load_bearing": true,
+      "resolves": "U-5"
+    }
+  ],
+  "modularity": {
+    "note": "Step 0.7 greenfield assessment. design-render must carry these boundaries into the REASONS Canvas Structure section and these coupling risks into its Safeguards section.",
+    "contexts": [
+      {
+        "name": "Policy & Catalog",
+        "classification": "core",
+        "volatility": "high",
+        "owns": [
+          "Loan Product",
+          "Policy Version",
+          "Policy Rules",
+          "Threshold",
+          "Reason Code",
+          "Required Document"
+        ],
+        "published_contract": "Read-only accessor returning a validated Policy Rules object for a pinned policy_version_id, plus the Reason Code set that version declares. Activation is a write on this context alone.",
+        "notes": "Highest volatility in the system — it is the configurability surface. Every consumer takes an explicit versioned contract; nobody reads the JSONB document directly."
+      },
+      {
+        "name": "Origination",
+        "classification": "core",
+        "volatility": "medium",
+        "owns": [
+          "Loan Application",
+          "Applicant",
+          "Application Document",
+          "Document Checklist",
+          "Underwriting Decision",
+          "Override",
+          "Credit Score Stub"
+        ],
+        "published_contract": "Submit an Application Submission; verify an Application Document; evaluate or override an Underwriting Decision. Emits an approved application for Servicing to consume.",
+        "notes": "Depends on Policy & Catalog only through the pinned-version accessor (D-D). The Credit Score Stub sits behind its own port so a real bureau could replace it without touching the evaluator."
+      },
+      {
+        "name": "Servicing",
+        "classification": "core",
+        "volatility": "low",
+        "owns": [
+          "Loan",
+          "Disbursement",
+          "Funding Source",
+          "Repayment Schedule",
+          "Installment",
+          "Repayment",
+          "Outstanding Principal"
+        ],
+        "published_contract": "Disburse an approved application; read a Repayment Schedule; post a Repayment. Publishes the Installment ladder that Delinquency reads.",
+        "notes": "The EMI computation is a pure function over (principal, rate, tenure) with the D-C residual rule — no I/O, no clock, directly unit-testable. Funding Source is a stubbed port."
+      },
+      {
+        "name": "Delinquency & Portfolio",
+        "classification": "core",
+        "volatility": "medium",
+        "owns": [
+          "Days Past Due",
+          "Delinquency Bucket",
+          "As-Of Date",
+          "End-Of-Day Run",
+          "Portfolio Summary"
+        ],
+        "published_contract": "Recalculate buckets for an As-Of Date (idempotent); read a Portfolio Summary. Consumes the published Installment ladder, never Servicing's tables directly.",
+        "notes": "Bucket boundaries are Config constants per D-B, so this context has no dependency on Policy & Catalog at all."
+      },
+      {
+        "name": "Identity & Audit",
+        "classification": "supporting",
+        "volatility": "low",
+        "owns": [
+          "User",
+          "Role",
+          "Audit Entry",
+          "Correlation Id"
+        ],
+        "published_contract": "require_roles(...) dependency at the API layer (D-F); append an Audit Entry; bind a Correlation Id for the request scope.",
+        "notes": "Cross-cutting and consumed by every context, so it must stay free of domain knowledge — it records actor, action and entity id as opaque values."
+      }
+    ],
+    "balanced_coupling": [
+      "Policy & Catalog is high-volatility, so its distance from consumers is kept high: integration is a narrow versioned accessor, not a shared model.",
+      "Servicing and Delinquency are low/medium volatility and genuinely sequential, so a stronger integration (Delinquency reading the published Installment ladder) is acceptable.",
+      "Identity & Audit is low-volatility and generic, so direct use by every context is fine — the knowledge it leaks is near zero."
+    ],
+    "coupling_risks": [
+      "Shared mutable money model: a single Money type reused as both a stored column type and a wire type invites float leakage. D-G fixes the representation at every hop; keep the serializer in one place.",
+      "Duplicated business rules: the DPD bucket boundaries (D-B) will be re-derived by the End-Of-Day Run, the post-Repayment recalculation and the Portfolio Summary. One Config-layer function must own the mapping, asserted by an NFR-25 architecture test.",
+      "Duplicated business rules: the EMI/residual formula (D-C) must exist once and be referenced by schedule generation and by the FR-07 invariant test.",
+      "Cross-context import: Delinquency reading Servicing repositories, or Origination reading the policy JSONB directly, would bypass both published contracts. The constitution already forbids cross-service database reads; make it a layer test.",
+      "Projection drift: loan.outstanding_principal and loan.delinquency_bucket are stored projections (D-E) and can diverge from the append-only facts. A replay reconciliation check is the safeguard.",
+      "Pass-through modules: with six layers there is real risk of Service classes that only forward to a Repository. Where a story has no business rule, the API layer should use the repository contract directly rather than adding an empty pass-through.",
+      "Argument clumps: (principal, rate, tenure) and (as_of_date, loan_id, bucket) travel together repeatedly — make them value objects in Types before the clump spreads."
+    ],
+    "carry_over_from_spec": [
+      "U3: cluster C1 is 21 stories / 103 points and biconnected — accepted as a single-owner cluster at the /spec gate, sequenced by the 13 scheduling waves. D-I supplies per-context file ownership so implementation still parallelizes.",
+      "U4: the E11-S1 -> E12-S1 contract edge is not a cluster cut; C2 is owned as one 8-point cluster and no parallelism is claimed for that edge."
+    ]
+  }
+}

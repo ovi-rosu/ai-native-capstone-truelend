@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Story: E8-S1 — Track screen (CUSTOMER)
+  Screen: Read-only status view of one LoanApplication — current
+          ApplicationStatus, checklist items still PENDING, and — only once a
+          decision exists — the UnderwritingDecision outcome with every
+          reason_code. A view toggle swaps between an undecided sample
+          (decision is null, so the decision section does not render at all,
+          E8-S1-AC4) and a decided sample.
+  Depends on: GET /applications/{application_id}
+  Notes: No notification, email or SMS affordance of any kind appears here.
+-->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Track your application — TrueLend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" /><!-- harness:secret-ok -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com/3.4.13"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#14231D',
+          'ink-muted': '#4E6158',
+          paper: '#F7F4EC',
+          'paper-raised': '#FFFDF7',
+          brass: '#9A6B1F',
+          'signal-red': '#8E241C',
+          'signal-amber': '#8A5B12',
+          'signal-green': '#1D5C41',
+          rule: '#D8D0BE'
+        },
+        fontFamily: {
+          display: ['Fraunces', 'serif'],
+          body: ['"Public Sans"', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<style>
+  html, body { background-color: #F7F4EC; }
+  body { font-family: 'Public Sans', sans-serif; color: #14231D; }
+  h1, h2, h3, .font-display { font-family: 'Fraunces', serif; }
+  .tnum { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+  :focus { outline: 2px solid #9A6B1F; outline-offset: 2px; }
+  :focus:not(:focus-visible) { outline: 2px solid #9A6B1F; outline-offset: 2px; }
+  .small-caps { font-variant: small-caps; letter-spacing: 0.06em; }
+</style>
+</head>
+<body class="antialiased">
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState } = React;
+
+function formatMoney(moneyString) {
+  const negative = moneyString.trim().startsWith('-');
+  const abs = negative ? moneyString.trim().slice(1) : moneyString.trim();
+  const [whole, frac] = abs.split('.');
+  const withSeparators = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (negative ? '-' : '') + withSeparators + '.' + (frac || '00');
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: '2-digit' });
+}
+
+// Two hardcoded application detail responses shaped exactly like
+// GET /applications/{application_id}: { application, document_checklist, decision, decision_history }
+const SAMPLES = {
+  undecided: {
+    application: {
+      id: '7a4e6d3a-1c2b-4a9e-8f4d-2b6e5c1a9d10',
+      product_code: 'VEHICLE',
+      policy_version_id: 'c29f3b2b-7a3e-4c9c-af4e-4b2a3d0e1f22',
+      status: 'UNDER_REVIEW',
+      requested_amount: '620000.00',
+      requested_tenure_months: 48,
+      applicant: {
+        full_name: 'Arjun Menon',
+        date_of_birth: '1988-11-02',
+        declared_income: '96000.00',
+        pan: 'PQRSX5678L',
+        aadhaar: '8888-7777-6666',
+        credit_history_flags: []
+      },
+      credit_score: null,
+      submitted_at: '2026-02-11T09:42:00Z'
+    },
+    document_checklist: [
+      { id: 'd1a1', application_id: '7a4e6d3a-1c2b-4a9e-8f4d-2b6e5c1a9d10', document_type: 'SALARY_SLIP', label: 'Latest salary slip', status: 'VERIFIED' },
+      { id: 'd1a2', application_id: '7a4e6d3a-1c2b-4a9e-8f4d-2b6e5c1a9d10', document_type: 'VEHICLE_QUOTATION', label: 'Vehicle price quotation', status: 'PENDING' },
+      { id: 'd1a3', application_id: '7a4e6d3a-1c2b-4a9e-8f4d-2b6e5c1a9d10', document_type: 'PAN_CARD', label: 'PAN card copy', status: 'PENDING' }
+    ],
+    decision: null,
+    decision_history: []
+  },
+  decided: {
+    application: {
+      id: '3f9c8b2e-5d4a-4e1f-9c3d-8a2b1e6f5c30',
+      product_code: 'EDUCATION',
+      policy_version_id: 'd3a04c3c-8b4f-4dad-b05f-5c3b4e1f2033',
+      status: 'REJECTED',
+      requested_amount: '900000.00',
+      requested_tenure_months: 60,
+      applicant: {
+        full_name: 'Kavya Iyer',
+        date_of_birth: '1997-06-23',
+        declared_income: '32000.00',
+        pan: 'KLMNO4321Z',
+        aadhaar: '7777-6666-5555',
+        credit_history_flags: ['EXISTING_LOAN']
+      },
+      credit_score: 588,
+      submitted_at: '2026-01-28T14:05:00Z'
+    },
+    document_checklist: [
+      { id: 'd2b1', application_id: '3f9c8b2e-5d4a-4e1f-9c3d-8a2b1e6f5c30', document_type: 'ADMISSION_LETTER', label: 'Institution admission letter', status: 'VERIFIED' },
+      { id: 'd2b2', application_id: '3f9c8b2e-5d4a-4e1f-9c3d-8a2b1e6f5c30', document_type: 'FEE_STRUCTURE', label: 'Fee structure document', status: 'VERIFIED' },
+      { id: 'd2b3', application_id: '3f9c8b2e-5d4a-4e1f-9c3d-8a2b1e6f5c30', document_type: 'PAN_CARD', label: 'PAN card copy', status: 'PENDING' }
+    ],
+    decision: {
+      id: 'e5f1a2b3-6c7d-4e8f-9a1b-2c3d4e5f6a71',
+      application_id: '3f9c8b2e-5d4a-4e1f-9c3d-8a2b1e6f5c30',
+      policy_version_id: 'd3a04c3c-8b4f-4dad-b05f-5c3b4e1f2033',
+      outcome: 'AUTO_REJECT',
+      reason_codes: [
+        { code: 'RC-07', text: 'Declared income below product minimum' },
+        { code: 'RC-15', text: 'Existing loan flag on declared credit history' }
+      ],
+      comment: null,
+      supersedes_id: null,
+      decided_by: null,
+      decided_at: '2026-01-28T14:05:04Z'
+    },
+    decision_history: []
+  }
+};
+
+const OUTCOME_BADGE = {
+  AUTO_APPROVE: 'border-signal-green text-signal-green',
+  AUTO_REJECT: 'border-signal-red text-signal-red',
+  MANUAL_REVIEW: 'border-signal-amber text-signal-amber'
+};
+
+function LeftRail() {
+  return (
+    <nav aria-label="Primary" className="hidden md:flex md:flex-col w-[220px] shrink-0 border-r border-rule bg-paper-raised px-6 py-8">
+      <div className="font-display text-xl font-600 mb-10">TrueLend</div>
+      <ul className="space-y-1 text-sm">
+        <li><a href="#" className="block px-3 py-2 text-ink-muted hover:text-ink rounded-[2px]">Apply</a></li>
+        <li><a href="#" aria-current="page" className="block px-3 py-2 border border-brass text-brass font-medium rounded-[2px]">Track</a></li>
+        <li><a href="#" className="block px-3 py-2 text-ink-muted hover:text-ink rounded-[2px]">Repay</a></li>
+      </ul>
+    </nav>
+  );
+}
+
+function ViewToggle({ view, onChange }) {
+  return (
+    <fieldset className="inline-flex border border-rule rounded-[2px] overflow-hidden" aria-label="Demonstration view">
+      <legend className="sr-only">Choose which sample application to display</legend>
+      {['undecided', 'decided'].map((v) => (
+        <label
+          key={v}
+          htmlFor={'view-' + v}
+          className={'px-4 py-2 text-sm cursor-pointer small-caps font-600 ' + (view === v ? 'bg-brass text-paper-raised' : 'bg-paper-raised text-ink-muted')}
+        >
+          <input
+            type="radio"
+            id={'view-' + v}
+            name="view"
+            value={v}
+            checked={view === v}
+            onChange={() => onChange(v)}
+            className="sr-only"
+          />
+          {v === 'undecided' ? 'Undecided application' : 'Decided application'}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+function PendingChecklist({ items }) {
+  const pending = items.filter((i) => i.status === 'PENDING');
+  return (
+    <section aria-labelledby="pending-heading" className="bg-paper-raised border border-rule rounded-[2px] p-5">
+      <h2 id="pending-heading" className="font-display text-lg font-600 mb-3">Documents still pending</h2>
+      {pending.length === 0 ? (
+        <p className="text-sm text-ink-muted">No checklist items remain pending.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-rule small-caps text-ink-muted font-600 text-xs">
+              <th scope="col" className="text-left py-2">Document type</th>
+              <th scope="col" className="text-left py-2">Label</th>
+              <th scope="col" className="text-left py-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pending.map((item) => (
+              <tr key={item.id} className="border-b border-rule h-11">
+                <td data-field="document_type" className="py-2 tnum">{item.document_type}</td>
+                <td data-field="label" className="py-2">{item.label}</td>
+                <td className="py-2">
+                  <span data-field="status" className="inline-block border border-ink-muted text-ink-muted text-xs px-2 py-0.5 rounded-[2px] small-caps">
+                    {item.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
+function DecisionSection({ decision }) {
+  if (!decision) return null;
+  const badgeClass = OUTCOME_BADGE[decision.outcome] || 'border-ink-muted text-ink-muted';
+  return (
+    <section aria-labelledby="decision-heading" className="bg-paper-raised border border-rule rounded-[2px] p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h2 id="decision-heading" className="font-display text-lg font-600">Underwriting decision</h2>
+        <span data-field="outcome" className={'border text-xs px-2 py-1 rounded-[2px] small-caps font-600 ' + badgeClass}>
+          {decision.outcome}
+        </span>
+      </div>
+      <ul className="divide-y divide-rule">
+        {decision.reason_codes.map((rc) => (
+          <li key={rc.code} className="py-2 flex gap-3 text-sm">
+            <span data-field="code" className="tnum font-600 shrink-0">{rc.code}</span>
+            <span data-field="text" className="text-ink-muted">{rc.text}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function App() {
+  const [view, setView] = useState('undecided');
+  const sample = SAMPLES[view];
+  const { application, document_checklist, decision } = sample;
+
+  return (
+    <div className="min-h-screen flex bg-paper">
+      <LeftRail />
+      <main className="flex-1 px-6 md:px-12 py-10 max-w-[1180px] mx-auto w-full">
+        <header className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-700">Track your application</h1>
+            <p className="text-ink-muted mt-1">Application <span data-field="id" className="tnum">{application.id}</span></p>
+          </div>
+          <ViewToggle view={view} onChange={setView} />
+        </header>
+
+        <section aria-labelledby="status-heading" className="bg-paper-raised border border-rule rounded-[2px] p-5 mb-6">
+          <h2 id="status-heading" className="font-display text-lg font-600 mb-3">Application status</h2>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-ink-muted small-caps text-xs">Current status</dt>
+              <dd data-field="status" className="border border-ink text-ink text-xs inline-block px-2 py-1 mt-1 rounded-[2px] small-caps font-600">{application.status}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-muted small-caps text-xs">Product</dt>
+              <dd data-field="product_code" className="tnum mt-1">{application.product_code}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-muted small-caps text-xs">Applicant</dt>
+              <dd data-field="full_name" className="mt-1">{application.applicant.full_name}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-muted small-caps text-xs">Requested amount</dt>
+              <dd data-field="requested_amount" className="tnum mt-1">Rs. {formatMoney(application.requested_amount)}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-muted small-caps text-xs">Submitted</dt>
+              <dd data-field="submitted_at" className="tnum mt-1">{formatDate(application.submitted_at)}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <div className="space-y-6">
+          <PendingChecklist items={document_checklist} />
+          <DecisionSection decision={decision} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

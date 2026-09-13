@@ -1,0 +1,67 @@
+{
+  "group": "A",
+  "stories": ["E1-S1", "E1-S2"],
+  "features": ["F001", "F002"],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "api-001",
+        "method": "GET",
+        "path": "/api/health",
+        "headers": {},
+        "expected_status": 200,
+        "expected_body": {},
+        "description": "Health check returns 200"
+      }
+    ],
+    "playwright_checks": [
+      {
+        "id": "pw-001",
+        "description": "Homepage loads and displays title",
+        "url": "/",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "/",
+            "assertion": "page loaded"
+          },
+          {
+            "action": "assert_visible",
+            "selector": "getByRole('heading', { name: 'Welcome' })",
+            "assertion": "heading visible"
+          }
+        ]
+      }
+    ],
+    "design_checks": {
+      "design_quality": { "required": true, "min_score": 7 },
+      "originality": { "required": true, "min_score": 5 },
+      "craft": { "required": true, "min_score": 7 },
+      "functionality": { "required": true, "min_score": 5 }
+    },
+    "performance_checks": [
+      {
+        "endpoint": "/api/health",
+        "max_response_time_ms": 500,
+        "method": "GET"
+      }
+    ],
+    "architecture_checks": {
+      "files_must_exist": [],
+      "layering": { "required": true, "description": "No upward imports across layers" },
+      "typing": { "required": true, "description": "All functions have type annotations" },
+      "folder_structure": { "required": true, "description": "Files match component-map.md" },
+      "env_vars": { "required": false, "description": "No hardcoded secrets" },
+      "migrations": { "required": false, "description": "DB migrations applied" }
+    },
+    "productivity_budget": {
+      "max_iterations": 5,
+      "max_files_changed": 25,
+      "_note": "Harness-specific caps (no native OTEL equivalent). Token and cost budgets are monitored via native claude_code.cost.usage and claude_code.token.usage metrics — set alerts in your Grafana/Prometheus dashboard instead of duplicating here."
+    },
+    "security_checks": {
+      "required": true,
+      "block_severities": ["critical", "high"]
+    }
+  }
+}

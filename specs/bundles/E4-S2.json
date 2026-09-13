@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "story_id": "E4-S2",
+  "sprint": 1,
+  "title": "Application intake with product derived document checklist and submission time policy pinning",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E4-S2-AC1",
+      "E4-S2-AC2",
+      "E4-S2-AC3",
+      "E4-S2-AC4"
+    ],
+    "brd_ids": [
+      "FRD-2"
+    ],
+    "br_acceptance_ids": [
+      "FRD-41"
+    ],
+    "scope_out": [
+      "must not re-resolve an application's policy version after submission; must not verify PAN or Aadhaar against an external registry; must not accept more than one applicant per application"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Application intake with product derived document checklist and submission time policy pinning",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/service/origination/checklist.py",
+      "backend/src/repository/origination/checklist_repository.py",
+      "backend/migrations/versions/0006_checklist_item.py",
+      "backend/tests/integration/test_intake_pinning.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-7",
+      "SG-9"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-038",
+      "VM-039",
+      "VM-040",
+      "VM-041"
+    ],
+    "case_ids": [
+      "VM-038",
+      "VM-039",
+      "VM-040",
+      "VM-041"
+    ],
+    "layers": [
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E4-S2.md",
+    "parents": [
+      "E4-S1"
+    ],
+    "tracker_key": null
+  }
+}

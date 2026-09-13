@@ -1,0 +1,56 @@
+{
+  "group": "F",
+  "stories": [
+    "E4-S2"
+  ],
+  "features": [
+    "F038",
+    "F039",
+    "F040",
+    "F041"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-038",
+        "matrix_ids": [
+          "VM-038"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 201,
+        "description": "POST /applications → 201 — document_checklist matches the pinned version's required-document list item for item"
+      },
+      {
+        "id": "QA-VM-039",
+        "matrix_ids": [
+          "VM-039"
+        ],
+        "method": "GET",
+        "path": "/applications/{application_id}",
+        "expected_status": 200,
+        "description": "GET /applications/{application_id} → 200 — SUBMITTED, storing the policy_version_id resolved at submission"
+      },
+      {
+        "id": "QA-VM-040",
+        "matrix_ids": [
+          "VM-040"
+        ],
+        "method": "GET",
+        "path": "/applications/{application_id}",
+        "expected_status": 200,
+        "description": "GET /applications/{application_id} → 200 — after a newer policy version is activated; stored policy_version_id and checklist are unchanged"
+      },
+      {
+        "id": "QA-VM-041",
+        "matrix_ids": [
+          "VM-041"
+        ],
+        "method": "GET",
+        "path": "/applications/{application_id}",
+        "expected_status": 200,
+        "description": "GET /applications/{application_id} → 200 — every checklist item carries its document type and status PENDING"
+      }
+    ]
+  }
+}

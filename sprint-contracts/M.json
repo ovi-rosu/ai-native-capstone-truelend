@@ -1,0 +1,140 @@
+{
+  "group": "M",
+  "stories": [
+    "E13-S1",
+    "E14-S1"
+  ],
+  "features": [
+    "F094",
+    "F095",
+    "F096",
+    "F097",
+    "F098",
+    "F099",
+    "F100",
+    "F101"
+  ],
+  "contract": {
+    "playwright_checks": [
+      {
+        "id": "QA-VM-094",
+        "matrix_ids": [
+          "VM-094"
+        ],
+        "description": "Sign in as CUSTOMER and open a disbursed loan's view — every installment is listed with its due date and amount",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Sign in as CUSTOMER and open a disbursed loan's view — every installment is listed with its due date and amount"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-095",
+        "matrix_ids": [
+          "VM-095"
+        ],
+        "description": "On that loan view — the current outstanding principal and the current delinquency bucket are both shown",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "On that loan view — the current outstanding principal and the current delinquency bucket are both shown"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-096",
+        "matrix_ids": [
+          "VM-096"
+        ],
+        "description": "Post a repayment from the loan view and reload — the displayed outstanding principal reflects that posting",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Post a repayment from the loan view and reload — the displayed outstanding principal reflects that posting"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-097",
+        "matrix_ids": [
+          "VM-097"
+        ],
+        "description": "On the loan view for a delinquent loan — no early settlement, foreclosure or prepayment quote is offered",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "On the loan view for a delinquent loan — no early settlement, foreclosure or prepayment quote is offered"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-098",
+        "matrix_ids": [
+          "VM-098"
+        ],
+        "description": "Sign in as ADMIN and open the portfolio dashboard — loan count and value are shown for every product and bucket combination",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Sign in as ADMIN and open the portfolio dashboard — loan count and value are shown for every product and bucket combination"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-099",
+        "matrix_ids": [
+          "VM-099"
+        ],
+        "description": "On the dashboard — total_overdue equals the sum of overdue installment amounts across all active loans",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "On the dashboard — total_overdue equals the sum of overdue installment amounts across all active loans"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-100",
+        "matrix_ids": [
+          "VM-100"
+        ],
+        "description": "Call the dashboard with a CUSTOMER session — 403 and no portfolio figures are rendered",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Call the dashboard with a CUSTOMER session — 403 and no portfolio figures are rendered"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-101",
+        "matrix_ids": [
+          "VM-101"
+        ],
+        "description": "Load the dashboard with the end-of-day operation spied — the figures come from stored bucket state and the run is never invoked",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Load the dashboard with the end-of-day operation spied — the figures come from stored bucket state and the run is never invoked"
+          }
+        ]
+      }
+    ],
+    "accessibility_checks": {
+      "required": true,
+      "block_impacts": [
+        "serious",
+        "critical"
+      ]
+    }
+  }
+}

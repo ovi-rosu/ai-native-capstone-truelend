@@ -1,0 +1,57 @@
+{
+  "group": "J",
+  "stories": [
+    "E9-S3"
+  ],
+  "features": [
+    "F077",
+    "F078",
+    "F079",
+    "F080",
+    "F081"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-077",
+        "matrix_ids": [
+          "VM-077"
+        ],
+        "method": "GET",
+        "path": "/loans/{loan_id}",
+        "expected_status": 200,
+        "description": "GET /loans/{loan_id} → 200 — the schedule principal column sums to the disbursed amount exactly, with no residual"
+      },
+      {
+        "id": "QA-VM-078",
+        "matrix_ids": [
+          "VM-078"
+        ],
+        "method": "GET",
+        "path": "/loans/{loan_id}",
+        "expected_status": 200,
+        "description": "GET /loans/{loan_id} → 200 — total payable equals principal plus interest over the stored rows and the installment count equals the product tenure"
+      },
+      {
+        "id": "QA-VM-079",
+        "matrix_ids": [
+          "VM-079"
+        ],
+        "method": "GET",
+        "path": "/loans/{loan_id}",
+        "expected_status": 200,
+        "description": "GET /loans/{loan_id} → 200 — for a schedule with a rounding residual, the final row principal equals the balance left after all preceding rows"
+      },
+      {
+        "id": "QA-VM-080",
+        "matrix_ids": [
+          "VM-080"
+        ],
+        "method": "GET",
+        "path": "/loans/{loan_id}",
+        "expected_status": 200,
+        "description": "GET /loans/{loan_id} → 200 — each period interest derives from that period's opening balance at the pinned policy version's rate"
+      }
+    ]
+  }
+}

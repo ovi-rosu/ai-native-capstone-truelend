@@ -1,0 +1,17 @@
+[
+  {
+    "id": "FRD-69",
+    "text": "**M1 — Policy & Catalog** — FR-01, FR-02, FR-13, FR-16. Done when: an ADMIN edits a product threshold in the Policy Editor, a new policy version becomes active with no restart, and the catalog and a generated document checklist reflect it.",
+    "section": "7. Milestones"
+  },
+  {
+    "id": "FRD-70",
+    "text": "**M2 — Apply & Decide** — FR-03, FR-04, FR-05, FR-06, FR-10, FR-11, FR-17. Done when: a customer submits against each of the 3 products and receives AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW with reason codes tied to the active policy version, and an admin override of an AUTO_REJECT appears in the audit trail.",
+    "section": "7. Milestones"
+  },
+  {
+    "id": "FRD-71",
+    "text": "**M3 — Disburse & Repay** — FR-07, FR-08, FR-09, FR-12, FR-14, FR-15. Done when: an approved application disburses, its schedule's principal plus interest equals total payable, a posted repayment reduces outstanding principal, and the end-of-day operation moves a 35-day-overdue loan to DPD-30 on the portfolio dashboard.",
+    "section": "7. Milestones"
+  }
+]

@@ -1,0 +1,196 @@
+---
+name: vibe
+description: Controlled small-change lane for low-risk fixes, docs, tests, and narrowly scoped edits without running the full SDLC pipeline.
+argument-hint: "[brief-change-description]"
+context: fork
+---
+
+# Controlled Vibe Coding
+
+Use `/vibe` for small, low-risk changes where the full BRD → spec → design → auto pipeline would be disproportionate.
+
+This is not permission to free-code. It is a bounded engineering lane with explicit scope, targeted verification, and reviewer enforcement.
+
+> **Ultracode tip:** Leave ultracode **off** here (`/effort high` or lower). This lane exists to keep small, low-risk changes proportionate — fanning out workflows would defeat its entire purpose.
+
+> **/goal tip (optional unattended iteration):** On Claude Code v2.1.139+ you can let `/goal` drive this single bounded session toward a verifiable condition — e.g. `/goal the targeted test passes and lint is clean, or stop after N turns`. Always include the "or stop after N turns" safety clause, and phrase conditions so each turn must produce *fresh* evidence (re-run the test, show the exit code) to avoid false-positive completion. `/goal`'s evaluator (Haiku) only judges what is in the transcript — it does **not** run tools or read files — so the proof (test output, exit codes) must be printed in the conversation, not routed through subagents. That makes `/goal` suitable for this small lane only. Do **not** use `/goal` inside `/auto`: it is single-session and would conflict with session chaining, the GAN evaluator, and sprint contracts. `/goal` does not replace the evaluator/sprint-contract gate.
+
+---
+
+## Usage
+
+```text
+/vibe "fix typo in empty-state copy"
+/vibe "add missing null guard in invoice total"
+/vibe "update README install command"
+```
+
+---
+
+## Eligibility
+
+Use controlled vibe coding only when all are true:
+
+- The change is understandable in one sentence.
+- The expected diff is small: usually 1-3 files, under 150 changed lines.
+- The change does not require a new product workflow.
+- The change does not alter core architecture, data ownership, auth, permissions, billing, migrations, or public API contracts.
+- The affected area can be verified with a targeted command.
+- Rollback is simple.
+
+Escalate to `/change`, `/refactor`, `/spec`, or `/auto` when any are true:
+
+- More than 3 source files are likely to change.
+- A new user story, feature, endpoint, table, queue, background job, or external integration is needed.
+- The change affects security, privacy, auth, billing, data migrations, or irreversible data operations.
+- The fix cannot be reproduced or verified locally.
+- Requirements are ambiguous after at most 3 clarification questions.
+- The requested work combines multiple independent changes.
+- The change bumps a dependency version — route through `upgrading-dependencies` (patch bumps may stay in `/vibe` if the suite proves them; minor/major escalate).
+
+---
+
+## Change Classes
+
+| Class | Examples | Required Verification |
+|---|---|---|
+| CV0 docs/config | docs typo, README command, comments, non-runtime config | `git diff --check`, relevant parser if any |
+| CV1 test/tooling | add/adjust tests, lint config, CI command | targeted test/lint command |
+| CV2 small behavior | null guard, validation message, small UI state, single bug | failing test or reproduction first, then targeted test |
+
+CV2 is the highest class allowed in `/vibe`. Anything larger escalates.
+
+---
+
+## Workflow
+
+### Step 1 — Classify
+
+State:
+
+- Class: CV0, CV1, or CV2
+- Scope: intended files or directories
+- Why this does not need the full SDLC pipeline
+- Escalation trigger: what would make you stop and switch lanes
+
+If classification is uncertain, use the `clarify` gate (`.claude/skills/clarify/SKILL.md`) — ask at most 3 questions, prefer recording assumptions over interrogating. If still uncertain, escalate.
+
+**Learned rules:** before writing the micro-contract, read `.claude/state/learned-rules.md`. If it exists and is non-empty, inject its contents verbatim into your working context — a learned rule can affect scope (Step 1) as well as implementation, so read it before the contract is finalized.
+
+### Step 2 — Write a Micro-Contract
+
+Before editing, write 3-6 bullets:
+
+```markdown
+## Micro-Contract
+- Change:
+- In scope:
+- Out of scope:
+- Verification:
+- Rollback:
+```
+
+Append it to `.claude/state/vibe-log.md`. Create the file if missing.
+
+### Step 3 — Inspect Before Editing
+
+**Context-first (Iron Law) — when `specs/brownfield/code-graph.json` exists and is not a placeholder**, run a micro pack before production source reads:
+
+```bash
+node .claude/scripts/context-pack.js --diff --budget 800 "<micro-contract change sentence>"
+```
+
+Read only `read_next` ranges (not whole god files). If `confidence` is low, one narrow search then re-pack or escalate. Prefer existing project patterns over new abstractions.
+
+If `specs/brownfield/change-strategy.md` exists, read it before editing. If it marks the affected area as high-risk, stop and escalate out of `/vibe`.
+
+If `specs/brownfield/code-graph.json` exists and the change edits an existing production symbol, run the coverage preflight (`checking-coverage-before-change`). An **UNCOVERED verdict is a hard block for `/vibe`**: silent breakage hides exactly here — escalate to `/change` or `/refactor`, where pinning/sprouting applies.
+
+### Step 4 — Test First When Behavior Changes
+
+For CV2 behavior changes:
+
+- Reproduce the bug or missing behavior first.
+- Write or update one focused test against the public interface.
+- Run it and confirm it fails for the expected reason.
+- Implement the smallest change that makes it pass.
+
+For CV0/CV1, skip TDD only when no runtime behavior changes.
+
+### Step 5 — Edit Narrowly
+
+Rules:
+
+- Do not touch unrelated files.
+- Do not reformat whole files unless formatting is the task.
+- Do not introduce abstractions unless they remove immediate duplication or clarify the current change.
+- Do not update generated SDLC artifacts unless the user explicitly asked for a story/spec/design change.
+
+### Step 6 — Verify
+
+Run the narrowest useful checks:
+
+- Always: `git diff --check`
+- CV0: parser/format check if applicable
+- CV1: targeted test/lint command
+- CV2: targeted failing-then-passing test, then relevant lint/typecheck if available
+- Always: `node .claude/scripts/run-gate-checks.js --only local-regression` (gap G16). Even a narrowly-scoped `/vibe` edit can silently break an earlier feature — this computes the diff's blast radius over `code-graph.json` and re-runs only the prior story-group(s) it could plausibly affect (plus any `project-manifest.json#verification.golden_paths`), instead of the whole accumulated `e2e/` suite. A `blocked` verdict is a **BLOCK** — fix the regression before Step 7. The full, unabridged regression-suite-full check (gap G15) still runs at `/gate` as the final backstop before merge.
+
+If verification fails, fix within the micro-contract. If the fix expands beyond the eligibility rules, stop and escalate.
+
+### Step 7 — Review [REQUIRED]
+
+Spawn one `code-reviewer` on the diff. Not optional, and not delegated to a hook:
+
+```bash
+node .claude/scripts/review-tier.js --files <n> --lines <n>
+```
+
+`/vibe`'s eligibility rules cap the change at 3 files and 150 lines, so this
+resolves to **standard** — one reviewer, fresh context, reading only the diff,
+the micro-contract from Step 3, and the files it touches. Never the
+implementation transcript. Write the verdict to
+`specs/reviews/code-review-verdict.json`.
+
+Findings: **BLOCK** must be fixed before Step 8; **WARN** should be fixed or
+explicitly deferred in the Step 8 report; **INFO** optional. Maximum 3 fix
+cycles — if a BLOCK survives three, stop and escalate to `/change`, because a
+small change that cannot be reviewed clean three times running is not a small
+change.
+
+**If `review-tier.js` reports `--security-boundary`, or the reviewer raises an
+auth / secrets / input-handling / persistence finding, stop.** That is evidence
+this change was misclassified at Step 1 — those areas are explicit `/vibe`
+exclusions. Escalate to `/change` (or `/change --issue N`) and let the full lane
+run its `security-reviewer`. Do not add a security review here; a lane that
+starts reviewing security work is a lane that will start accepting it.
+
+**Why this is spelled out rather than inherited.** This step used to read: *"the
+existing hooks mark production-code writes for review and the Stop hook requires
+reviewer agents before the turn ends."* That stopped being true — the per-turn
+review gate was removed from `review-on-stop.js`, which is now purely advisory —
+and because `/vibe` named no reviewer of its own, the lightest lane silently
+became the only one with **no** agentic review at all. Its own fallback ("if
+hooks are unavailable, manually invoke…") never fired either, because the hook
+was still present; it just no longer reviewed. Wire review into the lane that
+needs it, never into a shared mechanism the lane cannot see change.
+
+### Step 8 — Report
+
+Report:
+
+- Class
+- Files changed
+- Verification commands and results
+- **Review verdict** — the `code-reviewer` outcome, plus any WARN findings you
+  chose to defer and why. A report with no verdict line means Step 7 did not run.
+- Any follow-up work that should become a story
+
+---
+
+## Gotchas
+
+- **Small does not mean unsafe.** Auth, security, billing, migrations, and public API changes are never vibe work.
+- **No hidden stories.** If the change introduces user-visible behavior that needs product acceptance, write a story and use `/change`.
+- **No drive-by cleanup.** Adjacent cleanup belongs in a separate `/vibe` or `/refactor` task.
+- **No unverifiable fixes.** If you cannot prove the change, escalate to `/change --issue N` or `/spec`.

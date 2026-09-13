@@ -1,0 +1,1072 @@
+[
+  {
+    "id": "E15-S1-AC1",
+    "story": "E15-S1",
+    "traces": [
+      "FRD-59"
+    ],
+    "given": "an application payload carrying synthetic PAN, Aadhaar and salary-document content",
+    "when": "the request is served and every emitted log record is captured",
+    "then": "the captured buffer contains 0 occurrences of each of those three values"
+  },
+  {
+    "id": "E15-S1-AC2",
+    "story": "E15-S1",
+    "traces": [
+      "FRD-59"
+    ],
+    "given": "the application's logging configuration",
+    "when": "every configured logger is enumerated",
+    "then": "the redaction filter is installed on 100% of them and a logger registered without it fails the assertion"
+  },
+  {
+    "id": "E15-S1-AC3",
+    "story": "E15-S1",
+    "traces": [
+      "FRD-62"
+    ],
+    "given": "a request carrying the header X-Request-ID with value req-abc",
+    "when": "every log line emitted while serving that request is parsed",
+    "then": "100% of the lines parse as JSON and each carries request_id equal to req-abc"
+  },
+  {
+    "id": "E15-S1-AC4",
+    "story": "E15-S1",
+    "traces": [
+      "FRD-62"
+    ],
+    "given": "a request with no X-Request-ID header",
+    "when": "the response is returned",
+    "then": "every request-scoped log line carries the same generated non-empty request_id and the response echoes that id"
+  },
+  {
+    "id": "E15-S1-AC5",
+    "story": "E15-S1",
+    "traces": [
+      "FRD-63"
+    ],
+    "given": "the backend reporting a successful startup",
+    "when": "GET /health is called",
+    "then": "the response is 200 with a JSON body and the measured response time is under 1 second"
+  },
+  {
+    "id": "E15-S2-AC1",
+    "story": "E15-S2",
+    "traces": [
+      "FRD-68"
+    ],
+    "given": "a clean checkout with no prior containers",
+    "when": "docker compose up runs to completion",
+    "then": "exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend are running and all three report healthy"
+  },
+  {
+    "id": "E15-S2-AC2",
+    "story": "E15-S2",
+    "traces": [
+      "FRD-68"
+    ],
+    "given": "the running stack",
+    "when": "the layer-dependency architecture test executes",
+    "then": "it reports 0 violations of the one-way rule across Types, Config, Repository, Service, API and UI"
+  },
+  {
+    "id": "E15-S2-AC3",
+    "story": "E15-S2",
+    "traces": [
+      "FRD-68"
+    ],
+    "given": "the compose service inventory",
+    "when": "it is asserted against the declared stack",
+    "then": "no second database engine and no external provider endpoint is configured"
+  },
+  {
+    "id": "E9-S1-AC1",
+    "story": "E9-S1",
+    "traces": [
+      "FRD-57"
+    ],
+    "given": "randomly generated principal, rate and tenure triples",
+    "when": "a schedule is computed from each triple",
+    "then": "every money field on the result is a Decimal quantized to exactly 2 decimal places"
+  },
+  {
+    "id": "E9-S1-AC2",
+    "story": "E9-S1",
+    "traces": [
+      "FRD-57"
+    ],
+    "given": "the backend money code paths",
+    "when": "the static arithmetic check runs over them",
+    "then": "it reports 0 float arithmetic operations in those paths"
+  },
+  {
+    "id": "E9-S1-AC3",
+    "story": "E9-S1",
+    "traces": [
+      "FRD-57"
+    ],
+    "given": "the frontend money module",
+    "when": "a monetary amount is carried and formatted",
+    "then": "the value is held as a decimal value and never a float, and the static check reports 0 float arithmetic operations in that module"
+  },
+  {
+    "id": "E1-S1-AC1",
+    "story": "E1-S1",
+    "traces": [
+      "FRD-55"
+    ],
+    "given": "seeded users for CUSTOMER, UNDERWRITER and ADMIN",
+    "when": "each logs in with valid credentials",
+    "then": "a session is issued naming exactly one role and that role's landing surface loads"
+  },
+  {
+    "id": "E1-S1-AC2",
+    "story": "E1-S1",
+    "traces": [
+      "FRD-40"
+    ],
+    "given": "the seeded product catalog",
+    "when": "a CUSTOMER requests the product list",
+    "then": "at least one product is returned and it carries a policy version id"
+  },
+  {
+    "id": "E1-S1-AC3",
+    "story": "E1-S1",
+    "traces": [
+      "FRD-52"
+    ],
+    "given": "an ADMIN session and a product with a minimum-income threshold",
+    "when": "that threshold is saved with a new value",
+    "then": "a new policy version id is returned in the response"
+  },
+  {
+    "id": "E1-S1-AC4",
+    "story": "E1-S1",
+    "traces": [
+      "FRD-52"
+    ],
+    "given": "the newly saved policy version",
+    "when": "the product is read again inside the same running process",
+    "then": "the read cites the new policy version id with no process restart"
+  },
+  {
+    "id": "E1-S2-AC1",
+    "story": "E1-S2",
+    "traces": [
+      "FRD-55"
+    ],
+    "given": "any underwriter or admin route",
+    "when": "it is called with no session",
+    "then": "the response is 401 and no handler body executes"
+  },
+  {
+    "id": "E1-S2-AC2",
+    "story": "E1-S2",
+    "traces": [
+      "FRD-55"
+    ],
+    "given": "a CUSTOMER session",
+    "when": "an underwriter or admin route is called with it",
+    "then": "the response is 403, while each role reaches its own surfaces with 200"
+  },
+  {
+    "id": "E1-S2-AC3",
+    "story": "E1-S2",
+    "traces": [
+      "FRD-60"
+    ],
+    "given": "the underwriter and admin routes enumerated from the OpenAPI schema",
+    "when": "the generated authorization suite runs",
+    "then": "it reports 100% of those routes covered by both the no-session and wrong-role cases and fails when a new route is unguarded"
+  },
+  {
+    "id": "E1-S2-AC4",
+    "story": "E1-S2",
+    "traces": [
+      "FRD-60"
+    ],
+    "given": "an authenticated underwriter or admin action",
+    "when": "the action completes",
+    "then": "an audit_event row exists carrying the acting user id and a timestamp"
+  },
+  {
+    "id": "E3-S1-AC1",
+    "story": "E3-S1",
+    "traces": [
+      "FRD-58"
+    ],
+    "given": "the policy_version repository interface",
+    "when": "its public methods are enumerated",
+    "then": "no update method and no delete method is exposed"
+  },
+  {
+    "id": "E3-S1-AC2",
+    "story": "E3-S1",
+    "traces": [
+      "FRD-58"
+    ],
+    "given": "the contents of src/ and migrations/",
+    "when": "the immutability architecture test scans them",
+    "then": "it reports 0 UPDATE statements, 0 DELETE statements and 0 ORM mutations targeting policy_version"
+  },
+  {
+    "id": "E3-S1-AC3",
+    "story": "E3-S1",
+    "traces": [
+      "FRD-61"
+    ],
+    "given": "every file under migrations/",
+    "when": "the migration lint parses them",
+    "then": "it reports 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements"
+  },
+  {
+    "id": "E3-S1-AC4",
+    "story": "E3-S1",
+    "traces": [
+      "FRD-61"
+    ],
+    "given": "a policy migration file",
+    "when": "it is parsed by that same lint",
+    "then": "it is held to the identical zero-destructive-statement assertion as a schema migration"
+  },
+  {
+    "id": "E2-S1-AC1",
+    "story": "E2-S1",
+    "traces": [
+      "FRD-40"
+    ],
+    "given": "the seeded catalog",
+    "when": "GET /products is called",
+    "then": "at least 3 products are returned and Personal, Vehicle and Education are among them"
+  },
+  {
+    "id": "E2-S1-AC2",
+    "story": "E2-S1",
+    "traces": [
+      "FRD-40"
+    ],
+    "given": "the returned product list",
+    "when": "each entry is inspected",
+    "then": "each carries its own policy version id and no two products reference the same one"
+  },
+  {
+    "id": "E2-S1-AC3",
+    "story": "E2-S1",
+    "traces": [
+      "FRD-40"
+    ],
+    "given": "the three referenced policy versions",
+    "when": "their stored threshold values are compared",
+    "then": "the minimum income, age, score, tenure and rate values differ between the three versions"
+  },
+  {
+    "id": "E3-S2-AC1",
+    "story": "E3-S2",
+    "traces": [
+      "FRD-52"
+    ],
+    "given": "an authorised user editing a product's income, age, score, tenure and rate thresholds",
+    "when": "the editor form is saved",
+    "then": "a new policy version row is appended and becomes the product's active version"
+  },
+  {
+    "id": "E3-S2-AC2",
+    "story": "E3-S2",
+    "traces": [
+      "FRD-52"
+    ],
+    "given": "the policy version that was active before the save",
+    "when": "it is re-read afterwards",
+    "then": "its stored values are byte-identical to their pre-save state"
+  },
+  {
+    "id": "E3-S2-AC3",
+    "story": "E3-S2",
+    "traces": [
+      "FRD-52"
+    ],
+    "given": "the newly activated policy version",
+    "when": "a subsequent application is decided in the same running process",
+    "then": "the decision cites the new policy version id with no process restart"
+  },
+  {
+    "id": "E3-S2-AC4",
+    "story": "E3-S2",
+    "traces": [
+      "FRD-55"
+    ],
+    "given": "a CUSTOMER session",
+    "when": "the Policy Editor save endpoint is called with it",
+    "then": "the response is 403 and no policy version row is appended"
+  },
+  {
+    "id": "E16-S1-AC1",
+    "story": "E16-S1",
+    "traces": [
+      "FRD-64"
+    ],
+    "given": "a registry naming policy-version immutability, the EMI principal/rate/tenure invariant and the six-layer one-way dependency rule",
+    "when": "the architecture suite runs",
+    "then": "at least one test exists and executes for every registered invariant"
+  },
+  {
+    "id": "E16-S1-AC2",
+    "story": "E16-S1",
+    "traces": [
+      "FRD-64"
+    ],
+    "given": "a registered invariant with no corresponding test",
+    "when": "the architecture suite runs",
+    "then": "the suite fails and names the orphaned invariant"
+  },
+  {
+    "id": "E16-S1-AC3",
+    "story": "E16-S1",
+    "traces": [
+      "FRD-67"
+    ],
+    "given": "every production commit on the branch",
+    "when": "the provenance check inspects them",
+    "then": "each carries agent co-authorship and a passing record from the standard pre-commit gate set"
+  },
+  {
+    "id": "E16-S1-AC4",
+    "story": "E16-S1",
+    "traces": [
+      "FRD-67"
+    ],
+    "given": "the /gate attestation record",
+    "when": "it is read for the head commit",
+    "then": "it is present and records 0 hand-written production lines as the NFR-11 evidence"
+  },
+  {
+    "id": "E4-S1-AC1",
+    "story": "E4-S1",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "a chosen product and a CUSTOMER session",
+    "when": "an application is submitted",
+    "then": "a persisted application in SUBMITTED state is returned carrying the product's current policy version id"
+  },
+  {
+    "id": "E4-S1-AC2",
+    "story": "E4-S1",
+    "traces": [
+      "FRD-42"
+    ],
+    "given": "that application's age, income and credit-history flags",
+    "when": "the scoring stub is called for it",
+    "then": "a numeric credit score is returned and stored against the application"
+  },
+  {
+    "id": "E4-S1-AC3",
+    "story": "E4-S1",
+    "traces": [
+      "FRD-43"
+    ],
+    "given": "the scored application",
+    "when": "it is decided",
+    "then": "the response carries one of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW together with at least one reason code"
+  },
+  {
+    "id": "E4-S2-AC1",
+    "story": "E4-S2",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "a selected product with a required-document list on its policy version",
+    "when": "an application is submitted against it",
+    "then": "the generated checklist matches that policy version's list item for item"
+  },
+  {
+    "id": "E4-S2-AC2",
+    "story": "E4-S2",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "a submitted application",
+    "when": "it is read back from storage",
+    "then": "it is in SUBMITTED state and stores the policy_version_id resolved at submission"
+  },
+  {
+    "id": "E4-S2-AC3",
+    "story": "E4-S2",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "a policy version activated after that submission",
+    "when": "the application is re-read",
+    "then": "its stored policy_version_id and checklist are unchanged"
+  },
+  {
+    "id": "E4-S2-AC4",
+    "story": "E4-S2",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "a generated checklist item",
+    "when": "it is inspected",
+    "then": "it carries its document type and an unverified status"
+  },
+  {
+    "id": "E4-S3-AC1",
+    "story": "E4-S3",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "the Apply screen with a product selected",
+    "when": "the applicant submits valid details",
+    "then": "the confirmation shows the newly created application in SUBMITTED state"
+  },
+  {
+    "id": "E4-S3-AC2",
+    "story": "E4-S3",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "the submitted application",
+    "when": "the Apply screen renders its confirmation",
+    "then": "every required-document checklist item for the chosen product is listed"
+  },
+  {
+    "id": "E4-S3-AC3",
+    "story": "E4-S3",
+    "traces": [
+      "FRD-41"
+    ],
+    "given": "the Apply form",
+    "when": "it is rendered",
+    "then": "no co-applicant or guarantor field is present"
+  },
+  {
+    "id": "E4-S4-AC1",
+    "story": "E4-S4",
+    "traces": [
+      "FRD-44"
+    ],
+    "given": "declared income below the selected product's minimum income threshold",
+    "when": "the application is submitted",
+    "then": "the error response identifies PolicyViolationException"
+  },
+  {
+    "id": "E4-S4-AC2",
+    "story": "E4-S4",
+    "traces": [
+      "FRD-44"
+    ],
+    "given": "that refused submission",
+    "when": "the error body is inspected",
+    "then": "it names the breached threshold and the configured value it was checked against"
+  },
+  {
+    "id": "E4-S4-AC3",
+    "story": "E4-S4",
+    "traces": [
+      "FRD-44"
+    ],
+    "given": "that refused submission",
+    "when": "the application table is queried afterwards",
+    "then": "no application row was persisted for it"
+  },
+  {
+    "id": "E5-S1-AC1",
+    "story": "E5-S1",
+    "traces": [
+      "FRD-42"
+    ],
+    "given": "one set of age, income and credit-history-flag values",
+    "when": "the scoring stub is called repeatedly with it",
+    "then": "every call returns the identical score"
+  },
+  {
+    "id": "E5-S1-AC2",
+    "story": "E5-S1",
+    "traces": [
+      "FRD-42"
+    ],
+    "given": "two inputs differing only in their credit-history flags",
+    "when": "both are scored",
+    "then": "the two returned scores differ"
+  },
+  {
+    "id": "E5-S1-AC3",
+    "story": "E5-S1",
+    "traces": [
+      "FRD-42"
+    ],
+    "given": "the scoring stub under test",
+    "when": "its outbound collaborators are inspected",
+    "then": "no external credit-bureau call and no live provider credential is used"
+  },
+  {
+    "id": "E5-S2-AC1",
+    "story": "E5-S2",
+    "traces": [
+      "FRD-43"
+    ],
+    "given": "a scored application",
+    "when": "it is decided",
+    "then": "the response carries AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code"
+  },
+  {
+    "id": "E5-S2-AC2",
+    "story": "E5-S2",
+    "traces": [
+      "FRD-43"
+    ],
+    "given": "the reason codes on that decision",
+    "when": "each is looked up",
+    "then": "it exists in the policy version pinned on the application"
+  },
+  {
+    "id": "E5-S2-AC3",
+    "story": "E5-S2",
+    "traces": [
+      "FRD-43"
+    ],
+    "given": "a decided application",
+    "when": "the decision is recorded",
+    "then": "a new decision_record row is appended and the application's current decision is its latest record"
+  },
+  {
+    "id": "E5-S2-AC4",
+    "story": "E5-S2",
+    "traces": [
+      "FRD-43"
+    ],
+    "given": "a MANUAL_REVIEW application re-decided after a newer policy version was activated",
+    "when": "its decision is read",
+    "then": "the re-decision still cites the policy version pinned at submission"
+  },
+  {
+    "id": "E6-S1-AC1",
+    "story": "E6-S1",
+    "traces": [
+      "FRD-45"
+    ],
+    "given": "a checklist document in the verification queue",
+    "when": "an underwriter marks it VERIFIED",
+    "then": "its stored status reads VERIFIED"
+  },
+  {
+    "id": "E6-S1-AC2",
+    "story": "E6-S1",
+    "traces": [
+      "FRD-45"
+    ],
+    "given": "a checklist document in the verification queue",
+    "when": "an underwriter marks it REJECTED with a reason",
+    "then": "the stored row reads REJECTED and carries that non-empty reason"
+  },
+  {
+    "id": "E6-S1-AC3",
+    "story": "E6-S1",
+    "traces": [
+      "FRD-45"
+    ],
+    "given": "a document being rejected with an empty reason",
+    "when": "the transition is attempted",
+    "then": "it is refused and the document's stored status is unchanged"
+  },
+  {
+    "id": "E6-S1-AC4",
+    "story": "E6-S1",
+    "traces": [
+      "FRD-45"
+    ],
+    "given": "documents that have already been actioned",
+    "when": "the verification queue is listed",
+    "then": "those documents are absent from the returned queue"
+  },
+  {
+    "id": "E6-S2-AC1",
+    "story": "E6-S2",
+    "traces": [
+      "FRD-56"
+    ],
+    "given": "applications spread across every lifecycle state",
+    "when": "the workbench queue is listed",
+    "then": "it contains exactly those applications in SUBMITTED or MANUAL_REVIEW state"
+  },
+  {
+    "id": "E6-S2-AC2",
+    "story": "E6-S2",
+    "traces": [
+      "FRD-56"
+    ],
+    "given": "a MANUAL_REVIEW application",
+    "when": "its review screen is opened",
+    "then": "the screen shows its credit score, its decision reason codes and the verification state of each checklist document"
+  },
+  {
+    "id": "E6-S2-AC3",
+    "story": "E6-S2",
+    "traces": [
+      "FRD-56"
+    ],
+    "given": "an underwriter deciding a MANUAL_REVIEW case from the review screen",
+    "when": "the decision is saved",
+    "then": "the application's latest decision record reflects that decision and the case leaves the queue"
+  },
+  {
+    "id": "E7-S1-AC1",
+    "story": "E7-S1",
+    "traces": [
+      "FRD-49"
+    ],
+    "given": "applications across several statuses and products",
+    "when": "the list is filtered to one status and one product",
+    "then": "only the matching rows are returned"
+  },
+  {
+    "id": "E7-S1-AC2",
+    "story": "E7-S1",
+    "traces": [
+      "FRD-49"
+    ],
+    "given": "an application decided AUTO_REJECT",
+    "when": "an admin overrides it with a comment and a reason code",
+    "then": "a new decision_record is appended and the application's current decision is the override"
+  },
+  {
+    "id": "E7-S1-AC3",
+    "story": "E7-S1",
+    "traces": [
+      "FRD-49"
+    ],
+    "given": "that override",
+    "when": "the audit trail is read",
+    "then": "it contains an entry carrying the comment, the reason code, the acting user id and a timestamp"
+  },
+  {
+    "id": "E7-S1-AC4",
+    "story": "E7-S1",
+    "traces": [
+      "FRD-49"
+    ],
+    "given": "the reason code supplied with the override",
+    "when": "it is looked up",
+    "then": "it exists in the policy version pinned on the application"
+  },
+  {
+    "id": "E8-S1-AC1",
+    "story": "E8-S1",
+    "traces": [
+      "FRD-50"
+    ],
+    "given": "a submitted application belonging to the signed-in customer",
+    "when": "its tracking view is opened",
+    "then": "the view shows the application's current status"
+  },
+  {
+    "id": "E8-S1-AC2",
+    "story": "E8-S1",
+    "traces": [
+      "FRD-50"
+    ],
+    "given": "an application with documents still unverified",
+    "when": "the tracking view renders",
+    "then": "every unverified required document is listed"
+  },
+  {
+    "id": "E8-S1-AC3",
+    "story": "E8-S1",
+    "traces": [
+      "FRD-50"
+    ],
+    "given": "a decided application",
+    "when": "the tracking view renders",
+    "then": "the decision and each of its reason codes are shown"
+  },
+  {
+    "id": "E8-S1-AC4",
+    "story": "E8-S1",
+    "traces": [
+      "FRD-50"
+    ],
+    "given": "an application that has not been decided yet",
+    "when": "the tracking view renders",
+    "then": "no decision section is shown and no notification was dispatched to the customer"
+  },
+  {
+    "id": "E11-S1-AC1",
+    "story": "E11-S1",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "the floors CURRENT 0-29, DPD-30 30-59, DPD-60 60-89, DPD-90 90-179 and NPA at 180 or more days past due",
+    "when": "a loan whose oldest unpaid installment is 35 days past due is classified",
+    "then": "the returned bucket is DPD-30"
+  },
+  {
+    "id": "E11-S1-AC2",
+    "story": "E11-S1",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "days-past-due values sampled across 0 through 400",
+    "when": "each value is classified",
+    "then": "exactly one of the five buckets is returned for every value, with no gap and no overlap"
+  },
+  {
+    "id": "E11-S1-AC3",
+    "story": "E11-S1",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "a loan with no installment past its due date as of a given date",
+    "when": "it is classified as of that date",
+    "then": "the returned bucket is CURRENT"
+  },
+  {
+    "id": "E11-S1-AC4",
+    "story": "E11-S1",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "any classification result",
+    "when": "it is inspected",
+    "then": "it carries a bucket only, with no fee, penal interest or charge of any kind"
+  },
+  {
+    "id": "E9-S2-AC1",
+    "story": "E9-S2",
+    "traces": [
+      "FRD-46"
+    ],
+    "given": "an application with an approved decision",
+    "when": "its loan is created",
+    "then": "a repayment schedule exists with one installment row per month of the product tenure"
+  },
+  {
+    "id": "E9-S2-AC2",
+    "story": "E9-S2",
+    "traces": [
+      "FRD-47"
+    ],
+    "given": "that loan",
+    "when": "it is disbursed",
+    "then": "it is in DISBURSED state holding the released amount and a funding-source identifier"
+  },
+  {
+    "id": "E9-S2-AC3",
+    "story": "E9-S2",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "the disbursed loan",
+    "when": "a repayment is posted against it",
+    "then": "the loan's outstanding principal is lower than it was before the posting"
+  },
+  {
+    "id": "E9-S3-AC1",
+    "story": "E9-S3",
+    "traces": [
+      "FRD-46"
+    ],
+    "given": "a generated repayment schedule",
+    "when": "the principal column across its rows is summed",
+    "then": "the sum equals the disbursed amount exactly, with no residual"
+  },
+  {
+    "id": "E9-S3-AC2",
+    "story": "E9-S3",
+    "traces": [
+      "FRD-46"
+    ],
+    "given": "that same schedule",
+    "when": "total payable is read and the installments are counted",
+    "then": "total payable equals the sum of principal plus interest over the stored rows and the installment count equals the product tenure"
+  },
+  {
+    "id": "E9-S3-AC3",
+    "story": "E9-S3",
+    "traces": [
+      "FRD-46"
+    ],
+    "given": "a schedule whose rounded EMI leaves a residual",
+    "when": "the final installment row is inspected",
+    "then": "its principal equals the balance remaining after all preceding rows"
+  },
+  {
+    "id": "E9-S3-AC4",
+    "story": "E9-S3",
+    "traces": [
+      "FRD-46"
+    ],
+    "given": "each period of the schedule",
+    "when": "that period's interest is computed",
+    "then": "it is derived from the period's opening balance at the rate on the application's pinned policy version"
+  },
+  {
+    "id": "E9-S3-AC5",
+    "story": "E9-S3",
+    "traces": [
+      "FRD-58"
+    ],
+    "given": "the schedule_installment repository together with src/ and migrations/",
+    "when": "they are scanned by the immutability architecture test",
+    "then": "no update or delete method is exposed and 0 UPDATE or DELETE statements target schedule_installment"
+  },
+  {
+    "id": "E10-S1-AC1",
+    "story": "E10-S1",
+    "traces": [
+      "FRD-47"
+    ],
+    "given": "an approved loan with a generated schedule",
+    "when": "it is disbursed",
+    "then": "the loan record holds the released amount"
+  },
+  {
+    "id": "E10-S1-AC2",
+    "story": "E10-S1",
+    "traces": [
+      "FRD-47"
+    ],
+    "given": "that disbursement",
+    "when": "the loan is read back",
+    "then": "it holds a funding-source identifier and is in DISBURSED state with its schedule attached"
+  },
+  {
+    "id": "E10-S1-AC3",
+    "story": "E10-S1",
+    "traces": [
+      "FRD-47"
+    ],
+    "given": "the stub funding source",
+    "when": "the disbursement executes",
+    "then": "no external payment rail is called and no signed agreement artifact is produced"
+  },
+  {
+    "id": "E10-S1-AC4",
+    "story": "E10-S1",
+    "traces": [
+      "FRD-47"
+    ],
+    "given": "a loan already in DISBURSED state",
+    "when": "disbursement is attempted a second time",
+    "then": "the attempt is refused and the recorded released amount is unchanged"
+  },
+  {
+    "id": "E11-S2-AC1",
+    "story": "E11-S2",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "a disbursed loan with a known outstanding principal",
+    "when": "a repayment is posted against it",
+    "then": "outstanding principal falls by exactly the applied principal portion of that payment"
+  },
+  {
+    "id": "E11-S2-AC2",
+    "story": "E11-S2",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "a posted repayment",
+    "when": "the repayment_posting table is read",
+    "then": "a new immutable row records the payment and no pre-existing row was updated"
+  },
+  {
+    "id": "E11-S2-AC3",
+    "story": "E11-S2",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "a loan whose oldest unpaid installment is 35 days past due",
+    "when": "its bucket is recalculated after the posting",
+    "then": "the stored delinquency bucket reads DPD-30"
+  },
+  {
+    "id": "E11-S2-AC4",
+    "story": "E11-S2",
+    "traces": [
+      "FRD-48"
+    ],
+    "given": "a posting that clears every overdue installment",
+    "when": "the bucket is recalculated",
+    "then": "the stored bucket reads CURRENT and no late fee or penal interest was charged"
+  },
+  {
+    "id": "E12-S1-AC1",
+    "story": "E12-S1",
+    "traces": [
+      "FRD-53"
+    ],
+    "given": "seeded active loans with differing days past due",
+    "when": "the end-of-day operation runs for a given as-of date",
+    "then": "each loan's stored bucket matches its days past due at that date"
+  },
+  {
+    "id": "E12-S1-AC2",
+    "story": "E12-S1",
+    "traces": [
+      "FRD-53"
+    ],
+    "given": "a completed end-of-day run",
+    "when": "the operation runs a second time for the same as-of date",
+    "then": "every bucket and every stored row is byte-identical to the first run's result"
+  },
+  {
+    "id": "E12-S1-AC3",
+    "story": "E12-S1",
+    "traces": [
+      "FRD-53"
+    ],
+    "given": "an as-of date earlier than a loan's first installment due date",
+    "when": "the operation runs for that date",
+    "then": "that loan's stored bucket reads CURRENT"
+  },
+  {
+    "id": "E12-S1-AC4",
+    "story": "E12-S1",
+    "traces": [
+      "FRD-53"
+    ],
+    "given": "the completed run",
+    "when": "the loan records are compared against their pre-run state",
+    "then": "no fee, penal interest or collections record was created"
+  },
+  {
+    "id": "E13-S1-AC1",
+    "story": "E13-S1",
+    "traces": [
+      "FRD-51"
+    ],
+    "given": "a disbursed loan belonging to the signed-in customer",
+    "when": "its loan view is opened",
+    "then": "every installment is listed with its due date and amount"
+  },
+  {
+    "id": "E13-S1-AC2",
+    "story": "E13-S1",
+    "traces": [
+      "FRD-51"
+    ],
+    "given": "that same loan view",
+    "when": "it renders",
+    "then": "the current outstanding principal and the current delinquency bucket are both shown"
+  },
+  {
+    "id": "E13-S1-AC3",
+    "story": "E13-S1",
+    "traces": [
+      "FRD-51"
+    ],
+    "given": "a repayment posted from the loan view",
+    "when": "the page is reloaded",
+    "then": "the displayed outstanding principal reflects that posting"
+  },
+  {
+    "id": "E13-S1-AC4",
+    "story": "E13-S1",
+    "traces": [
+      "FRD-51"
+    ],
+    "given": "the loan view for a delinquent loan",
+    "when": "it renders",
+    "then": "it offers no early settlement, foreclosure or prepayment quote"
+  },
+  {
+    "id": "E14-S1-AC1",
+    "story": "E14-S1",
+    "traces": [
+      "FRD-54"
+    ],
+    "given": "loans spread across products and delinquency buckets",
+    "when": "an admin opens the dashboard",
+    "then": "the loan count and value are reported for every product and bucket combination"
+  },
+  {
+    "id": "E14-S1-AC2",
+    "story": "E14-S1",
+    "traces": [
+      "FRD-54"
+    ],
+    "given": "those same loans",
+    "when": "the total overdue figure is read",
+    "then": "it equals the sum of overdue installment amounts across all active loans"
+  },
+  {
+    "id": "E14-S1-AC3",
+    "story": "E14-S1",
+    "traces": [
+      "FRD-54"
+    ],
+    "given": "a CUSTOMER session",
+    "when": "the dashboard endpoint is called with it",
+    "then": "the response is 403 and no portfolio figures are returned"
+  },
+  {
+    "id": "E14-S1-AC4",
+    "story": "E14-S1",
+    "traces": [
+      "FRD-54"
+    ],
+    "given": "the dashboard request",
+    "when": "its data source is traced",
+    "then": "the figures are served from stored loan bucket state without invoking the end-of-day job"
+  },
+  {
+    "id": "E17-S1-AC1",
+    "story": "E17-S1",
+    "traces": [
+      "FRD-66"
+    ],
+    "given": "the customer-facing screen registry",
+    "when": "the automated axe-core scan runs against every registered screen",
+    "then": "it reports 0 WCAG 2.1 AA violations with no rule suppressed, and asserts it covered 100% of registered screens"
+  },
+  {
+    "id": "E17-S1-AC2",
+    "story": "E17-S1",
+    "traces": [
+      "FRD-66"
+    ],
+    "given": "each registered screen",
+    "when": "its primary flow is traversed using the keyboard only",
+    "then": "the flow completes, no focus trap is encountered, and every interactive control exposes an accessible name and a visible focus indicator"
+  },
+  {
+    "id": "E17-S1-AC3",
+    "story": "E17-S1",
+    "traces": [
+      "FRD-66"
+    ],
+    "given": "a route that renders a customer-facing screen and is absent from the registry",
+    "when": "the accessibility suite runs",
+    "then": "the suite fails, so Apply, Track and Repay are each held to WCAG 2.1 AA by the story that lands them"
+  },
+  {
+    "id": "E15-S3-AC1",
+    "story": "E15-S3",
+    "traces": [
+      "FRD-65"
+    ],
+    "given": "the read-heavy endpoint registry, which contains GET /products, GET /applications, GET /loans/{id} and GET /dashboard",
+    "when": "the load run executes against every registered endpoint",
+    "then": "the measured p95 latency is under 500 ms and the error rate is under 1% across all of them"
+  },
+  {
+    "id": "E15-S3-AC2",
+    "story": "E15-S3",
+    "traces": [
+      "FRD-65"
+    ],
+    "given": "the completed load run",
+    "when": "the evaluation report is written",
+    "then": "it records the measured p95 and error-rate figures for each registered endpoint"
+  },
+  {
+    "id": "E15-S3-AC3",
+    "story": "E15-S3",
+    "traces": [
+      "FRD-65"
+    ],
+    "given": "a read-heavy endpoint absent from the registry",
+    "when": "the SLO suite runs",
+    "then": "the suite fails, so a read surface added later is measured by the story that adds it"
+  }
+]

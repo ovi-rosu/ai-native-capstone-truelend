@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "story_id": "E10-S1",
+  "sprint": 1,
+  "title": "Disbursement records the released amount and a stub funding source",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E10-S1-AC1",
+      "E10-S1-AC2",
+      "E10-S1-AC3",
+      "E10-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-8"
+    ],
+    "br_acceptance_ids": [
+      "FRD-47"
+    ],
+    "scope_out": [
+      "must not call a real payment rail or hold live provider credentials; must not produce a signed loan agreement or e-signature artifact; must not disburse a loan without a generated schedule attached"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Disbursement records the released amount and a stub funding source",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/service/servicing/disbursement.py",
+      "backend/src/service/servicing/funding_source.py",
+      "backend/tests/integration/test_disbursement_idempotence.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-2",
+      "SG-5"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-082",
+      "VM-083",
+      "VM-084",
+      "VM-085"
+    ],
+    "case_ids": [
+      "VM-082",
+      "VM-083",
+      "VM-084",
+      "VM-085"
+    ],
+    "layers": [
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E10-S1.md",
+    "parents": [
+      "E9-S3"
+    ],
+    "tracker_key": null
+  }
+}

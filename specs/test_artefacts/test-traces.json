@@ -1,0 +1,1213 @@
+[
+  {
+    "id": "VM-001",
+    "text": "the captured buffer contains 0 occurrences of each of those three values",
+    "traces": [
+      "E15-S1-AC1",
+      "FRD-59",
+      "OBL-Applicant.aadhaar-minLength",
+      "OBL-Applicant.aadhaar-required",
+      "OBL-Applicant.pan-minLength",
+      "OBL-Applicant.pan-required",
+      "OBL-ApplicationDocument.application_id-format",
+      "OBL-ApplicationDocument.application_id-required",
+      "OBL-ApplicationDocument.id-format",
+      "OBL-ApplicationDocument.id-required",
+      "OBL-ApplicationDocument.label-minLength",
+      "OBL-ApplicationDocument.label-required",
+      "OBL-CorrelationId-minLength",
+      "OBL-EMI-pattern"
+    ],
+    "matrix_id": "VM-001"
+  },
+  {
+    "id": "VM-002",
+    "text": "the redaction filter is installed on 100% of them and a logger registered without it fails the assertion",
+    "traces": [
+      "E15-S1-AC2",
+      "FRD-59"
+    ],
+    "matrix_id": "VM-002"
+  },
+  {
+    "id": "VM-003",
+    "text": "100% of the lines parse as JSON and each carries request_id equal to req-abc",
+    "traces": [
+      "E15-S1-AC3",
+      "FRD-62"
+    ],
+    "matrix_id": "VM-003"
+  },
+  {
+    "id": "VM-004",
+    "text": "every request-scoped log line carries the same generated non-empty request_id and the response echoes that id",
+    "traces": [
+      "E15-S1-AC4",
+      "FRD-62"
+    ],
+    "matrix_id": "VM-004"
+  },
+  {
+    "id": "VM-005",
+    "text": "the response is 200 with a JSON body and the measured response time is under 1 second",
+    "traces": [
+      "E15-S1-AC5",
+      "FRD-63"
+    ],
+    "matrix_id": "VM-005"
+  },
+  {
+    "id": "VM-006",
+    "text": "exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend are running and all three report healthy",
+    "traces": [
+      "E15-S2-AC1",
+      "FRD-68"
+    ],
+    "matrix_id": "VM-006"
+  },
+  {
+    "id": "VM-007",
+    "text": "it reports 0 violations of the one-way rule across Types, Config, Repository, Service, API and UI",
+    "traces": [
+      "E15-S2-AC2",
+      "FRD-68"
+    ],
+    "matrix_id": "VM-007"
+  },
+  {
+    "id": "VM-008",
+    "text": "no second database engine and no external provider endpoint is configured",
+    "traces": [
+      "E15-S2-AC3",
+      "FRD-68"
+    ],
+    "matrix_id": "VM-008"
+  },
+  {
+    "id": "VM-009",
+    "text": "every money field on the result is a Decimal quantized to exactly 2 decimal places",
+    "traces": [
+      "E9-S1-AC1",
+      "FRD-57"
+    ],
+    "matrix_id": "VM-009"
+  },
+  {
+    "id": "VM-010",
+    "text": "it reports 0 float arithmetic operations in those paths",
+    "traces": [
+      "E9-S1-AC2",
+      "FRD-57"
+    ],
+    "matrix_id": "VM-010"
+  },
+  {
+    "id": "VM-011",
+    "text": "the value is held as a decimal value and never a float, and the static check reports 0 float arithmetic operations in that module",
+    "traces": [
+      "E9-S1-AC3",
+      "FRD-57"
+    ],
+    "matrix_id": "VM-011"
+  },
+  {
+    "id": "VM-012",
+    "text": "a session is issued naming exactly one role and that role's landing surface loads",
+    "traces": [
+      "E1-S1-AC1",
+      "FRD-55",
+      "OBL-PolicyVersion.created_at-format",
+      "OBL-PolicyVersion.created_at-required",
+      "OBL-PolicyVersion.created_by-format",
+      "OBL-PolicyVersion.id-format",
+      "OBL-PolicyVersion.id-required",
+      "OBL-PolicyVersion.product_code-minLength",
+      "OBL-PolicyVersion.product_code-required",
+      "OBL-PolicyVersion.rules-required",
+      "OBL-PolicyVersion.version_number-minimum",
+      "OBL-PolicyVersion.version_number-required",
+      "OBL-PolicyViolation.context.policy_version_id-format",
+      "OBL-PolicyViolation.context.policy_version_id-required",
+      "OBL-Role-enum",
+      "OBL-User.id-format",
+      "OBL-User.id-required",
+      "OBL-User.role-required",
+      "OBL-User.username-minLength",
+      "OBL-User.username-required"
+    ],
+    "matrix_id": "VM-012"
+  },
+  {
+    "id": "VM-013",
+    "text": "at least one product is returned and it carries a policy version id",
+    "traces": [
+      "E1-S1-AC2",
+      "FRD-40"
+    ],
+    "matrix_id": "VM-013"
+  },
+  {
+    "id": "VM-014",
+    "text": "a new policy version id is returned in the response",
+    "traces": [
+      "E1-S1-AC3",
+      "FRD-52",
+      "OBL-PolicyRules.min_income-pattern",
+      "OBL-PolicyRules.min_income-required",
+      "OBL-Threshold.value-minLength",
+      "OBL-Threshold.value-required"
+    ],
+    "matrix_id": "VM-014"
+  },
+  {
+    "id": "VM-015",
+    "text": "the read cites the new policy version id with no process restart",
+    "traces": [
+      "E1-S1-AC4",
+      "FRD-52"
+    ],
+    "matrix_id": "VM-015"
+  },
+  {
+    "id": "VM-016",
+    "text": "the response is 401 and no handler body executes",
+    "traces": [
+      "E1-S2-AC1",
+      "FRD-55",
+      "OBL-Applicant.full_name-minLength",
+      "OBL-Applicant.full_name-required",
+      "OBL-AuditEntry.action-minLength",
+      "OBL-AuditEntry.action-required"
+    ],
+    "matrix_id": "VM-016"
+  },
+  {
+    "id": "VM-017",
+    "text": "the response is 403, while each role reaches its own surfaces with 200",
+    "traces": [
+      "E1-S2-AC2",
+      "FRD-55"
+    ],
+    "matrix_id": "VM-017"
+  },
+  {
+    "id": "VM-018",
+    "text": "it reports 100% of those routes covered by both the no-session and wrong-role cases and fails when a new route is unguarded",
+    "traces": [
+      "E1-S2-AC3",
+      "FRD-60"
+    ],
+    "matrix_id": "VM-018"
+  },
+  {
+    "id": "VM-019",
+    "text": "an audit_event row exists carrying the acting user id and a timestamp",
+    "traces": [
+      "E1-S2-AC4",
+      "FRD-60"
+    ],
+    "matrix_id": "VM-019"
+  },
+  {
+    "id": "VM-020",
+    "text": "no update method and no delete method is exposed",
+    "traces": [
+      "E3-S1-AC1",
+      "FRD-58",
+      "OBL-Applicant.date_of_birth-format",
+      "OBL-Applicant.date_of_birth-required",
+      "OBL-AsOfDate-format",
+      "OBL-PolicyRules.annual_rate_pct-pattern",
+      "OBL-PolicyRules.annual_rate_pct-required"
+    ],
+    "matrix_id": "VM-020"
+  },
+  {
+    "id": "VM-021",
+    "text": "it reports 0 UPDATE statements, 0 DELETE statements and 0 ORM mutations targeting policy_version",
+    "traces": [
+      "E3-S1-AC2",
+      "FRD-58"
+    ],
+    "matrix_id": "VM-021"
+  },
+  {
+    "id": "VM-022",
+    "text": "it reports 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements",
+    "traces": [
+      "E3-S1-AC3",
+      "FRD-61"
+    ],
+    "matrix_id": "VM-022"
+  },
+  {
+    "id": "VM-023",
+    "text": "it is held to the identical zero-destructive-statement assertion as a schema migration",
+    "traces": [
+      "E3-S1-AC4",
+      "FRD-61"
+    ],
+    "matrix_id": "VM-023"
+  },
+  {
+    "id": "VM-024",
+    "text": "at least 3 products are returned and Personal, Vehicle and Education are among them",
+    "traces": [
+      "E2-S1-AC1",
+      "FRD-40",
+      "OBL-Loan.id-format",
+      "OBL-Loan.id-required",
+      "OBL-Loan.product_code-minLength",
+      "OBL-Loan.product_code-required",
+      "OBL-LoanProduct.name-minLength",
+      "OBL-LoanProduct.name-required",
+      "OBL-LoanProduct.product_code-enum",
+      "OBL-LoanProduct.product_code-required"
+    ],
+    "matrix_id": "VM-024"
+  },
+  {
+    "id": "VM-025",
+    "text": "each carries its own policy version id and no two products reference the same one",
+    "traces": [
+      "E2-S1-AC2",
+      "FRD-40",
+      "OBL-LoanApplication.policy_version_id-format",
+      "OBL-LoanApplication.policy_version_id-required"
+    ],
+    "matrix_id": "VM-025"
+  },
+  {
+    "id": "VM-026",
+    "text": "the minimum income, age, score, tenure and rate values differ between the three versions",
+    "traces": [
+      "E2-S1-AC3",
+      "FRD-40",
+      "OBL-Loan.annual_rate_pct-pattern",
+      "OBL-Loan.annual_rate_pct-required",
+      "OBL-Loan.tenure_months-minimum",
+      "OBL-Loan.tenure_months-required",
+      "OBL-PolicyRules.max_age-minimum",
+      "OBL-PolicyRules.max_age-required",
+      "OBL-PolicyRules.max_tenure_months-minimum",
+      "OBL-PolicyRules.max_tenure_months-required",
+      "OBL-PolicyRules.min_age-minimum",
+      "OBL-PolicyRules.min_age-required",
+      "OBL-PolicyRules.min_tenure_months-minimum",
+      "OBL-PolicyRules.min_tenure_months-required"
+    ],
+    "matrix_id": "VM-026"
+  },
+  {
+    "id": "VM-027",
+    "text": "a new policy version row is appended and becomes the product's active version",
+    "traces": [
+      "E3-S2-AC1",
+      "FRD-52",
+      "OBL-LoanProduct.active_policy_version_id-format",
+      "OBL-LoanProduct.active_policy_version_id-required",
+      "OBL-PolicyVersion.is_active-required"
+    ],
+    "matrix_id": "VM-027"
+  },
+  {
+    "id": "VM-028",
+    "text": "its stored values are byte-identical to their pre-save state",
+    "traces": [
+      "E3-S2-AC2",
+      "FRD-52"
+    ],
+    "matrix_id": "VM-028"
+  },
+  {
+    "id": "VM-029",
+    "text": "the decision cites the new policy version id with no process restart",
+    "traces": [
+      "E3-S2-AC3",
+      "FRD-52",
+      "OBL-DecisionOutcome-enum"
+    ],
+    "matrix_id": "VM-029"
+  },
+  {
+    "id": "VM-030",
+    "text": "the response is 403 and no policy version row is appended",
+    "traces": [
+      "E3-S2-AC4",
+      "FRD-55"
+    ],
+    "matrix_id": "VM-030"
+  },
+  {
+    "id": "VM-031",
+    "text": "at least one test exists and executes for every registered invariant",
+    "traces": [
+      "E16-S1-AC1",
+      "FRD-64"
+    ],
+    "matrix_id": "VM-031"
+  },
+  {
+    "id": "VM-032",
+    "text": "the suite fails and names the orphaned invariant",
+    "traces": [
+      "E16-S1-AC2",
+      "FRD-64"
+    ],
+    "matrix_id": "VM-032"
+  },
+  {
+    "id": "VM-033",
+    "text": "each carries agent co-authorship and a passing record from the standard pre-commit gate set",
+    "traces": [
+      "E16-S1-AC3",
+      "FRD-67"
+    ],
+    "matrix_id": "VM-033"
+  },
+  {
+    "id": "VM-034",
+    "text": "it is present and records 0 hand-written production lines as the NFR-11 evidence",
+    "traces": [
+      "E16-S1-AC4",
+      "FRD-67"
+    ],
+    "matrix_id": "VM-034"
+  },
+  {
+    "id": "VM-035",
+    "text": "a persisted application in SUBMITTED state is returned carrying the product's current policy version id",
+    "traces": [
+      "E4-S1-AC1",
+      "FRD-41",
+      "OBL-LoanApplication.submitted_at-format",
+      "OBL-LoanApplication.submitted_at-required"
+    ],
+    "matrix_id": "VM-035"
+  },
+  {
+    "id": "VM-036",
+    "text": "a numeric credit score is returned and stored against the application",
+    "traces": [
+      "E4-S1-AC2",
+      "FRD-42",
+      "OBL-CreditScore-maximum",
+      "OBL-CreditScore-minimum"
+    ],
+    "matrix_id": "VM-036"
+  },
+  {
+    "id": "VM-037",
+    "text": "the response carries one of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW together with at least one reason code",
+    "traces": [
+      "E4-S1-AC3",
+      "FRD-43",
+      "OBL-ReasonCode.code-minLength",
+      "OBL-ReasonCode.code-required",
+      "OBL-ReasonCode.text-minLength",
+      "OBL-ReasonCode.text-required"
+    ],
+    "matrix_id": "VM-037"
+  },
+  {
+    "id": "VM-038",
+    "text": "the generated checklist matches that policy version's list item for item",
+    "traces": [
+      "E4-S2-AC1",
+      "FRD-41",
+      "OBL-ApplicationSubmission.product_code-minLength",
+      "OBL-ApplicationSubmission.product_code-required",
+      "OBL-ApplicationSubmission.requested_amount-pattern",
+      "OBL-ApplicationSubmission.requested_amount-required",
+      "OBL-RequiredDocument.label-minLength",
+      "OBL-RequiredDocument.label-required"
+    ],
+    "matrix_id": "VM-038"
+  },
+  {
+    "id": "VM-039",
+    "text": "it is in SUBMITTED state and stores the policy_version_id resolved at submission",
+    "traces": [
+      "E4-S2-AC2",
+      "FRD-41"
+    ],
+    "matrix_id": "VM-039"
+  },
+  {
+    "id": "VM-040",
+    "text": "its stored policy_version_id and checklist are unchanged",
+    "traces": [
+      "E4-S2-AC3",
+      "FRD-41"
+    ],
+    "matrix_id": "VM-040"
+  },
+  {
+    "id": "VM-041",
+    "text": "it carries its document type and an unverified status",
+    "traces": [
+      "E4-S2-AC4",
+      "FRD-41",
+      "OBL-ApplicationDocument.document_type-minLength",
+      "OBL-ApplicationDocument.document_type-required",
+      "OBL-ApplicationDocument.status-required",
+      "OBL-ApplicationStatus-enum",
+      "OBL-Loan.status-enum",
+      "OBL-Loan.status-required",
+      "OBL-LoanApplication.status-required",
+      "OBL-RequiredDocument.document_type-minLength",
+      "OBL-RequiredDocument.document_type-required"
+    ],
+    "matrix_id": "VM-041"
+  },
+  {
+    "id": "VM-042",
+    "text": "the confirmation shows the newly created application in SUBMITTED state",
+    "traces": [
+      "E4-S3-AC1",
+      "FRD-41",
+      "OBL-ApplicationSubmission.applicant-required",
+      "OBL-LoanApplication.applicant-required",
+      "OBL-LoanApplication.applicant_user_id-format",
+      "OBL-LoanApplication.applicant_user_id-required",
+      "OBL-User.created_at-format"
+    ],
+    "matrix_id": "VM-042"
+  },
+  {
+    "id": "VM-043",
+    "text": "every required-document checklist item for the chosen product is listed",
+    "traces": [
+      "E4-S3-AC2",
+      "FRD-41"
+    ],
+    "matrix_id": "VM-043"
+  },
+  {
+    "id": "VM-044",
+    "text": "no co-applicant or guarantor field is present",
+    "traces": [
+      "E4-S3-AC3",
+      "FRD-41"
+    ],
+    "matrix_id": "VM-044"
+  },
+  {
+    "id": "VM-045",
+    "text": "the error response identifies PolicyViolationException",
+    "traces": [
+      "E4-S4-AC1",
+      "FRD-44",
+      "OBL-Applicant.declared_income-pattern",
+      "OBL-Applicant.declared_income-required",
+      "OBL-PolicyViolation.context-required",
+      "OBL-PolicyViolation.context.submitted_value-minLength",
+      "OBL-PolicyViolation.context.submitted_value-required",
+      "OBL-PolicyViolation.context.threshold_kind-minLength",
+      "OBL-PolicyViolation.context.threshold_kind-required",
+      "OBL-PolicyViolation.detail-minLength",
+      "OBL-PolicyViolation.detail-required",
+      "OBL-PolicyViolation.error-enum",
+      "OBL-PolicyViolation.error-required"
+    ],
+    "matrix_id": "VM-045"
+  },
+  {
+    "id": "VM-046",
+    "text": "it names the breached threshold and the configured value it was checked against",
+    "traces": [
+      "E4-S4-AC2",
+      "FRD-44",
+      "OBL-PolicyViolation.context.configured_value-minLength",
+      "OBL-PolicyViolation.context.configured_value-required"
+    ],
+    "matrix_id": "VM-046"
+  },
+  {
+    "id": "VM-047",
+    "text": "no application row was persisted for it",
+    "traces": [
+      "E4-S4-AC3",
+      "FRD-44"
+    ],
+    "matrix_id": "VM-047"
+  },
+  {
+    "id": "VM-048",
+    "text": "every call returns the identical score",
+    "traces": [
+      "E5-S1-AC1",
+      "FRD-42",
+      "OBL-CreditScoreStub.deterministic-enum",
+      "OBL-CreditScoreStub.deterministic-required",
+      "OBL-PolicyRules.min_credit_score-maximum",
+      "OBL-PolicyRules.min_credit_score-minimum",
+      "OBL-PolicyRules.min_credit_score-required"
+    ],
+    "matrix_id": "VM-048"
+  },
+  {
+    "id": "VM-049",
+    "text": "the two returned scores differ",
+    "traces": [
+      "E5-S1-AC2",
+      "FRD-42",
+      "OBL-CreditScoreStub.inputs[]-enum"
+    ],
+    "matrix_id": "VM-049"
+  },
+  {
+    "id": "VM-050",
+    "text": "no external credit-bureau call and no live provider credential is used",
+    "traces": [
+      "E5-S1-AC3",
+      "FRD-42",
+      "OBL-CreditScoreStub.external_call-enum",
+      "OBL-CreditScoreStub.external_call-required"
+    ],
+    "matrix_id": "VM-050"
+  },
+  {
+    "id": "VM-051",
+    "text": "the response carries AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code",
+    "traces": [
+      "E5-S2-AC1",
+      "FRD-43",
+      "OBL-PolicyRules.reason_codes-required",
+      "OBL-UnderwritingDecision.application_id-format",
+      "OBL-UnderwritingDecision.application_id-required",
+      "OBL-UnderwritingDecision.decided_at-format",
+      "OBL-UnderwritingDecision.decided_at-required",
+      "OBL-UnderwritingDecision.decided_by-format",
+      "OBL-UnderwritingDecision.id-format",
+      "OBL-UnderwritingDecision.id-required",
+      "OBL-UnderwritingDecision.outcome-required",
+      "OBL-UnderwritingDecision.policy_version_id-format",
+      "OBL-UnderwritingDecision.policy_version_id-required",
+      "OBL-UnderwritingDecision.reason_codes-required",
+      "OBL-UnderwritingDecision.supersedes_id-format"
+    ],
+    "matrix_id": "VM-051"
+  },
+  {
+    "id": "VM-052",
+    "text": "it exists in the policy version pinned on the application",
+    "traces": [
+      "E5-S2-AC2",
+      "FRD-43"
+    ],
+    "matrix_id": "VM-052"
+  },
+  {
+    "id": "VM-053",
+    "text": "a new decision_record row is appended and the application's current decision is its latest record",
+    "traces": [
+      "E5-S2-AC3",
+      "FRD-43"
+    ],
+    "matrix_id": "VM-053"
+  },
+  {
+    "id": "VM-054",
+    "text": "the re-decision still cites the policy version pinned at submission",
+    "traces": [
+      "E5-S2-AC4",
+      "FRD-43"
+    ],
+    "matrix_id": "VM-054"
+  },
+  {
+    "id": "VM-055",
+    "text": "its stored status reads VERIFIED",
+    "traces": [
+      "E6-S1-AC1",
+      "FRD-45",
+      "OBL-DocumentVerificationStatus-enum"
+    ],
+    "matrix_id": "VM-055"
+  },
+  {
+    "id": "VM-056",
+    "text": "the stored row reads REJECTED and carries that non-empty reason",
+    "traces": [
+      "E6-S1-AC2",
+      "FRD-45"
+    ],
+    "matrix_id": "VM-056"
+  },
+  {
+    "id": "VM-057",
+    "text": "it is refused and the document's stored status is unchanged",
+    "traces": [
+      "E6-S1-AC3",
+      "FRD-45"
+    ],
+    "matrix_id": "VM-057"
+  },
+  {
+    "id": "VM-058",
+    "text": "those documents are absent from the returned queue",
+    "traces": [
+      "E6-S1-AC4",
+      "FRD-45",
+      "OBL-ApplicationDocument.actioned_at-format",
+      "OBL-ApplicationDocument.actioned_by-format"
+    ],
+    "matrix_id": "VM-058"
+  },
+  {
+    "id": "VM-059",
+    "text": "it contains exactly those applications in SUBMITTED or MANUAL_REVIEW state",
+    "traces": [
+      "E6-S2-AC1",
+      "FRD-56"
+    ],
+    "matrix_id": "VM-059"
+  },
+  {
+    "id": "VM-060",
+    "text": "the screen shows its credit score, its decision reason codes and the verification state of each checklist document",
+    "traces": [
+      "E6-S2-AC2",
+      "FRD-56",
+      "OBL-ApplicationDocument.rejection_reason-minLength"
+    ],
+    "matrix_id": "VM-060"
+  },
+  {
+    "id": "VM-061",
+    "text": "the application's latest decision record reflects that decision and the case leaves the queue",
+    "traces": [
+      "E6-S2-AC3",
+      "FRD-56"
+    ],
+    "matrix_id": "VM-061"
+  },
+  {
+    "id": "VM-062",
+    "text": "only the matching rows are returned",
+    "traces": [
+      "E7-S1-AC1",
+      "FRD-49",
+      "OBL-Override.application_id-format",
+      "OBL-Override.application_id-required",
+      "OBL-Override.supersedes_id-format",
+      "OBL-Override.supersedes_id-required"
+    ],
+    "matrix_id": "VM-062"
+  },
+  {
+    "id": "VM-063",
+    "text": "a new decision_record is appended and the application's current decision is the override",
+    "traces": [
+      "E7-S1-AC2",
+      "FRD-49",
+      "OBL-Override.comment-minLength",
+      "OBL-Override.comment-required",
+      "OBL-Override.reason_code-minLength",
+      "OBL-Override.reason_code-required"
+    ],
+    "matrix_id": "VM-063"
+  },
+  {
+    "id": "VM-064",
+    "text": "it contains an entry carrying the comment, the reason code, the acting user id and a timestamp",
+    "traces": [
+      "E7-S1-AC3",
+      "FRD-49",
+      "OBL-AuditEntry.actor_user_id-format",
+      "OBL-AuditEntry.actor_user_id-required",
+      "OBL-AuditEntry.entity_id-minLength",
+      "OBL-AuditEntry.entity_id-required",
+      "OBL-AuditEntry.entity_type-minLength",
+      "OBL-AuditEntry.entity_type-required",
+      "OBL-AuditEntry.id-format",
+      "OBL-AuditEntry.id-required",
+      "OBL-AuditEntry.occurred_at-format",
+      "OBL-AuditEntry.occurred_at-required"
+    ],
+    "matrix_id": "VM-064"
+  },
+  {
+    "id": "VM-065",
+    "text": "it exists in the policy version pinned on the application",
+    "traces": [
+      "E7-S1-AC4",
+      "FRD-49"
+    ],
+    "matrix_id": "VM-065"
+  },
+  {
+    "id": "VM-066",
+    "text": "the view shows the application's current status",
+    "traces": [
+      "E8-S1-AC1",
+      "FRD-50"
+    ],
+    "matrix_id": "VM-066"
+  },
+  {
+    "id": "VM-067",
+    "text": "every unverified required document is listed",
+    "traces": [
+      "E8-S1-AC2",
+      "FRD-50",
+      "OBL-PolicyRules.required_documents-required"
+    ],
+    "matrix_id": "VM-067"
+  },
+  {
+    "id": "VM-068",
+    "text": "the decision and each of its reason codes are shown",
+    "traces": [
+      "E8-S1-AC3",
+      "FRD-50"
+    ],
+    "matrix_id": "VM-068"
+  },
+  {
+    "id": "VM-069",
+    "text": "no decision section is shown and no notification was dispatched to the customer",
+    "traces": [
+      "E8-S1-AC4",
+      "FRD-50"
+    ],
+    "matrix_id": "VM-069"
+  },
+  {
+    "id": "VM-070",
+    "text": "the returned bucket is DPD-30",
+    "traces": [
+      "E11-S1-AC1",
+      "FRD-48",
+      "OBL-DaysPastDue-minimum",
+      "OBL-DelinquencyBucket-enum",
+      "OBL-Installment.id-format",
+      "OBL-Installment.id-required",
+      "OBL-Installment.sequence-minimum",
+      "OBL-Installment.sequence-required",
+      "OBL-Loan.days_past_due-required",
+      "OBL-Loan.delinquency_bucket-required"
+    ],
+    "matrix_id": "VM-070"
+  },
+  {
+    "id": "VM-071",
+    "text": "exactly one of the five buckets is returned for every value, with no gap and no overlap",
+    "traces": [
+      "E11-S1-AC2",
+      "FRD-48"
+    ],
+    "matrix_id": "VM-071"
+  },
+  {
+    "id": "VM-072",
+    "text": "the returned bucket is CURRENT",
+    "traces": [
+      "E11-S1-AC3",
+      "FRD-48",
+      "OBL-Installment.due_date-format",
+      "OBL-Installment.due_date-required"
+    ],
+    "matrix_id": "VM-072"
+  },
+  {
+    "id": "VM-073",
+    "text": "it carries a bucket only, with no fee, penal interest or charge of any kind",
+    "traces": [
+      "E11-S1-AC4",
+      "FRD-48",
+      "OBL-Threshold.kind-enum",
+      "OBL-Threshold.kind-required"
+    ],
+    "matrix_id": "VM-073"
+  },
+  {
+    "id": "VM-074",
+    "text": "a repayment schedule exists with one installment row per month of the product tenure",
+    "traces": [
+      "E9-S2-AC1",
+      "FRD-46",
+      "OBL-ApplicationSubmission.requested_tenure_months-minimum",
+      "OBL-ApplicationSubmission.requested_tenure_months-required",
+      "OBL-Installment.schedule_id-format",
+      "OBL-Installment.schedule_id-required",
+      "OBL-Loan.application_id-format",
+      "OBL-Loan.application_id-required",
+      "OBL-LoanApplication.id-format",
+      "OBL-LoanApplication.id-required",
+      "OBL-LoanApplication.product_code-minLength",
+      "OBL-LoanApplication.product_code-required",
+      "OBL-LoanApplication.requested_tenure_months-minimum",
+      "OBL-LoanApplication.requested_tenure_months-required",
+      "OBL-Repayment.id-format",
+      "OBL-Repayment.id-required",
+      "OBL-Repayment.loan_id-format",
+      "OBL-Repayment.loan_id-required",
+      "OBL-RepaymentSchedule.id-format",
+      "OBL-RepaymentSchedule.id-required",
+      "OBL-RepaymentSchedule.loan_id-format",
+      "OBL-RepaymentSchedule.loan_id-required"
+    ],
+    "matrix_id": "VM-074"
+  },
+  {
+    "id": "VM-075",
+    "text": "it is in DISBURSED state holding the released amount and a funding-source identifier",
+    "traces": [
+      "E9-S2-AC2",
+      "FRD-47",
+      "OBL-FundingSource-minLength",
+      "OBL-Loan.disbursed_at-format",
+      "OBL-LoanApplication.requested_amount-pattern",
+      "OBL-LoanApplication.requested_amount-required",
+      "OBL-Repayment.amount-pattern",
+      "OBL-Repayment.amount-required"
+    ],
+    "matrix_id": "VM-075"
+  },
+  {
+    "id": "VM-076",
+    "text": "the loan's outstanding principal is lower than it was before the posting",
+    "traces": [
+      "E9-S2-AC3",
+      "FRD-48",
+      "OBL-Loan.outstanding_principal-required",
+      "OBL-Loan.principal-pattern",
+      "OBL-Loan.principal-required",
+      "OBL-OutstandingPrincipal-pattern",
+      "OBL-Repayment.posted_at-format",
+      "OBL-Repayment.posted_at-required",
+      "OBL-Repayment.posted_by-format"
+    ],
+    "matrix_id": "VM-076"
+  },
+  {
+    "id": "VM-077",
+    "text": "the sum equals the disbursed amount exactly, with no residual",
+    "traces": [
+      "E9-S3-AC1",
+      "FRD-46",
+      "OBL-RepaymentSchedule.emi-required",
+      "OBL-RepaymentSchedule.generated_at-format",
+      "OBL-RepaymentSchedule.generated_at-required",
+      "OBL-RepaymentSchedule.rounding_residual-required",
+      "OBL-RoundingResidual-pattern"
+    ],
+    "matrix_id": "VM-077"
+  },
+  {
+    "id": "VM-078",
+    "text": "total payable equals the sum of principal plus interest over the stored rows and the installment count equals the product tenure",
+    "traces": [
+      "E9-S3-AC2",
+      "FRD-46",
+      "OBL-Installment.emi-required",
+      "OBL-Installment.interest_component-pattern",
+      "OBL-Installment.interest_component-required",
+      "OBL-Installment.principal_component-pattern",
+      "OBL-Installment.principal_component-required",
+      "OBL-Repayment.applied_interest-pattern",
+      "OBL-Repayment.applied_interest-required",
+      "OBL-RepaymentSchedule.installments-required",
+      "OBL-RepaymentSchedule.total_payable-required",
+      "OBL-TotalPayable-pattern"
+    ],
+    "matrix_id": "VM-078"
+  },
+  {
+    "id": "VM-079",
+    "text": "its principal equals the balance remaining after all preceding rows",
+    "traces": [
+      "E9-S3-AC3",
+      "FRD-46"
+    ],
+    "matrix_id": "VM-079"
+  },
+  {
+    "id": "VM-080",
+    "text": "it is derived from the period's opening balance at the rate on the application's pinned policy version",
+    "traces": [
+      "E9-S3-AC4",
+      "FRD-46"
+    ],
+    "matrix_id": "VM-080"
+  },
+  {
+    "id": "VM-081",
+    "text": "no update or delete method is exposed and 0 UPDATE or DELETE statements target schedule_installment",
+    "traces": [
+      "E9-S3-AC5",
+      "FRD-58"
+    ],
+    "matrix_id": "VM-081"
+  },
+  {
+    "id": "VM-082",
+    "text": "the loan record holds the released amount",
+    "traces": [
+      "E10-S1-AC1",
+      "FRD-47",
+      "OBL-Disbursement.disbursed_at-format",
+      "OBL-Disbursement.disbursed_at-required",
+      "OBL-Disbursement.funding_source-required",
+      "OBL-Disbursement.id-format",
+      "OBL-Disbursement.id-required",
+      "OBL-Disbursement.loan_id-format",
+      "OBL-Disbursement.loan_id-required",
+      "OBL-Disbursement.released_amount-pattern",
+      "OBL-Disbursement.released_amount-required"
+    ],
+    "matrix_id": "VM-082"
+  },
+  {
+    "id": "VM-083",
+    "text": "it holds a funding-source identifier and is in DISBURSED state with its schedule attached",
+    "traces": [
+      "E10-S1-AC2",
+      "FRD-47"
+    ],
+    "matrix_id": "VM-083"
+  },
+  {
+    "id": "VM-084",
+    "text": "no external payment rail is called and no signed agreement artifact is produced",
+    "traces": [
+      "E10-S1-AC3",
+      "FRD-47"
+    ],
+    "matrix_id": "VM-084"
+  },
+  {
+    "id": "VM-085",
+    "text": "the attempt is refused and the recorded released amount is unchanged",
+    "traces": [
+      "E10-S1-AC4",
+      "FRD-47"
+    ],
+    "matrix_id": "VM-085"
+  },
+  {
+    "id": "VM-086",
+    "text": "outstanding principal falls by exactly the applied principal portion of that payment",
+    "traces": [
+      "E11-S2-AC1",
+      "FRD-48",
+      "OBL-Repayment.applied_principal-pattern",
+      "OBL-Repayment.applied_principal-required"
+    ],
+    "matrix_id": "VM-086"
+  },
+  {
+    "id": "VM-087",
+    "text": "a new immutable row records the payment and no pre-existing row was updated",
+    "traces": [
+      "E11-S2-AC2",
+      "FRD-48"
+    ],
+    "matrix_id": "VM-087"
+  },
+  {
+    "id": "VM-088",
+    "text": "the stored delinquency bucket reads DPD-30",
+    "traces": [
+      "E11-S2-AC3",
+      "FRD-48"
+    ],
+    "matrix_id": "VM-088"
+  },
+  {
+    "id": "VM-089",
+    "text": "the stored bucket reads CURRENT and no late fee or penal interest was charged",
+    "traces": [
+      "E11-S2-AC4",
+      "FRD-48"
+    ],
+    "matrix_id": "VM-089"
+  },
+  {
+    "id": "VM-090",
+    "text": "each loan's stored bucket matches its days past due at that date",
+    "traces": [
+      "E12-S1-AC1",
+      "FRD-53",
+      "OBL-EndOfDayRun.as_of_date-required",
+      "OBL-EndOfDayRun.buckets-required",
+      "OBL-EndOfDayRun.loans_evaluated-minimum",
+      "OBL-EndOfDayRun.loans_evaluated-required"
+    ],
+    "matrix_id": "VM-090"
+  },
+  {
+    "id": "VM-091",
+    "text": "every bucket and every stored row is byte-identical to the first run's result",
+    "traces": [
+      "E12-S1-AC2",
+      "FRD-53",
+      "OBL-EndOfDayRun.completed_at-format",
+      "OBL-EndOfDayRun.completed_at-required"
+    ],
+    "matrix_id": "VM-091"
+  },
+  {
+    "id": "VM-092",
+    "text": "that loan's stored bucket reads CURRENT",
+    "traces": [
+      "E12-S1-AC3",
+      "FRD-53"
+    ],
+    "matrix_id": "VM-092"
+  },
+  {
+    "id": "VM-093",
+    "text": "no fee, penal interest or collections record was created",
+    "traces": [
+      "E12-S1-AC4",
+      "FRD-53"
+    ],
+    "matrix_id": "VM-093"
+  },
+  {
+    "id": "VM-094",
+    "text": "every installment is listed with its due date and amount",
+    "traces": [
+      "E13-S1-AC1",
+      "FRD-51"
+    ],
+    "matrix_id": "VM-094"
+  },
+  {
+    "id": "VM-095",
+    "text": "the current outstanding principal and the current delinquency bucket are both shown",
+    "traces": [
+      "E13-S1-AC2",
+      "FRD-51"
+    ],
+    "matrix_id": "VM-095"
+  },
+  {
+    "id": "VM-096",
+    "text": "the displayed outstanding principal reflects that posting",
+    "traces": [
+      "E13-S1-AC3",
+      "FRD-51"
+    ],
+    "matrix_id": "VM-096"
+  },
+  {
+    "id": "VM-097",
+    "text": "it offers no early settlement, foreclosure or prepayment quote",
+    "traces": [
+      "E13-S1-AC4",
+      "FRD-51"
+    ],
+    "matrix_id": "VM-097"
+  },
+  {
+    "id": "VM-098",
+    "text": "the loan count and value are reported for every product and bucket combination",
+    "traces": [
+      "E14-S1-AC1",
+      "FRD-54",
+      "OBL-PortfolioSummary.as_of-format",
+      "OBL-PortfolioSummary.as_of-required",
+      "OBL-PortfolioSummary.by_product-required",
+      "OBL-PortfolioSummary.by_product[].by_bucket-required",
+      "OBL-PortfolioSummary.by_product[].by_bucket[].delinquency_bucket-required",
+      "OBL-PortfolioSummary.by_product[].by_bucket[].loan_count-minimum",
+      "OBL-PortfolioSummary.by_product[].by_bucket[].loan_count-required",
+      "OBL-PortfolioSummary.by_product[].by_bucket[].loan_value-pattern",
+      "OBL-PortfolioSummary.by_product[].by_bucket[].loan_value-required",
+      "OBL-PortfolioSummary.by_product[].loan_count-minimum",
+      "OBL-PortfolioSummary.by_product[].loan_count-required",
+      "OBL-PortfolioSummary.by_product[].loan_value-pattern",
+      "OBL-PortfolioSummary.by_product[].loan_value-required",
+      "OBL-PortfolioSummary.by_product[].product_code-minLength",
+      "OBL-PortfolioSummary.by_product[].product_code-required",
+      "OBL-PortfolioSummary.total_overdue-pattern",
+      "OBL-PortfolioSummary.total_overdue-required"
+    ],
+    "matrix_id": "VM-098"
+  },
+  {
+    "id": "VM-099",
+    "text": "it equals the sum of overdue installment amounts across all active loans",
+    "traces": [
+      "E14-S1-AC2",
+      "FRD-54"
+    ],
+    "matrix_id": "VM-099"
+  },
+  {
+    "id": "VM-100",
+    "text": "the response is 403 and no portfolio figures are returned",
+    "traces": [
+      "E14-S1-AC3",
+      "FRD-54"
+    ],
+    "matrix_id": "VM-100"
+  },
+  {
+    "id": "VM-101",
+    "text": "the figures are served from stored loan bucket state without invoking the end-of-day job",
+    "traces": [
+      "E14-S1-AC4",
+      "FRD-54"
+    ],
+    "matrix_id": "VM-101"
+  },
+  {
+    "id": "VM-102",
+    "text": "it reports 0 WCAG 2.1 AA violations with no rule suppressed, and asserts it covered 100% of registered screens",
+    "traces": [
+      "E17-S1-AC1",
+      "FRD-66"
+    ],
+    "matrix_id": "VM-102"
+  },
+  {
+    "id": "VM-103",
+    "text": "the flow completes, no focus trap is encountered, and every interactive control exposes an accessible name and a visible focus indicator",
+    "traces": [
+      "E17-S1-AC2",
+      "FRD-66"
+    ],
+    "matrix_id": "VM-103"
+  },
+  {
+    "id": "VM-104",
+    "text": "the suite fails, so Apply, Track and Repay are each held to WCAG 2.1 AA by the story that lands them",
+    "traces": [
+      "E17-S1-AC3",
+      "FRD-66"
+    ],
+    "matrix_id": "VM-104"
+  },
+  {
+    "id": "VM-105",
+    "text": "the measured p95 latency is under 500 ms and the error rate is under 1% across all of them",
+    "traces": [
+      "E15-S3-AC1",
+      "FRD-65"
+    ],
+    "matrix_id": "VM-105"
+  },
+  {
+    "id": "VM-106",
+    "text": "it records the measured p95 and error-rate figures for each registered endpoint",
+    "traces": [
+      "E15-S3-AC2",
+      "FRD-65"
+    ],
+    "matrix_id": "VM-106"
+  },
+  {
+    "id": "VM-107",
+    "text": "the suite fails, so a read surface added later is measured by the story that adds it",
+    "traces": [
+      "E15-S3-AC3",
+      "FRD-65"
+    ],
+    "matrix_id": "VM-107"
+  }
+]

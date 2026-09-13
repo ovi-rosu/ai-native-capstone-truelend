@@ -1,0 +1,12 @@
+{
+  "layer": "design",
+  "pass": true,
+  "blocking": false,
+  "accepted": 0,
+  "required_total": 29,
+  "required_covered": 29,
+  "downstream_total": 31,
+  "scope": null,
+  "net_new": [],
+  "dropped": []
+}

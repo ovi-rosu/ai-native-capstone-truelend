@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "phase": "design-render",
+  "source": "specs/decisions/design-decisions.json",
+  "rendered_at": "2026-09-13T15:10:00Z",
+  "note": "Empty. The six items returned by the first rendering pass (U-1..U-6) were each settled by a human decision in the second round and the document set was re-rendered against them: U-1 -> D-J, U-2 -> D-K, U-3 -> D-M, U-4 -> D-N, U-5 -> D-O, U-6 -> D-L. Rendering needed no call the decisions file does not contain.",
+  "unresolved": [],
+  "resolved_in_round_2": [
+    {
+      "id": "U-1",
+      "decision": "D-J",
+      "effect": "E9-S1-AC3 and FRD-57 amended to 'held as a decimal value, never a float'; D-G stands. E9-S1's story bundle and features.json entry still need a /spec re-render from the amended AC \u2014 outside this document set."
+    },
+    {
+      "id": "U-2",
+      "decision": "D-K",
+      "effect": "Interest-first within the oldest unpaid Installment, FIFO across whole Installments. Rendered into api-contracts.md, data-models.md, data-models.schema.json, program-design.md, architecture.md, component-map.md."
+    },
+    {
+      "id": "U-3",
+      "decision": "D-M",
+      "effect": "Settings.jwt_ttl_seconds = 3600. Rendered into api-contracts.md, program-design.md, reasons-canvas.md, deployment.md."
+    },
+    {
+      "id": "U-4",
+      "decision": "D-N",
+      "effect": "ADMIN for disbursement and end-of-day, as already rendered; the rendering-choice caveat was replaced by the decision reference in api-contracts.md and api-contracts.schema.json."
+    },
+    {
+      "id": "U-5",
+      "decision": "D-O",
+      "effect": "No rate limit in v1, as already rendered; recorded as a decision with the login attempt-throttle gap accepted explicitly."
+    },
+    {
+      "id": "U-6",
+      "decision": "D-L",
+      "effect": "MANUAL_REVIEW is an ApplicationStatus. CONTEXT.md was human-edited first per D-H's ordering; the enum moved from six to seven states in both schemas, the filter alias was removed from api-contracts.md, and mockups/E7-S1.html gained the seventh filter option and now labels its MANUAL_REVIEW-outcome application with that status."
+    }
+  ]
+}

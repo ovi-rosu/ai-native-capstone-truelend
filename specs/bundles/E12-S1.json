@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "story_id": "E12-S1",
+  "sprint": 1,
+  "title": "Idempotent as-of-date end-of-day delinquency recalculation",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E12-S1-AC1",
+      "E12-S1-AC2",
+      "E12-S1-AC3",
+      "E12-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-14"
+    ],
+    "br_acceptance_ids": [
+      "FRD-53"
+    ],
+    "scope_out": [
+      "must not charge a late fee, penal interest or create a collections record; must not depend on the repayment posting endpoint, per D10; must not change any row on a second run for the same as-of date"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Idempotent as-of-date end-of-day delinquency recalculation",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/service/delinquency/end_of_day.py",
+      "backend/src/api/delinquency/end_of_day_routes.py",
+      "backend/tests/integration/test_end_of_day_idempotence.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-1"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-090",
+      "VM-091",
+      "VM-092",
+      "VM-093"
+    ],
+    "case_ids": [
+      "VM-090",
+      "VM-091",
+      "VM-092",
+      "VM-093"
+    ],
+    "layers": [
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E12-S1.md",
+    "parents": [
+      "E11-S1",
+      "E9-S3"
+    ],
+    "tracker_key": null
+  }
+}

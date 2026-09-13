@@ -1,0 +1,346 @@
+{
+  "version": 1,
+  "kind": "lean-analysis-seed",
+  "domain_concepts": [
+    {
+      "name": "Across",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Active",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Admin",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Against",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Append-Only",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Application",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Applications",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Auto",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Bucket",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Carry",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Code",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Codes",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Computed",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Current",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Customer",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Database",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Decision",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Delinquency",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Enforced",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Generated",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Income",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Interest",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Least",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Lines",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Loan",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Loans",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Logs",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Manual",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Meet",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Never",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Outstanding",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Policy",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Principal",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Product",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Queue",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Rate",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Reason",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Recalculates",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Reject",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Repayment",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Returns",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Review",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Schedule",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Score",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Status",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Stub",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "System",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Total",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Track",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Underwriter",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "User",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Version",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    },
+    {
+      "name": "Written",
+      "status": "unknown",
+      "evidence": "requirement-frequency"
+    }
+  ],
+  "open_questions": [],
+  "risks": [
+    {
+      "id": "FRD-72",
+      "text": "**R-1 EMI rounding residual.** Fixed-point money at 2 decimal places (NFR-01) and the requirement that per-installment principal plus interest equal total payable (FR-07) are in tension: rounded equal installments rarely sum to the unrounded total. Design must state where the residual is absorbed, or the FR-07 invariant test will be loosened to hide it.",
+      "source": "prd"
+    },
+    {
+      "id": "FRD-73",
+      "text": "**R-2 Append-only versus correction.** Policy versions and schedules admit no update or delete (NFR-02, NFR-05), while an override changes a decision (FR-10) and a posted repayment changes outstanding principal and bucket (FR-09). Design must draw the boundary between the immutable artifacts and the mutable loan state explicitly, or the architecture test and the features will collide.",
+      "source": "prd"
+    },
+    {
+      "id": "FRD-74",
+      "text": "**R-3 Policy activation with in-flight applications.** A new version becomes active without restart (FR-13), yet every reason code must exist in the policy version named on the application (FR-04). An application decided across an activation must keep citing its own version rather than the newly active one.",
+      "source": "prd"
+    },
+    {
+      "id": "FRD-75",
+      "text": "**R-4 Undefined bucket boundaries.** The delinquency buckets are named (FR-09) but no requirement fixes the day ranges, nor where NPA begins. Left unstated, the first agent to write that code picks the thresholds by accident. Design must fix the boundaries against the capstone's intent before FR-09 or FR-14 is implemented.",
+      "source": "prd"
+    }
+  ],
+  "safeguards": [
+    {
+      "id": "SG-1",
+      "kind": "forbidden_action",
+      "text": "Late fees, penal interest, collections workflow and write-off. Delinquency is status only: buckets are computed, nothing is charged for lateness and no recovery process exists."
+    },
+    {
+      "id": "SG-2",
+      "kind": "forbidden_action",
+      "text": "Real money movement and real credit-bureau calls. The funding source (FR-08) and the credit score (FR-03) are stubs; no payment rail, no external bureau, no live provider credentials."
+    },
+    {
+      "id": "SG-3",
+      "kind": "forbidden_action",
+      "text": "Native or responsive mobile clients."
+    },
+    {
+      "id": "SG-4",
+      "kind": "forbidden_action",
+      "text": "Customer notifications of any kind — no email or SMS on decision, disbursement or due date."
+    },
+    {
+      "id": "SG-5",
+      "kind": "forbidden_action",
+      "text": "Electronic signature or a signed loan agreement artifact."
+    },
+    {
+      "id": "SG-6",
+      "kind": "forbidden_action",
+      "text": "Multi-currency support. Single currency only."
+    },
+    {
+      "id": "SG-7",
+      "kind": "forbidden_action",
+      "text": "Co-applicants, guarantors and joint applications. One applicant per application."
+    },
+    {
+      "id": "SG-8",
+      "kind": "forbidden_action",
+      "text": "Loan top-ups, restructuring and any mid-life modification of a disbursed loan."
+    },
+    {
+      "id": "SG-9",
+      "kind": "forbidden_action",
+      "text": "KYC/AML identity verification against external registries. Synthetic PAN and Aadhaar values are captured as application data only and are never verified."
+    },
+    {
+      "id": "SG-10",
+      "kind": "forbidden_action",
+      "text": "Early settlement, foreclosure and prepayment quotes."
+    }
+  ]
+}

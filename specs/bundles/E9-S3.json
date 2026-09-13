@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "story_id": "E9-S3",
+  "sprint": 1,
+  "title": "EMI computation and append-only repayment schedule generation",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E9-S3-AC1",
+      "E9-S3-AC2",
+      "E9-S3-AC3",
+      "E9-S3-AC4",
+      "E9-S3-AC5"
+    ],
+    "brd_ids": [
+      "FRD-7",
+      "FRD-19"
+    ],
+    "br_acceptance_ids": [
+      "FRD-46",
+      "FRD-58"
+    ],
+    "scope_out": [
+      "must not define total_payable as EMI multiplied by tenure; must not expose an update or delete method on the schedule_installment repository; must not add a late fee, penal interest or prepayment quote to any installment row"
+    ]
+  },
+  "entities": [
+    {
+      "name": "EMI computation and append-only repayment schedule generation",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/types/loan_terms.py",
+      "backend/src/service/servicing/emi.py",
+      "backend/src/service/servicing/installment_ladder.py",
+      "backend/tests/unit/test_emi_residual.py",
+      "backend/tests/architecture/test_schedule_immutability.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-1",
+      "SG-10"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-077",
+      "VM-078",
+      "VM-079",
+      "VM-080",
+      "VM-081"
+    ],
+    "case_ids": [
+      "VM-077",
+      "VM-078",
+      "VM-079",
+      "VM-080",
+      "VM-081"
+    ],
+    "layers": [
+      "api",
+      "unit"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E9-S3.md",
+    "parents": [
+      "E9-S2",
+      "E9-S1"
+    ],
+    "tracker_key": null
+  }
+}

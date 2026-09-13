@@ -1,0 +1,583 @@
+<!--
+  Story: E3-S2 — Policy Editor (ADMIN)
+  Screen: Product policy threshold editor with reason codes and required documents,
+          appends a new immutable Policy Version and activates it (never edits/deletes history).
+  Endpoints depended on:
+    GET  /products/{product_code}            (seeds the active PolicyVersion + rules shown on load/switch)
+    POST /products/{product_code}/policy-versions  (primary interaction: Save -> 201 PolicyVersion)
+  Fields shown are drawn from PolicyRules, PolicyVersion, ReasonCode, RequiredDocument,
+  LoanProduct per specs/design/api-contracts.md / api-contracts.schema.json.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Policy Editor — TrueLend Admin</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght&#64;9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght&#64;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght&#64;400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com/3.4.10"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: "#14231D",
+          "ink-muted": "#4E6158",
+          paper: "#F7F4EC",
+          "paper-raised": "#FFFDF7",
+          brass: "#9A6B1F",
+          "signal-red": "#8E241C",
+          "signal-amber": "#8A5B12",
+          "signal-green": "#1D5C41",
+          rule: "#D8D0BE",
+        },
+        fontFamily: {
+          display: ["Fraunces", "serif"],
+          body: ["Public Sans", "sans-serif"],
+          mono: ["IBM Plex Mono", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  body { font-family: "Public Sans", sans-serif; background-color: #F7F4EC; color: #14231D; }
+  .font-display { font-family: "Fraunces", serif; }
+  .font-mono-num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  :focus-visible {
+    outline: 2px solid #9A6B1F !important;
+    outline-offset: 2px !important;
+  }
+  input:focus, select:focus, button:focus, textarea:focus {
+    outline: 2px solid #9A6B1F;
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body class="bg-paper text-ink">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react,typescript">
+const { useState, useMemo } = React;
+
+/* ---------- seed data (matches PolicyRules / PolicyVersion / LoanProduct shapes) ---------- */
+
+function seedProduct(product_code, name, versionSeed) {
+  return {
+    product_code,
+    name,
+    versions: [versionSeed],
+  };
+}
+
+const initialCatalog = {
+  PERSONAL: seedProduct("PERSONAL", "Personal Loan", {
+    id: "8f14e45f-ceea-4f37-9c93-1cdcaef86d10",
+    product_code: "PERSONAL",
+    version_number: 3,
+    is_active: true,
+    created_by: "8a1e4c1a-2222-4a3b-9c11-000000000001",
+    created_at: "2026-01-12T09:15:00Z",
+    rules: {
+      min_income: "25000.00",
+      min_age: 21,
+      max_age: 60,
+      min_credit_score: 650,
+      min_tenure_months: 6,
+      max_tenure_months: 60,
+      annual_rate_pct: "13.500000",
+      reason_codes: [
+        { code: "RC-01", text: "Credit score below product minimum" },
+        { code: "RC-07", text: "Declared income below product minimum" },
+        { code: "RC-12", text: "Manual review required — borderline tenure" },
+      ],
+      required_documents: [
+        { document_type: "PAN_CARD", label: "PAN card copy" },
+        { document_type: "SALARY_SLIP", label: "Latest salary slip" },
+        { document_type: "BANK_STATEMENT", label: "6-month bank statement" },
+      ],
+    },
+  }),
+  VEHICLE: seedProduct("VEHICLE", "Vehicle Loan", {
+    id: "3b2c9e70-4444-4a3b-9c11-000000000002",
+    product_code: "VEHICLE",
+    version_number: 2,
+    is_active: true,
+    created_by: "8a1e4c1a-2222-4a3b-9c11-000000000001",
+    created_at: "2025-11-03T11:40:00Z",
+    rules: {
+      min_income: "30000.00",
+      min_age: 21,
+      max_age: 65,
+      min_credit_score: 620,
+      min_tenure_months: 12,
+      max_tenure_months: 84,
+      annual_rate_pct: "11.250000",
+      reason_codes: [
+        { code: "RC-02", text: "Vehicle valuation below loan request" },
+        { code: "RC-07", text: "Declared income below product minimum" },
+      ],
+      required_documents: [
+        { document_type: "PAN_CARD", label: "PAN card copy" },
+        { document_type: "VEHICLE_QUOTATION", label: "Vehicle dealer quotation" },
+        { document_type: "DRIVING_LICENSE", label: "Driving licence copy" },
+      ],
+    },
+  }),
+  EDUCATION: seedProduct("EDUCATION", "Education Loan", {
+    id: "6d5a1f30-6666-4a3b-9c11-000000000003",
+    product_code: "EDUCATION",
+    version_number: 1,
+    is_active: true,
+    created_by: "8a1e4c1a-2222-4a3b-9c11-000000000001",
+    created_at: "2025-08-19T08:05:00Z",
+    rules: {
+      min_income: "18000.00",
+      min_age: 18,
+      max_age: 45,
+      min_credit_score: 600,
+      min_tenure_months: 12,
+      max_tenure_months: 96,
+      annual_rate_pct: "10.750000",
+      reason_codes: [
+        { code: "RC-03", text: "Institution not on approved list" },
+        { code: "RC-07", text: "Declared income below product minimum" },
+      ],
+      required_documents: [
+        { document_type: "ADMISSION_LETTER", label: "Admission / offer letter" },
+        { document_type: "FEE_STRUCTURE", label: "Institution fee structure" },
+      ],
+    },
+  }),
+};
+
+const PRODUCT_ORDER = ["PERSONAL", "VEHICLE", "EDUCATION"];
+
+/* ---------- helpers ---------- */
+
+function formatMoney(decimalString) {
+  if (decimalString === undefined || decimalString === null) return "—";
+  const [whole, frac] = String(decimalString).split(".");
+  const negative = whole.startsWith("-");
+  const digits = negative ? whole.slice(1) : whole;
+  const withSeparators = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return (negative ? "-" : "") + "₹" + withSeparators + "." + (frac || "00");
+}
+
+function formatDateTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("en-IN", {
+    year: "numeric", month: "short", day: "2-digit",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function makeVersionId(product_code, seq) {
+  return `${product_code.slice(0, 3).toLowerCase()}-draft-${seq}-${Date.now().toString(36)}`;
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+/* ---------- reusable form pieces ---------- */
+
+function Field({ id, label, children, hint }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-sm font-semibold text-ink-muted uppercase tracking-wide">
+        {label}
+      </label>
+      {children}
+      {hint && <span className="text-xs text-ink-muted">{hint}</span>}
+    </div>
+  );
+}
+
+function NumberInput({ id, value, onChange }) {
+  return (
+    <input
+      id={id}
+      type="number"
+      inputMode="numeric"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="font-mono-num border border-rule rounded-[2px] bg-paper-raised px-3 py-2 text-ink w-full"
+    />
+  );
+}
+
+function MoneyStringInput({ id, value, onChange }) {
+  return (
+    <input
+      id={id}
+      type="text"
+      pattern="^-?[0-9]{1,12}\.[0-9]{2}$"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="font-mono-num border border-rule rounded-[2px] bg-paper-raised px-3 py-2 text-ink w-full"
+      aria-describedby={id + "-hint"}
+    />
+  );
+}
+
+/* ---------- Reason codes / required documents editable lists ---------- */
+
+function ReasonCodesEditor({ items, onChange }) {
+  const update = (idx, key, val) => {
+    const next = items.map((it, i) => (i === idx ? { ...it, [key]: val } : it));
+    onChange(next);
+  };
+  const remove = (idx) => onChange(items.filter((_, i) => i !== idx));
+  const add = () => onChange([...items, { code: "", text: "" }]);
+
+  return (
+    <fieldset className="border border-rule rounded-[2px] bg-paper-raised p-4">
+      <legend className="font-display text-lg px-1">Reason codes</legend>
+      <div className="flex flex-col gap-3 mt-2">
+        {items.map((rc, idx) => (
+          <div key={idx} className="grid grid-cols-[120px_1fr_auto] gap-2 items-end">
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`rc-code-${idx}`} className="text-xs font-semibold text-ink-muted">Code</label>
+              <input
+                id={`rc-code-${idx}`}
+                type="text"
+                value={rc.code}
+                onChange={(e) => update(idx, "code", e.target.value)}
+                className="font-mono-num border border-rule rounded-[2px] px-2 py-1.5 bg-white"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`rc-text-${idx}`} className="text-xs font-semibold text-ink-muted">Text</label>
+              <input
+                id={`rc-text-${idx}`}
+                type="text"
+                value={rc.text}
+                onChange={(e) => update(idx, "text", e.target.value)}
+                className="border border-rule rounded-[2px] px-2 py-1.5 bg-white"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => remove(idx)}
+              aria-label={`Remove reason code ${rc.code || idx + 1}`}
+              className="text-signal-red border border-rule rounded-[2px] px-2 py-1.5 hover:bg-paper text-sm font-semibold"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={add}
+        className="mt-3 text-sm font-semibold text-brass border border-brass rounded-[2px] px-3 py-1.5 hover:bg-paper"
+      >
+        + Add reason code
+      </button>
+    </fieldset>
+  );
+}
+
+function RequiredDocumentsEditor({ items, onChange }) {
+  const update = (idx, key, val) => {
+    const next = items.map((it, i) => (i === idx ? { ...it, [key]: val } : it));
+    onChange(next);
+  };
+  const remove = (idx) => onChange(items.filter((_, i) => i !== idx));
+  const add = () => onChange([...items, { document_type: "", label: "" }]);
+
+  return (
+    <fieldset className="border border-rule rounded-[2px] bg-paper-raised p-4">
+      <legend className="font-display text-lg px-1">Required documents</legend>
+      <div className="flex flex-col gap-3 mt-2">
+        {items.map((doc, idx) => (
+          <div key={idx} className="grid grid-cols-[180px_1fr_auto] gap-2 items-end">
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`doc-type-${idx}`} className="text-xs font-semibold text-ink-muted">Document type</label>
+              <input
+                id={`doc-type-${idx}`}
+                type="text"
+                value={doc.document_type}
+                onChange={(e) => update(idx, "document_type", e.target.value)}
+                className="font-mono-num border border-rule rounded-[2px] px-2 py-1.5 bg-white"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`doc-label-${idx}`} className="text-xs font-semibold text-ink-muted">Label</label>
+              <input
+                id={`doc-label-${idx}`}
+                type="text"
+                value={doc.label}
+                onChange={(e) => update(idx, "label", e.target.value)}
+                className="border border-rule rounded-[2px] px-2 py-1.5 bg-white"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => remove(idx)}
+              aria-label={`Remove required document ${doc.label || idx + 1}`}
+              className="text-signal-red border border-rule rounded-[2px] px-2 py-1.5 hover:bg-paper text-sm font-semibold"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={add}
+        className="mt-3 text-sm font-semibold text-brass border border-brass rounded-[2px] px-3 py-1.5 hover:bg-paper"
+      >
+        + Add required document
+      </button>
+    </fieldset>
+  );
+}
+
+/* ---------- Version history (read-only, byte-identical prior versions) ---------- */
+
+function VersionHistoryTable({ versions }) {
+  const sorted = [...versions].sort((a, b) => b.version_number - a.version_number);
+  return (
+    <table className="w-full border-collapse" data-testid="version-history">
+      <caption className="sr-only">Policy version history for this product</caption>
+      <thead>
+        <tr className="border-b border-rule">
+          <th scope="col" className="text-left text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Version</th>
+          <th scope="col" className="text-left text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Version id</th>
+          <th scope="col" className="text-left text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Status</th>
+          <th scope="col" className="text-right text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Min income</th>
+          <th scope="col" className="text-right text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Annual rate %</th>
+          <th scope="col" className="text-left text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Created at</th>
+        </tr>
+      </thead>
+      <tbody>
+        {sorted.map((v) => (
+          <tr key={v.id} className="border-b border-rule h-11" data-version-id={v.id}>
+            <td className="px-3 font-mono-num">v{v.version_number}</td>
+            <td className="px-3 font-mono-num text-xs">{v.id}</td>
+            <td className="px-3">
+              {v.is_active ? (
+                <span className="text-signal-green font-semibold">ACTIVE</span>
+              ) : (
+                <span className="text-ink-muted font-semibold">SUPERSEDED — read only</span>
+              )}
+            </td>
+            <td className="px-3 text-right font-mono-num">{formatMoney(v.rules.min_income)}</td>
+            <td className="px-3 text-right font-mono-num">{v.rules.annual_rate_pct}</td>
+            <td className="px-3 font-mono-num text-xs">{formatDateTime(v.created_at)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/* ---------- App ---------- */
+
+function App() {
+  const [catalog, setCatalog] = useState(initialCatalog);
+  const [selectedProduct, setSelectedProduct] = useState("PERSONAL");
+  const [saveCounter, setSaveCounter] = useState(1);
+  const [savedFlash, setSavedFlash] = useState(null);
+
+  const activeVersion = useMemo(() => {
+    const versions = catalog[selectedProduct].versions;
+    return versions.find((v) => v.is_active) || versions[0];
+  }, [catalog, selectedProduct]);
+
+  const [form, setForm] = useState(() => JSON.parse(JSON.stringify(activeVersion.rules)));
+
+  const switchProduct = (code) => {
+    setSelectedProduct(code);
+    const versions = catalog[code].versions;
+    const active = versions.find((v) => v.is_active) || versions[0];
+    setForm(JSON.parse(JSON.stringify(active.rules)));
+    setSavedFlash(null);
+  };
+
+  const setThreshold = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    const product = catalog[selectedProduct];
+    const currentActive = product.versions.find((v) => v.is_active);
+    const newVersion = {
+      id: makeVersionId(selectedProduct, saveCounter),
+      product_code: selectedProduct,
+      version_number: currentActive.version_number + 1,
+      is_active: true,
+      created_by: "8a1e4c1a-2222-4a3b-9c11-000000000001",
+      created_at: nowIso(),
+      rules: JSON.parse(JSON.stringify(form)),
+    };
+
+    setCatalog((prev) => {
+      const prevVersions = prev[selectedProduct].versions;
+      const untouchedPrevious = prevVersions.map((v) =>
+        v.id === currentActive.id ? { ...v, is_active: false } : v
+      );
+      return {
+        ...prev,
+        [selectedProduct]: {
+          ...prev[selectedProduct],
+          versions: [...untouchedPrevious, newVersion],
+        },
+      };
+    });
+
+    setSaveCounter((c) => c + 1);
+    setSavedFlash(`Saved as version ${newVersion.version_number} (${newVersion.id}) and activated.`);
+  };
+
+  const product = catalog[selectedProduct];
+
+  return (
+    <div className="min-h-screen flex">
+      <nav aria-label="Admin sections" className="hidden md:block w-[220px] shrink-0 border-r border-rule bg-paper-raised p-6">
+        <div className="font-display text-xl mb-8">TrueLend</div>
+        <ul className="flex flex-col gap-3 text-sm font-semibold">
+          <li><span className="text-ink-muted">Applications</span></li>
+          <li><span className="text-ink-muted">Underwriting Queue</span></li>
+          <li className="text-brass border-l-2 border-brass -ml-[2px] pl-3">Policy Editor</li>
+          <li><span className="text-ink-muted">Portfolio Dashboard</span></li>
+          <li><span className="text-ink-muted">Audit Log</span></li>
+        </ul>
+      </nav>
+
+      <main className="flex-1 max-w-[1180px] mx-auto px-4 md:px-10 py-8">
+        <header className="mb-6">
+          <p className="text-xs uppercase tracking-widest text-ink-muted font-semibold">Admin · Policy &amp; Catalog</p>
+          <h1 className="font-display text-3xl md:text-4xl font-semibold mt-1">Policy Editor</h1>
+        </header>
+
+        <section aria-label="Product selector" className="mb-6">
+          <div role="tablist" aria-label="Loan products" className="flex gap-2 border-b border-rule">
+            {PRODUCT_ORDER.map((code) => (
+              <button
+                key={code}
+                type="button"
+                role="tab"
+                aria-selected={selectedProduct === code}
+                onClick={() => switchProduct(code)}
+                className={
+                  "px-4 py-2 text-sm font-semibold border-b-2 -mb-px " +
+                  (selectedProduct === code
+                    ? "border-brass text-brass"
+                    : "border-transparent text-ink-muted hover:text-ink")
+                }
+              >
+                {catalog[code].name}
+                <span className="ml-1 font-mono-num text-xs">({code})</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section aria-label="Active version summary" className="mb-8 border border-rule bg-paper-raised rounded-[2px] p-4 flex flex-wrap gap-6">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-ink-muted font-semibold">Active version id</p>
+            <p className="font-mono-num text-sm mt-1" data-active-version-id={activeVersion.id}>{activeVersion.id}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-ink-muted font-semibold">Active version number</p>
+            <p className="font-mono-num text-lg mt-1" data-active-version-number={activeVersion.version_number}>
+              v{activeVersion.version_number}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-ink-muted font-semibold">Created at</p>
+            <p className="font-mono-num text-sm mt-1">{formatDateTime(activeVersion.created_at)}</p>
+          </div>
+        </section>
+
+        <form onSubmit={handleSave} aria-label={`Edit policy thresholds for ${product.name}`}>
+          <fieldset className="border border-rule rounded-[2px] bg-paper-raised p-4 mb-6">
+            <legend className="font-display text-lg px-1">Threshold families</legend>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+              <Field id="min_income" label="Minimum income" hint="Money string, e.g. 25000.00">
+                <MoneyStringInput id="min_income" value={form.min_income} onChange={(v) => setThreshold("min_income", v)} />
+              </Field>
+              <Field id="min_age" label="Minimum age">
+                <NumberInput id="min_age" value={form.min_age} onChange={(v) => setThreshold("min_age", Number(v))} />
+              </Field>
+              <Field id="max_age" label="Maximum age">
+                <NumberInput id="max_age" value={form.max_age} onChange={(v) => setThreshold("max_age", Number(v))} />
+              </Field>
+              <Field id="min_credit_score" label="Minimum credit score">
+                <NumberInput id="min_credit_score" value={form.min_credit_score} onChange={(v) => setThreshold("min_credit_score", Number(v))} />
+              </Field>
+              <Field id="min_tenure_months" label="Minimum tenure (months)">
+                <NumberInput id="min_tenure_months" value={form.min_tenure_months} onChange={(v) => setThreshold("min_tenure_months", Number(v))} />
+              </Field>
+              <Field id="max_tenure_months" label="Maximum tenure (months)">
+                <NumberInput id="max_tenure_months" value={form.max_tenure_months} onChange={(v) => setThreshold("max_tenure_months", Number(v))} />
+              </Field>
+              <Field id="annual_rate_pct" label="Annual rate %" hint='e.g. "13.500000"'>
+                <input
+                  id="annual_rate_pct"
+                  type="text"
+                  pattern="^[0-9]{1,3}\.[0-9]{1,6}$"
+                  value={form.annual_rate_pct}
+                  onChange={(e) => setThreshold("annual_rate_pct", e.target.value)}
+                  className="font-mono-num border border-rule rounded-[2px] bg-paper-raised px-3 py-2 text-ink w-full"
+                />
+              </Field>
+            </div>
+          </fieldset>
+
+          <div className="mb-6">
+            <ReasonCodesEditor items={form.reason_codes} onChange={(v) => setThreshold("reason_codes", v)} />
+          </div>
+
+          <div className="mb-6">
+            <RequiredDocumentsEditor items={form.required_documents} onChange={(v) => setThreshold("required_documents", v)} />
+          </div>
+
+          <div className="flex items-center gap-4 mb-10">
+            <button
+              type="submit"
+              className="bg-brass text-paper-raised font-semibold px-5 py-2.5 rounded-[2px] hover:opacity-90"
+            >
+              Save new policy version
+            </button>
+            <p className="text-sm text-ink-muted">
+              Saving appends a new version and activates it. This never edits or deletes version {activeVersion.version_number}.
+            </p>
+          </div>
+          {savedFlash && (
+            <p role="status" className="text-signal-green font-semibold mb-8" data-testid="save-confirmation">
+              {savedFlash}
+            </p>
+          )}
+        </form>
+
+        <section aria-label="Version history">
+          <h2 className="font-display text-2xl mb-2">Version history</h2>
+          <p className="text-sm text-ink-muted mb-3">
+            Prior versions are immutable and shown here read-only — there is no edit or delete path to a past version.
+          </p>
+          <div className="border border-rule rounded-[2px] overflow-x-auto bg-paper-raised">
+            <VersionHistoryTable versions={product.versions} />
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

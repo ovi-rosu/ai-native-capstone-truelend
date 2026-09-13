@@ -1,0 +1,169 @@
+{
+  "group": "G",
+  "stories": [
+    "E4-S3",
+    "E4-S4",
+    "E5-S1",
+    "E6-S1"
+  ],
+  "features": [
+    "F042",
+    "F043",
+    "F044",
+    "F045",
+    "F046",
+    "F047",
+    "F048",
+    "F049",
+    "F050",
+    "F055",
+    "F056",
+    "F057",
+    "F058"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-045",
+        "matrix_ids": [
+          "VM-045"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 422,
+        "description": "POST /applications → 422 — declared income below the product minimum; error reads PolicyViolationException"
+      },
+      {
+        "id": "QA-VM-046",
+        "matrix_ids": [
+          "VM-046"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 422,
+        "description": "POST /applications → 422 — context names threshold_kind min_income and the configured_value it was checked against"
+      },
+      {
+        "id": "QA-VM-047",
+        "matrix_ids": [
+          "VM-047"
+        ],
+        "method": "GET",
+        "path": "/applications",
+        "expected_status": 200,
+        "description": "GET /applications → 200 — after that refusal; no application row was persisted for it"
+      },
+      {
+        "id": "QA-VM-048",
+        "matrix_ids": [
+          "VM-048"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 201,
+        "description": "POST /applications → 201 — repeated with one identical age/income/credit-flag set; credit_score is identical on every call"
+      },
+      {
+        "id": "QA-VM-049",
+        "matrix_ids": [
+          "VM-049"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 201,
+        "description": "POST /applications → 201 — two submissions differing only in credit-history flags return different credit_score values"
+      },
+      {
+        "id": "QA-VM-055",
+        "matrix_ids": [
+          "VM-055"
+        ],
+        "method": "POST",
+        "path": "/applications/{application_id}/documents/{document_id}/verification",
+        "expected_status": 200,
+        "description": "POST /applications/{application_id}/documents/{document_id}/verification → 200 — {\"status\":\"VERIFIED\"}; the stored status reads VERIFIED"
+      },
+      {
+        "id": "QA-VM-056",
+        "matrix_ids": [
+          "VM-056"
+        ],
+        "method": "POST",
+        "path": "/applications/{application_id}/documents/{document_id}/verification",
+        "expected_status": 200,
+        "description": "POST /applications/{application_id}/documents/{document_id}/verification → 200 — REJECTED with a reason; the row reads REJECTED and carries that non-empty reason"
+      },
+      {
+        "id": "QA-VM-057",
+        "matrix_ids": [
+          "VM-057"
+        ],
+        "method": "POST",
+        "path": "/applications/{application_id}/documents/{document_id}/verification",
+        "expected_status": 422,
+        "description": "POST /applications/{application_id}/documents/{document_id}/verification → 422 — REJECTED with an empty reason; the stored status is unchanged"
+      },
+      {
+        "id": "QA-VM-058",
+        "matrix_ids": [
+          "VM-058"
+        ],
+        "method": "GET",
+        "path": "/documents/queue",
+        "expected_status": 200,
+        "description": "GET /documents/queue → 200 — already-actioned documents are absent from the returned queue"
+      }
+    ],
+    "playwright_checks": [
+      {
+        "id": "QA-VM-042",
+        "matrix_ids": [
+          "VM-042"
+        ],
+        "description": "Sign in as CUSTOMER, open Apply, select a product, enter valid details and submit — the confirmation shows the new application in SUBMITTED state",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Sign in as CUSTOMER, open Apply, select a product, enter valid details and submit — the confirmation shows the new application in SUBMITTED state"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-043",
+        "matrix_ids": [
+          "VM-043"
+        ],
+        "description": "On that confirmation screen — every required-document checklist item for the chosen product is listed",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "On that confirmation screen — every required-document checklist item for the chosen product is listed"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-044",
+        "matrix_ids": [
+          "VM-044"
+        ],
+        "description": "Render the Apply form — no co-applicant field and no guarantor field is present",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Render the Apply form — no co-applicant field and no guarantor field is present"
+          }
+        ]
+      }
+    ],
+    "accessibility_checks": {
+      "required": true,
+      "block_impacts": [
+        "serious",
+        "critical"
+      ]
+    }
+  }
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+  TrueLend design mockups — index
+  One mockup per screen-bearing UI-layer story. E17-S1 is a UI-layer story with
+  no screen of its own (it lands the accessibility harness and registers Apply,
+  Track and Repay), so it has no mockup and is listed here for completeness.
+  Aesthetic contract: aesthetic-direction.md. API contract: ../api-contracts.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TrueLend — design mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght&#64;9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght&#64;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght&#64;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #14231D; --ink-muted: #4E6158; --paper: #F7F4EC;
+    --paper-raised: #FFFDF7; --brass: #9A6B1F; --rule: #D8D0BE;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: "Public Sans", sans-serif; line-height: 1.55;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 {
+    font-family: Fraunces, Georgia, serif; font-weight: 600;
+    font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.01em; margin: 0 0 8px;
+  }
+  .lede { color: var(--ink-muted); max-width: 62ch; margin: 0 0 40px; }
+  h2 {
+    font-family: Fraunces, Georgia, serif; font-size: 1.25rem; font-weight: 600;
+    margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+  }
+  table { width: 100%; border-collapse: collapse; background: var(--paper-raised); }
+  caption { text-align: left; color: var(--ink-muted); font-size: 0.875rem; padding: 8px 0; }
+  th {
+    text-align: left; font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 600; color: var(--ink-muted);
+    border-bottom: 1px solid var(--rule); padding: 10px 12px;
+  }
+  td { border-bottom: 1px solid var(--rule); padding: 12px; vertical-align: top; }
+  td.role, td.endpoints { font-family: "IBM Plex Mono", monospace; font-size: 0.8125rem; }
+  a { color: var(--brass); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--brass); }
+  a:hover { background: rgba(154, 107, 31, 0.08); }
+  a:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+  .note {
+    background: var(--paper-raised); border: 1px solid var(--rule);
+    padding: 16px 20px; margin-top: 40px; font-size: 0.9375rem; color: var(--ink-muted);
+  }
+  @media (max-width: 700px) {
+    table, thead, tbody, tr, th, td { display: block; }
+    thead { display: none; }
+    tr { border-bottom: 1px solid var(--rule); padding: 8px 0; }
+    td { border: 0; padding: 4px 12px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>TrueLend — design mockups</h1>
+  <p class="lede">
+    Visual contract for the seven screen-bearing UI stories, produced at design
+    time and before any production code. Every displayed field exists in
+    <a href="../api-contracts.md">api-contracts.md</a>; every monetary value is a
+    quoted 2-decimal string, per decision D-G. Shared aesthetic:
+    <a href="aesthetic-direction.md">aesthetic-direction.md</a>.
+  </p>
+
+  <h2>Customer screens</h2>
+  <table>
+    <caption>All three are held to WCAG 2.1 AA by the E17-S1 accessibility harness.</caption>
+    <thead>
+      <tr><th>Story</th><th>Screen</th><th>Role</th><th>Endpoints</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="E4-S3.html">E4-S3</a></td>
+        <td>Apply — product selection, applicant details, generated checklist</td>
+        <td class="role">CUSTOMER</td>
+        <td class="endpoints">GET /products<br />POST /applications</td>
+      </tr>
+      <tr>
+        <td><a href="E8-S1.html">E8-S1</a></td>
+        <td>Track — status, unverified documents, decision with reason codes</td>
+        <td class="role">CUSTOMER</td>
+        <td class="endpoints">GET /applications<br />GET /applications/{application_id}</td>
+      </tr>
+      <tr>
+        <td><a href="E13-S1.html">E13-S1</a></td>
+        <td>Repay — installment ladder, outstanding principal, bucket, posting</td>
+        <td class="role">CUSTOMER</td>
+        <td class="endpoints">GET /loans/{loan_id}<br />POST /loans/{loan_id}/repayments</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Underwriter and admin screens</h2>
+  <table>
+    <thead>
+      <tr><th>Story</th><th>Screen</th><th>Role</th><th>Endpoints</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="E6-S2.html">E6-S2</a></td>
+        <td>Workbench and decision review for MANUAL_REVIEW cases</td>
+        <td class="role">UNDERWRITER</td>
+        <td class="endpoints">GET /applications?status=<br />POST /applications/{application_id}/decision</td>
+      </tr>
+      <tr>
+        <td><a href="E7-S1.html">E7-S1</a></td>
+        <td>Admin console — filtered application list, audited AUTO_REJECT override</td>
+        <td class="role">ADMIN</td>
+        <td class="endpoints">GET /applications<br />POST /applications/{application_id}/override<br />GET /audit-entries</td>
+      </tr>
+      <tr>
+        <td><a href="E3-S2.html">E3-S2</a></td>
+        <td>Policy Editor — five threshold families, append-and-activate</td>
+        <td class="role">ADMIN</td>
+        <td class="endpoints">GET /products/{product_code}<br />POST /products/{product_code}/policy-versions</td>
+      </tr>
+      <tr>
+        <td><a href="E14-S1.html">E14-S1</a></td>
+        <td>Portfolio dashboard — by product, by bucket, total overdue</td>
+        <td class="role">ADMIN</td>
+        <td class="endpoints">GET /dashboard</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>UI-layer story without a mockup</h2>
+  <table>
+    <thead>
+      <tr><th>Story</th><th>Why no mockup</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>E17-S1</td>
+        <td>
+          It lands the axe-core and keyboard-traversal harness plus the
+          customer-facing screen registry, and remediates the Apply screen. It
+          renders no screen of its own, so inventing one would be scope the story
+          denies.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>Scope fidelity.</strong> These mockups show only what their stories
+    specify. There is no notification affordance (SG-4), no co-applicant or
+    guarantor field (SG-7), no fee, penalty or collections figure (SG-1), and no
+    early settlement, foreclosure or prepayment quote (SG-10). Interactions
+    demonstrate the flow in local state; none calls a backend.
+  </div>
+</main>
+</body>
+</html>

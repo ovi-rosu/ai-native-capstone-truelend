@@ -1,0 +1,14 @@
+=== Session 0 ===
+date: 2026-09-13T13:04:00.730Z
+mode: full
+groups_completed: []
+groups_remaining: []
+current_group: none
+current_stories: []
+sprint_contract: none
+last_commit: none
+features_passing: 0 / 0
+coverage: 0%
+learned_rules: 0
+blocked_stories: none
+next_action: Run /auto

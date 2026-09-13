@@ -1,0 +1,506 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://horizonbank.example/truelend/data-models.schema.json",
+  "title": "TrueLend persisted and derived entities",
+  "description": "Every $defs key is a term in specs/design/CONTEXT.md (decision D-H). Money is a quoted 2-decimal string at every hop (decision D-G); no monetary property is a number.",
+  "type": "object",
+  "properties": {
+    "entities": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/LoanProduct" },
+          { "$ref": "#/$defs/PolicyVersion" },
+          { "$ref": "#/$defs/User" },
+          { "$ref": "#/$defs/LoanApplication" },
+          { "$ref": "#/$defs/ApplicationDocument" },
+          { "$ref": "#/$defs/UnderwritingDecision" },
+          { "$ref": "#/$defs/Loan" },
+          { "$ref": "#/$defs/RepaymentSchedule" },
+          { "$ref": "#/$defs/Installment" },
+          { "$ref": "#/$defs/Disbursement" },
+          { "$ref": "#/$defs/Repayment" },
+          { "$ref": "#/$defs/AuditEntry" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "EMI": {
+      "title": "EMI",
+      "description": "Equated Monthly Installment. Quoted 2dp decimal string.",
+      "type": "string",
+      "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$"
+    },
+    "TotalPayable": {
+      "title": "Total Payable",
+      "description": "Sum of every Installment principal and interest across a Repayment Schedule.",
+      "type": "string",
+      "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$"
+    },
+    "RoundingResidual": {
+      "title": "Rounding Residual",
+      "description": "Difference between the unrounded EMI stream and its 2dp representation, absorbed wholly by the final Installment (decision D-C).",
+      "type": "string",
+      "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$"
+    },
+    "OutstandingPrincipal": {
+      "title": "Outstanding Principal",
+      "description": "Stored projection: disbursed principal minus the applied principal of posted Repayments. Reconcilable by replay.",
+      "type": "string",
+      "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$"
+    },
+    "CorrelationId": {
+      "title": "Correlation Id",
+      "description": "Request-scoped identifier carried by every structured log line emitted while handling one request.",
+      "type": "string",
+      "minLength": 1
+    },
+    "Role": {
+      "title": "Role",
+      "description": "Exactly one per User. Enforced at the controller layer.",
+      "type": "string",
+      "enum": ["CUSTOMER", "UNDERWRITER", "ADMIN"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Table app_user. An authenticated actor holding exactly one Role.",
+      "type": "object",
+      "required": ["id", "username", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "username": { "type": "string", "minLength": 1 },
+        "role": { "$ref": "#/$defs/Role" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AuditEntry": {
+      "title": "Audit Entry",
+      "description": "Table audit_event. Insert-only (decision D-E). Records actor, action and entity id as opaque values.",
+      "type": "object",
+      "required": ["id", "actor_user_id", "action", "entity_type", "entity_id", "occurred_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "actor_user_id": { "type": "string", "format": "uuid" },
+        "action": { "type": "string", "minLength": 1 },
+        "entity_type": { "type": "string", "minLength": 1 },
+        "entity_id": { "type": "string", "minLength": 1 },
+        "comment": { "type": ["string", "null"] },
+        "reason_code": { "type": ["string", "null"] },
+        "occurred_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Threshold": {
+      "title": "Threshold",
+      "description": "One configurable bound inside Policy Rules. Changing it means publishing a new Policy Version.",
+      "type": "object",
+      "required": ["kind", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["min_income", "min_age", "max_age", "min_credit_score", "min_tenure_months", "max_tenure_months", "annual_rate_pct"]
+        },
+        "value": { "type": "string", "minLength": 1 }
+      }
+    },
+    "ReasonCode": {
+      "title": "Reason Code",
+      "description": "Declared by a Policy Version. A decision may cite only codes declared by the version pinned to its application.",
+      "type": "object",
+      "required": ["code", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "RequiredDocument": {
+      "title": "Required Document",
+      "description": "A document type a Loan Product demands, declared by the Policy Version.",
+      "type": "object",
+      "required": ["document_type", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "document_type": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 }
+      }
+    },
+    "PolicyRules": {
+      "title": "Policy Rules",
+      "description": "The validated threshold document carried by a Policy Version, stored as JSONB and validated by a Pydantic model (decision D-A). No expression DSL exists.",
+      "type": "object",
+      "required": ["min_income", "min_age", "max_age", "min_credit_score", "min_tenure_months", "max_tenure_months", "annual_rate_pct", "reason_codes", "required_documents"],
+      "additionalProperties": false,
+      "properties": {
+        "min_income": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "min_age": { "type": "integer", "minimum": 0 },
+        "max_age": { "type": "integer", "minimum": 0 },
+        "min_credit_score": { "type": "integer", "minimum": 300, "maximum": 900 },
+        "min_tenure_months": { "type": "integer", "minimum": 1 },
+        "max_tenure_months": { "type": "integer", "minimum": 1 },
+        "annual_rate_pct": { "type": "string", "pattern": "^[0-9]{1,3}\\.[0-9]{1,6}$" },
+        "reason_codes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/ReasonCode" } },
+        "required_documents": { "type": "array", "items": { "$ref": "#/$defs/RequiredDocument" } }
+      }
+    },
+    "PolicyVersion": {
+      "title": "Policy Version",
+      "description": "Table policy_version. Insert-only: never updated, never deleted, in code or in migration.",
+      "type": "object",
+      "required": ["id", "product_code", "version_number", "rules", "created_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "product_code": { "type": "string", "minLength": 1 },
+        "version_number": { "type": "integer", "minimum": 1 },
+        "rules": { "$ref": "#/$defs/PolicyRules" },
+        "created_by": { "type": ["string", "null"], "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ActivePolicyVersion": {
+      "title": "Active Policy Version",
+      "description": "Derived, not a table. The Policy Version whose id equals product.active_policy_version_id. An is_active column on policy_version is impossible: flipping it would be an UPDATE the immutability test forbids.",
+      "allOf": [{ "$ref": "#/$defs/PolicyVersion" }]
+    },
+    "LoanProduct": {
+      "title": "Loan Product",
+      "description": "Table product. Carries no thresholds; its rules live in its Policy Versions. A new product is an INSERT with no deploy (decision D-A).",
+      "type": "object",
+      "required": ["product_code", "name", "active_policy_version_id"],
+      "additionalProperties": false,
+      "properties": {
+        "product_code": { "type": "string", "enum": ["PERSONAL", "VEHICLE", "EDUCATION"] },
+        "name": { "type": "string", "minLength": 1 },
+        "active_policy_version_id": { "type": "string", "format": "uuid" }
+      }
+    },
+    "Applicant": {
+      "title": "Applicant",
+      "description": "Inlined on the application row: exactly one per Loan Application, so a child table would model a cardinality the requirements deny.",
+      "type": "object",
+      "required": ["full_name", "date_of_birth", "declared_income", "pan", "aadhaar"],
+      "additionalProperties": false,
+      "properties": {
+        "full_name": { "type": "string", "minLength": 1 },
+        "date_of_birth": { "type": "string", "format": "date" },
+        "declared_income": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "pan": { "type": "string", "minLength": 1, "description": "Synthetic. Never verified, never logged." },
+        "aadhaar": { "type": "string", "minLength": 1, "description": "Synthetic. Never verified, never logged." },
+        "credit_history_flags": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "ApplicationSubmission": {
+      "title": "Application Submission",
+      "description": "The inbound payload that creates a Loan Application.",
+      "type": "object",
+      "required": ["product_code", "requested_amount", "requested_tenure_months", "applicant"],
+      "additionalProperties": false,
+      "properties": {
+        "product_code": { "type": "string", "minLength": 1 },
+        "requested_amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "requested_tenure_months": { "type": "integer", "minimum": 1 },
+        "applicant": { "$ref": "#/$defs/Applicant" }
+      }
+    },
+    "ApplicationStatus": {
+      "title": "Application Status",
+      "description": "Mutable projection of the append-only facts recorded against the application. Seven states per D-L, which added MANUAL_REVIEW to the Application Status term in CONTEXT.md and to this enum.",
+      "type": "string",
+      "enum": ["SUBMITTED", "AWAITING_DOCUMENTS", "UNDER_REVIEW", "MANUAL_REVIEW", "APPROVED", "REJECTED", "DISBURSED"]
+    },
+    "CreditScore": {
+      "title": "Credit Score",
+      "description": "Deterministic score from age, income and credit-history flags. Not a bureau score.",
+      "type": "integer",
+      "minimum": 300,
+      "maximum": 900
+    },
+    "CreditScoreStub": {
+      "title": "Credit Score Stub",
+      "description": "Derived, not a table. The in-process stand-in for a credit bureau behind its own port: deterministic for identical inputs, no external call, no provider credentials.",
+      "type": "object",
+      "required": ["deterministic", "external_call"],
+      "additionalProperties": false,
+      "properties": {
+        "deterministic": { "type": "boolean", "enum": [true] },
+        "external_call": { "type": "boolean", "enum": [false] },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["age", "declared_income", "credit_history_flags"] }
+        }
+      }
+    },
+    "LoanApplication": {
+      "title": "Loan Application",
+      "description": "Table application. policy_version_id is pinned at submission and never retargeted by a later activation (decision D-D).",
+      "type": "object",
+      "required": ["id", "product_code", "policy_version_id", "applicant_user_id", "status", "requested_amount", "requested_tenure_months", "applicant", "submitted_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "product_code": { "type": "string", "minLength": 1 },
+        "policy_version_id": { "type": "string", "format": "uuid" },
+        "applicant_user_id": { "type": "string", "format": "uuid" },
+        "status": { "$ref": "#/$defs/ApplicationStatus" },
+        "requested_amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "requested_tenure_months": { "type": "integer", "minimum": 1 },
+        "applicant": { "$ref": "#/$defs/Applicant" },
+        "credit_score": { "anyOf": [{ "$ref": "#/$defs/CreditScore" }, { "type": "null" }] },
+        "submitted_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "DocumentVerificationStatus": {
+      "title": "Document Verification Status",
+      "description": "An Underwriter ruling on one Application Document. REJECTED requires a non-empty reason, enforced by a CHECK constraint.",
+      "type": "string",
+      "enum": ["PENDING", "VERIFIED", "REJECTED"]
+    },
+    "ApplicationDocument": {
+      "title": "Application Document",
+      "description": "Table checklist_item. No file bytes and no storage URL: M1-M3 has no upload surface, so the checklist row is the document.",
+      "type": "object",
+      "required": ["id", "application_id", "document_type", "label", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "application_id": { "type": "string", "format": "uuid" },
+        "document_type": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/DocumentVerificationStatus" },
+        "rejection_reason": { "type": ["string", "null"], "minLength": 1 },
+        "actioned_by": { "type": ["string", "null"], "format": "uuid" },
+        "actioned_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "DocumentChecklist": {
+      "title": "Document Checklist",
+      "description": "The set of Required Documents generated for one Loan Application at submission, from its pinned Policy Version, item for item.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/ApplicationDocument" }
+    },
+    "DocumentVerificationQueue": {
+      "title": "Document Verification Queue",
+      "description": "Derived read model: Application Documents still PENDING. Already-actioned documents are absent.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/ApplicationDocument" }
+    },
+    "DecisionOutcome": {
+      "title": "Decision Outcome",
+      "type": "string",
+      "enum": ["AUTO_APPROVE", "AUTO_REJECT", "MANUAL_REVIEW"]
+    },
+    "UnderwritingDecision": {
+      "title": "Underwriting Decision",
+      "description": "Table decision_record. Insert-only; the latest record wins. Cites only Reason Codes declared by policy_version_id.",
+      "type": "object",
+      "required": ["id", "application_id", "policy_version_id", "outcome", "reason_codes", "decided_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "application_id": { "type": "string", "format": "uuid" },
+        "policy_version_id": { "type": "string", "format": "uuid" },
+        "outcome": { "$ref": "#/$defs/DecisionOutcome" },
+        "reason_codes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/ReasonCode" } },
+        "comment": { "type": ["string", "null"] },
+        "supersedes_id": { "type": ["string", "null"], "format": "uuid" },
+        "decided_by": { "type": ["string", "null"], "format": "uuid" },
+        "decided_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Override": {
+      "title": "Override",
+      "description": "An Admin reversal of an AUTO_REJECT: a new decision_record with supersedes_id set, a comment, a Reason Code and an Audit Entry. Never an edit of the prior row.",
+      "type": "object",
+      "required": ["application_id", "reason_code", "comment", "supersedes_id"],
+      "additionalProperties": false,
+      "properties": {
+        "application_id": { "type": "string", "format": "uuid" },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "comment": { "type": "string", "minLength": 1 },
+        "supersedes_id": { "type": "string", "format": "uuid" }
+      }
+    },
+    "PolicyViolation": {
+      "title": "Policy Violation",
+      "description": "Refusal of an Application Submission that breaches a Threshold outright. Surfaces as PolicyViolationException; the transaction rolls back and no application row survives.",
+      "type": "object",
+      "required": ["error", "detail", "context"],
+      "additionalProperties": false,
+      "properties": {
+        "error": { "type": "string", "enum": ["PolicyViolationException"] },
+        "detail": { "type": "string", "minLength": 1 },
+        "context": {
+          "type": "object",
+          "required": ["threshold_kind", "configured_value", "submitted_value", "policy_version_id"],
+          "additionalProperties": false,
+          "properties": {
+            "threshold_kind": { "type": "string", "minLength": 1 },
+            "configured_value": { "type": "string", "minLength": 1 },
+            "submitted_value": { "type": "string", "minLength": 1 },
+            "policy_version_id": { "type": "string", "format": "uuid" }
+          }
+        }
+      }
+    },
+    "Loan": {
+      "title": "Loan",
+      "description": "Table loan. A disbursed Loan Application. outstanding_principal, delinquency_bucket and days_past_due are the maintained projections (decision D-E).",
+      "type": "object",
+      "required": ["id", "application_id", "product_code", "principal", "annual_rate_pct", "tenure_months", "status", "outstanding_principal", "delinquency_bucket", "days_past_due"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "application_id": { "type": "string", "format": "uuid" },
+        "product_code": { "type": "string", "minLength": 1 },
+        "principal": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "annual_rate_pct": { "type": "string", "pattern": "^[0-9]{1,3}\\.[0-9]{1,6}$" },
+        "tenure_months": { "type": "integer", "minimum": 1 },
+        "status": { "type": "string", "enum": ["APPROVED", "DISBURSED", "CLOSED"] },
+        "outstanding_principal": { "$ref": "#/$defs/OutstandingPrincipal" },
+        "delinquency_bucket": { "$ref": "#/$defs/DelinquencyBucket" },
+        "days_past_due": { "$ref": "#/$defs/DaysPastDue" },
+        "disbursed_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "Installment": {
+      "title": "Installment",
+      "description": "Table schedule_installment. Insert-only. No paid flag exists: paid/unpaid is derived from the cumulative ladder against posted Repayments.",
+      "type": "object",
+      "required": ["id", "schedule_id", "sequence", "due_date", "principal_component", "interest_component", "emi"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "schedule_id": { "type": "string", "format": "uuid" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "due_date": { "type": "string", "format": "date" },
+        "principal_component": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "interest_component": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "emi": { "$ref": "#/$defs/EMI" }
+      }
+    },
+    "RepaymentSchedule": {
+      "title": "Repayment Schedule",
+      "description": "Table repayment_schedule, one row per Loan. Insert-only. The stored Installments sum exactly to total_payable, with no epsilon (decision D-C).",
+      "type": "object",
+      "required": ["id", "loan_id", "emi", "total_payable", "rounding_residual", "installments", "generated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "loan_id": { "type": "string", "format": "uuid" },
+        "emi": { "$ref": "#/$defs/EMI" },
+        "total_payable": { "$ref": "#/$defs/TotalPayable" },
+        "rounding_residual": { "$ref": "#/$defs/RoundingResidual" },
+        "installments": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Installment" } },
+        "generated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "FundingSource": {
+      "title": "Funding Source",
+      "description": "Stubbed origin of disbursed money, recorded for audit. No payment rail is called and no live credential exists.",
+      "type": "string",
+      "minLength": 1
+    },
+    "Disbursement": {
+      "title": "Disbursement",
+      "description": "Table disbursement. Insert-only, UNIQUE on loan_id — the structural idempotence guard against a repeat disbursement.",
+      "type": "object",
+      "required": ["id", "loan_id", "released_amount", "funding_source", "disbursed_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "loan_id": { "type": "string", "format": "uuid" },
+        "released_amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "funding_source": { "$ref": "#/$defs/FundingSource" },
+        "disbursed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Repayment": {
+      "title": "Repayment",
+      "description": "Table repayment_posting. Insert-only. applied_principal + applied_interest = amount, enforced by CHECK. Per D-K, allocation is FIFO across whole Installments and within the oldest unpaid Installment a partial Repayment applies to interest first, then principal.",
+      "type": "object",
+      "required": ["id", "loan_id", "amount", "applied_principal", "applied_interest", "posted_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "loan_id": { "type": "string", "format": "uuid" },
+        "amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "applied_principal": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "applied_interest": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "posted_at": { "type": "string", "format": "date-time" },
+        "posted_by": { "type": ["string", "null"], "format": "uuid" }
+      }
+    },
+    "DaysPastDue": {
+      "title": "Days Past Due",
+      "description": "Whole days between the As-Of Date and the due date of the oldest unpaid Installment. Zero when none is overdue (decision D-B).",
+      "type": "integer",
+      "minimum": 0
+    },
+    "DelinquencyBucket": {
+      "title": "Delinquency Bucket",
+      "description": "Ageing band from Days Past Due: CURRENT 0-29, DPD-30 30-59, DPD-60 60-89, DPD-90 90-179, NPA 180+ (decision D-B). Boundaries are Config-layer constants. Status only; nothing is charged for lateness.",
+      "type": "string",
+      "enum": ["CURRENT", "DPD-30", "DPD-60", "DPD-90", "NPA"]
+    },
+    "AsOfDate": {
+      "title": "As-Of Date",
+      "description": "The date an End-Of-Day Run evaluates against, making the run replayable and independent of wall-clock time.",
+      "type": "string",
+      "format": "date"
+    },
+    "EndOfDayRun": {
+      "title": "End-Of-Day Run",
+      "description": "Derived, not a table. Persisting a run row would break the byte-identical second-run assertion, so the run writes only the loan projections it recomputes plus one Audit Entry.",
+      "type": "object",
+      "required": ["as_of_date", "loans_evaluated", "buckets", "completed_at"],
+      "additionalProperties": false,
+      "properties": {
+        "as_of_date": { "$ref": "#/$defs/AsOfDate" },
+        "loans_evaluated": { "type": "integer", "minimum": 0 },
+        "buckets": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "completed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "PortfolioSummary": {
+      "title": "Portfolio Summary",
+      "description": "Derived read model over stored loan bucket state and overdue Installment amounts. Never invokes the End-Of-Day Run.",
+      "type": "object",
+      "required": ["by_product", "total_overdue", "as_of"],
+      "additionalProperties": false,
+      "properties": {
+        "by_product": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["product_code", "loan_count", "loan_value", "by_bucket"],
+            "additionalProperties": false,
+            "properties": {
+              "product_code": { "type": "string", "minLength": 1 },
+              "loan_count": { "type": "integer", "minimum": 0 },
+              "loan_value": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+              "by_bucket": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["delinquency_bucket", "loan_count", "loan_value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "delinquency_bucket": { "$ref": "#/$defs/DelinquencyBucket" },
+                    "loan_count": { "type": "integer", "minimum": 0 },
+                    "loan_value": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "total_overdue": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+        "as_of": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

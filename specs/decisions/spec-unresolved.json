@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "phase": "spec-render",
+  "source": "specs/brd/brd.md",
+  "rendered_at": "2026-09-13T00:00:00Z",
+  "unresolved": [
+    {
+      "id": "U1",
+      "kind": "gate_blocking",
+      "gate": "trace-check --layer spec-acceptance",
+      "verdict_file": "specs/reviews/spec-acceptance-grounding.json",
+      "summary": "17/17 BRD acceptance postconditions covered, 0 dropped, but 28 NFR-derived criteria register as net_new and the verdict is blocking. brd-acceptance.json writes postconditions only for FR-01..FR-17, so a criterion realizing an NFR observation procedure has no upstream acceptance id to trace. No re-render can fix this — the documented exit is a human-recorded accepts_verdict on the deciding entry, which spec-render must never author.",
+      "needs": "The reviewer decides at the /spec human gate whether each NFR criterion stands, then records accepts_verdict {\"layer\": \"spec-acceptance\", \"ids\": [...]} on the decision entry that authored it. Re-run the Step 2 acceptance gate afterwards; --accepted then clears blocking.",
+      "proposed_mapping": [
+        { "decision": "D13", "requirement": "NFR-01", "ids": ["E9-S1-AC1", "E9-S1-AC2", "E9-S1-AC3"] },
+        { "decision": "D14", "requirement": "NFR-02", "ids": ["E3-S1-AC1", "E3-S1-AC2", "E9-S3-AC5"] },
+        { "decision": "D15", "requirement": "NFR-03", "ids": ["E15-S1-AC1", "E15-S1-AC2"] },
+        { "decision": "D16", "requirement": "NFR-04", "ids": ["E1-S2-AC3", "E1-S2-AC4"] },
+        { "decision": "D17", "requirement": "NFR-05", "ids": ["E3-S1-AC3", "E3-S1-AC4"] },
+        { "decision": "D18", "requirement": "NFR-06", "ids": ["E15-S1-AC3", "E15-S1-AC4"] },
+        { "decision": "D19", "requirement": "NFR-07", "ids": ["E15-S1-AC5"] },
+        { "decision": "D20", "requirement": "NFR-08", "ids": ["E16-S1-AC1", "E16-S1-AC2"] },
+        { "decision": "D21", "requirement": "NFR-09", "ids": ["E15-S3-AC1", "E15-S3-AC2", "E15-S3-AC3"] },
+        { "decision": "D22", "requirement": "NFR-10", "ids": ["E17-S1-AC1", "E17-S1-AC2", "E17-S1-AC3"] },
+        { "decision": "D23", "requirement": "NFR-11", "ids": ["E16-S1-AC3", "E16-S1-AC4"] },
+        { "decision": "D24", "requirement": "NFR-12", "ids": ["E15-S2-AC1", "E15-S2-AC2", "E15-S2-AC3"] }
+      ]
+    },
+    {
+      "id": "U2",
+      "kind": "un_oracled_requirements",
+      "gate": "trace-check --layer spec-acceptance",
+      "summary": "The acceptance gate reported UNMATCHED for NFR-01 through NFR-12: all twelve are in milestone.requirements_in_scope but have no record in specs/brd/brd-acceptance.json. Their observation procedures exist only as D13-D24 in the decisions file, not as BRD postconditions.",
+      "needs": "Either accept that the NFR oracles live in the decisions file (resolved together with U1), or re-run /brd to add the twelve postconditions to brd-acceptance.json so the gate can ground them mechanically.",
+      "ids": ["NFR-01", "NFR-02", "NFR-03", "NFR-04", "NFR-05", "NFR-06", "NFR-07", "NFR-08", "NFR-09", "NFR-10", "NFR-11", "NFR-12"]
+    },
+    {
+      "id": "U3",
+      "kind": "ownership_cluster",
+      "gate": "story-clusters (via spec-render-write)",
+      "summary": "Cluster C1 holds 25 of the 29 stories at 118 points and is biconnected — the clusterer found no bridge to split on. This is a consequence of two recorded decisions, not of a fabricated edge: D8 makes each milestone open with a thin end-to-end tracer that later epics depend on, and D12 puts the platform epic ahead of every other epic's first log line. The remaining cross-epic edges (E16-S1 registering the E15-S2 and E3-S1 invariant tests, E17-S1 scanning three screens, E15-S3 measuring four read surfaces) close the undirected cycles that remove every bridge.",
+      "needs": "A human call on ownership: accept C1 as a single-owner cluster and rely on the 14 scheduling waves for sequencing, or direct which edges to re-shape (for example, dropping the platform-first edge from D12 or the multi-screen fan-in on E17-S1/E15-S3). spec-render will not remove a recorded edge to silence this warning.",
+      "clusters": [
+        { "id": "C1", "story_points": 118, "stories": 25, "oversized": true },
+        { "id": "C2", "story_points": 8, "stories": 2, "oversized": false },
+        { "id": "C3", "story_points": 3, "stories": 1, "oversized": false },
+        { "id": "C4", "story_points": 3, "stories": 1, "oversized": false }
+      ]
+    },
+    {
+      "id": "U4",
+      "kind": "cancelled_contract_edge",
+      "gate": "story-clusters (via spec-render-write)",
+      "summary": "Warning: the contract edge E11-S1 -> E12-S1 is not a cluster cut because hard edges still join them in C2. D10 chose that edge so the end-of-day job could be built in parallel with E11-S2's posting API, and E12-S1 does consume the published ladder rather than the posting endpoint. The cancellation is a side effect of the undersized-cluster merge: E11-S1 alone is 3 points, below the 5-point floor, so it was merged into the peer it shares a cut edge with.",
+      "needs": "Confirm the intent of D10 is still met (E12-S1 does not depend on E11-S2) and that C2 may be owned as one 8-point cluster, or raise the parallelism concern at the /spec gate. No parallelism is being claimed for this edge in the returned report."
+    }
+  ]
+}

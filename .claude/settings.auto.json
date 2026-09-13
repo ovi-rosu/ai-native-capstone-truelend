@@ -1,0 +1,28 @@
+{
+  "_comment": "Unattended full-auto profile. NOT auto-loaded by Claude Code — pass it explicitly for headless `--auto` runs. It removes permission prompts and therefore requires unattended-preflight.js before delegation. The external runtime must enforce the exact signed unattended-policy.json: deny-by-default egress, no host credentials, read-only hooks/settings/trust/authority, and brokered credential execution. Hooks are defense in depth, not an OS boundary. Do NOT make this the default settings.json.",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_AUTO_CONTINUE": "1",
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1",
+    "HARNESS_UNATTENDED": "1"
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "MultiEdit(*)",
+      "Glob(*)",
+      "Grep(*)"
+    ]
+  },
+  "enabledPlugins": {
+    "playwright@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  }
+}

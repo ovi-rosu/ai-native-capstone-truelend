@@ -1,0 +1,15 @@
+{
+  "gate": "design-decisions",
+  "pass": true,
+  "waived_by": null,
+  "claimed_lane": null,
+  "session_lane": null,
+  "decisions_sha256": "04fe1c674dd3f65b47b13948869cf6e97fea5e63d78902ce4170ca014a505cb7",
+  "session_id": "0c0561b7-49a4-464b-b10b-b85a37e705b9",
+  "in_session": false,
+  "carried": true,
+  "revalidated_by": "ddfc5903-7f5b-470b-8b3f-0622d32b9d46",
+  "stamped_against": "721e5056829731d2a52f3a45cf5130757d499b6d355a0386744d7f55655fc27b",
+  "errors": [],
+  "checked_at": "2026-09-13T14:59:13.022Z"
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "id": "SG-1",
+    "kind": "forbidden_action",
+    "text": "Late fees, penal interest, collections workflow and write-off. Delinquency is status only: buckets are computed, nothing is charged for lateness and no recovery process exists.",
+    "traces": [
+      "FRD-30"
+    ]
+  },
+  {
+    "id": "SG-2",
+    "kind": "forbidden_action",
+    "text": "Real money movement and real credit-bureau calls. The funding source (FR-08) and the credit score (FR-03) are stubs; no payment rail, no external bureau, no live provider credentials.",
+    "traces": [
+      "FRD-31"
+    ]
+  },
+  {
+    "id": "SG-3",
+    "kind": "forbidden_action",
+    "text": "Native or responsive mobile clients.",
+    "traces": [
+      "FRD-32"
+    ]
+  },
+  {
+    "id": "SG-4",
+    "kind": "forbidden_action",
+    "text": "Customer notifications of any kind — no email or SMS on decision, disbursement or due date.",
+    "traces": [
+      "FRD-33"
+    ]
+  },
+  {
+    "id": "SG-5",
+    "kind": "forbidden_action",
+    "text": "Electronic signature or a signed loan agreement artifact.",
+    "traces": [
+      "FRD-34"
+    ]
+  },
+  {
+    "id": "SG-6",
+    "kind": "forbidden_action",
+    "text": "Multi-currency support. Single currency only.",
+    "traces": [
+      "FRD-35"
+    ]
+  },
+  {
+    "id": "SG-7",
+    "kind": "forbidden_action",
+    "text": "Co-applicants, guarantors and joint applications. One applicant per application.",
+    "traces": [
+      "FRD-36"
+    ]
+  },
+  {
+    "id": "SG-8",
+    "kind": "forbidden_action",
+    "text": "Loan top-ups, restructuring and any mid-life modification of a disbursed loan.",
+    "traces": [
+      "FRD-37"
+    ]
+  },
+  {
+    "id": "SG-9",
+    "kind": "forbidden_action",
+    "text": "KYC/AML identity verification against external registries. Synthetic PAN and Aadhaar values are captured as application data only and are never verified.",
+    "traces": [
+      "FRD-38"
+    ]
+  },
+  {
+    "id": "SG-10",
+    "kind": "forbidden_action",
+    "text": "Early settlement, foreclosure and prepayment quotes.",
+    "traces": [
+      "FRD-39"
+    ]
+  }
+]

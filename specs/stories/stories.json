@@ -1,0 +1,2730 @@
+[
+  {
+    "id": "E15-S1",
+    "title": "Structured JSON logging, correlation id propagation, PII redaction and health endpoint",
+    "epic": "E15",
+    "layer": "Config",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 0,
+      "integration_surface": 2,
+      "uncertainty_risk": 2,
+      "total": 8,
+      "evidence": "Four platform concerns (log format, correlation id, redaction, health) wired into every handler; retrofit-hostile per D12."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a platform operator, I want every request to emit structured, correlated, PII-free logs and a health probe so that I can diagnose the origination flow without leaking applicant identifiers.",
+    "business_value": "Removes the retrofit pass that would otherwise have to revisit every handler written before observability existed, and keeps synthetic PAN, Aadhaar and salary content out of operational logs.",
+    "description": "Installs the platform logging substrate before any other epic emits a log line: JSON formatter, correlation-id middleware that honours or generates X-Request-ID, a redaction filter on every configured logger, and the /health endpoint. D12 places this first in M1 because NFR-03 and NFR-06 are retrofit-hostile.",
+    "scope_in": [
+      "JSON log formatter, correlation-id middleware and redaction filter registered in the app factory",
+      "GET /health returning a JSON readiness body",
+      "Log-capture test harness reused by later stories"
+    ],
+    "scope_out": [
+      "must not add any business endpoint beyond /health",
+      "must not write applicant PAN, Aadhaar or salary-document content to any log sink",
+      "must not introduce an external log-shipping provider or credentials"
+    ],
+    "safeguards": [
+      "SG-9"
+    ],
+    "depends_on": [],
+    "traces": [
+      "FRD-20",
+      "FRD-23",
+      "FRD-24"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E15-S1-AC1",
+        "given": "an application payload carrying synthetic PAN, Aadhaar and salary-document content",
+        "when": "the request is served and every emitted log record is captured",
+        "then": "the captured buffer contains 0 occurrences of each of those three values",
+        "traces": [
+          "FRD-59"
+        ]
+      },
+      {
+        "id": "E15-S1-AC2",
+        "given": "the application's logging configuration",
+        "when": "every configured logger is enumerated",
+        "then": "the redaction filter is installed on 100% of them and a logger registered without it fails the assertion",
+        "traces": [
+          "FRD-59"
+        ]
+      },
+      {
+        "id": "E15-S1-AC3",
+        "given": "a request carrying the header X-Request-ID with value req-abc",
+        "when": "every log line emitted while serving that request is parsed",
+        "then": "100% of the lines parse as JSON and each carries request_id equal to req-abc",
+        "traces": [
+          "FRD-62"
+        ]
+      },
+      {
+        "id": "E15-S1-AC4",
+        "given": "a request with no X-Request-ID header",
+        "when": "the response is returned",
+        "then": "every request-scoped log line carries the same generated non-empty request_id and the response echoes that id",
+        "traces": [
+          "FRD-62"
+        ]
+      },
+      {
+        "id": "E15-S1-AC5",
+        "given": "the backend reporting a successful startup",
+        "when": "GET /health is called",
+        "then": "the response is 200 with a JSON body and the measured response time is under 1 second",
+        "traces": [
+          "FRD-63"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "A"
+  },
+  {
+    "id": "E15-S2",
+    "title": "Self-hosted Docker Compose stack and one-way layer dependency test",
+    "epic": "E15",
+    "layer": "Config",
+    "story_points": 3,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 2,
+      "data_state_impact": 0,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 6,
+      "evidence": "Three-service compose file plus a static dependency-direction check; no persistence logic of its own."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a reviewer, I want the whole platform to come up from a clean checkout with one command so that I can evaluate it without bespoke setup.",
+    "business_value": "Makes the capstone reproducible for graders and keeps the six-layer architecture rule mechanically enforced rather than aspirational.",
+    "description": "Defines the self-hosted stack NFR-12 names — a single Postgres, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend — with compose readiness gated on the /health probe from E15-S1. Also lands the architecture test that asserts the one-way dependency direction across Types, Config, Repository, Service, API and UI.",
+    "scope_in": [
+      "docker-compose.yml with exactly three services and healthchecks",
+      "Dockerfiles for backend and frontend",
+      "Layer-dependency architecture test over the six layers"
+    ],
+    "scope_out": [
+      "must not add a second database engine, cache or message broker",
+      "must not configure any external provider endpoint or live credential",
+      "must not relax the one-way layer rule to make an existing import pass"
+    ],
+    "safeguards": [
+      "SG-2"
+    ],
+    "depends_on": [
+      {
+        "story": "E15-S1",
+        "kind": "behavior",
+        "reason": "compose readiness is gated on the /health probe"
+      }
+    ],
+    "traces": [
+      "FRD-29"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E15-S2-AC1",
+        "given": "a clean checkout with no prior containers",
+        "when": "docker compose up runs to completion",
+        "then": "exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend are running and all three report healthy",
+        "traces": [
+          "FRD-68"
+        ]
+      },
+      {
+        "id": "E15-S2-AC2",
+        "given": "the running stack",
+        "when": "the layer-dependency architecture test executes",
+        "then": "it reports 0 violations of the one-way rule across Types, Config, Repository, Service, API and UI",
+        "traces": [
+          "FRD-68"
+        ]
+      },
+      {
+        "id": "E15-S2-AC3",
+        "given": "the compose service inventory",
+        "when": "it is asserted against the declared stack",
+        "then": "no second database engine and no external provider endpoint is configured",
+        "traces": [
+          "FRD-68"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "B"
+  },
+  {
+    "id": "E9-S1",
+    "title": "Money value type with fixed-point decimal arithmetic",
+    "epic": "E9",
+    "layer": "Types",
+    "story_points": 3,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 2,
+      "data_state_impact": 0,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 5,
+      "evidence": "One published type plus a static float-usage check; consumed by policy, schedule and repayment code."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an underwriting lead, I want every monetary amount held in fixed-point decimal so that EMI and outstanding-principal figures never drift by rounding error.",
+    "business_value": "Protects the AC-07 schedule invariants at their source, so no downstream story has to compensate for float drift in loan balances.",
+    "description": "Publishes the Money value type and the fixed-point arithmetic helpers the policy, schedule and repayment stories consume — backend decimal.Decimal quantized to 2 places, frontend a decimal-library value that is never a float. This is the interface-layer artifact behind the contract edges from E3-S1, E1-S1 and E9-S3, per the D13 criterion.",
+    "scope_in": [
+      "Money value type with 2-decimal quantization and arithmetic helpers",
+      "Static check reporting float arithmetic in money code paths",
+      "Frontend integer-minor-unit money module"
+    ],
+    "scope_out": [
+      "must not introduce a second currency or a currency-conversion path",
+      "must not expose a float-typed money field on any API contract",
+      "must not embed interest or EMI business rules in the type"
+    ],
+    "safeguards": [
+      "SG-6"
+    ],
+    "depends_on": [],
+    "traces": [
+      "FRD-18"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E9-S1-AC1",
+        "given": "randomly generated principal, rate and tenure triples",
+        "when": "a schedule is computed from each triple",
+        "then": "every money field on the result is a Decimal quantized to exactly 2 decimal places",
+        "traces": [
+          "FRD-57"
+        ]
+      },
+      {
+        "id": "E9-S1-AC2",
+        "given": "the backend money code paths",
+        "when": "the static arithmetic check runs over them",
+        "then": "it reports 0 float arithmetic operations in those paths",
+        "traces": [
+          "FRD-57"
+        ]
+      },
+      {
+        "id": "E9-S1-AC3",
+        "given": "the frontend money module",
+        "when": "a monetary amount is carried and formatted",
+        "then": "the value is held as a decimal value and never a float, and the static check reports 0 float arithmetic operations in that module",
+        "traces": [
+          "FRD-57"
+        ]
+      }
+    ],
+    "cluster": "C6",
+    "group": "A"
+  },
+  {
+    "id": "E1-S1",
+    "title": "Tracer M1: log in, list products, edit a threshold and activate a new policy version",
+    "epic": "E1",
+    "layer": "API",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 1,
+      "integration_surface": 2,
+      "uncertainty_risk": 2,
+      "total": 8,
+      "evidence": "Thin slice that must open every one of the six layers at once; auth touch adds risk."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a product owner, I want a thin end-to-end slice from login through a policy-threshold change so that the M1 done-when is demoable before any epic goes deep.",
+    "business_value": "Proves the Types-through-UI seam exists at the first story boundary, so no epic integrates six finished layers late.",
+    "description": "The D8 tracer bullet for M1: a seeded login for each of the three roles, a shallow product list, and an admin threshold edit that produces a new active policy version with no restart. Depth is added behind it by E1-S2, E2-S1, E3-S1 and E3-S2.",
+    "scope_in": [
+      "Session login for the three seeded roles and a role-specific landing surface",
+      "Shallow product list endpoint and screen",
+      "Threshold save that writes and activates a new policy version"
+    ],
+    "scope_out": [
+      "must not implement the full authorization matrix — that is E1-S2",
+      "must not implement the full three-product catalog rule sets — that is E2-S1",
+      "must not verify applicant PAN or Aadhaar against any external registry"
+    ],
+    "safeguards": [
+      "SG-3",
+      "SG-9"
+    ],
+    "depends_on": [
+      {
+        "story": "E15-S1",
+        "kind": "behavior",
+        "reason": "every request-scoped log line must already carry a correlation id"
+      },
+      {
+        "story": "E9-S1",
+        "kind": "contract",
+        "artifact": "Money value type",
+        "reason": "threshold values are monetary and must be fixed-point from the first write"
+      }
+    ],
+    "traces": [
+      "FRD-1",
+      "FRD-13",
+      "FRD-16"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E1-S1-AC1",
+        "given": "seeded users for CUSTOMER, UNDERWRITER and ADMIN",
+        "when": "each logs in with valid credentials",
+        "then": "a session is issued naming exactly one role and that role's landing surface loads",
+        "traces": [
+          "FRD-55"
+        ]
+      },
+      {
+        "id": "E1-S1-AC2",
+        "given": "the seeded product catalog",
+        "when": "a CUSTOMER requests the product list",
+        "then": "at least one product is returned and it carries a policy version id",
+        "traces": [
+          "FRD-40"
+        ]
+      },
+      {
+        "id": "E1-S1-AC3",
+        "given": "an ADMIN session and a product with a minimum-income threshold",
+        "when": "that threshold is saved with a new value",
+        "then": "a new policy version id is returned in the response",
+        "traces": [
+          "FRD-52"
+        ]
+      },
+      {
+        "id": "E1-S1-AC4",
+        "given": "the newly saved policy version",
+        "when": "the product is read again inside the same running process",
+        "then": "the read cites the new policy version id with no process restart",
+        "traces": [
+          "FRD-52"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "B"
+  },
+  {
+    "id": "E1-S2",
+    "title": "Role boundary enforced at the controller layer with full action audit",
+    "epic": "E1",
+    "layer": "API",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 1,
+      "integration_surface": 3,
+      "uncertainty_risk": 1,
+      "total": 9,
+      "evidence": "Auth surface spanning every route plus an append-only audit write; schema-driven test generation."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a compliance officer, I want every underwriter and admin route guarded at the controller and every privileged action audited so that role separation is provable rather than assumed.",
+    "business_value": "Makes the NFR-04 100%-of-routes claim self-maintaining: a newly added unguarded route fails the suite instead of shipping.",
+    "description": "Deepens E1-S1 into the full role boundary: exactly one of CUSTOMER, UNDERWRITER or ADMIN per user, 401 with no session, 403 on the wrong role, and an audit_event append for every privileged action. The authorization suite enumerates routes from the OpenAPI schema rather than a hand-written list, per D16.",
+    "scope_in": [
+      "Controller-layer authorization dependency applied to underwriter and admin routes",
+      "Schema-driven authorization test that asserts 100% route coverage",
+      "Append-only audit_event write carrying acting user id and timestamp"
+    ],
+    "scope_out": [
+      "must not move the authorization check below the controller layer",
+      "must not allow a user to hold more than one role",
+      "must not update or delete an existing audit_event row"
+    ],
+    "safeguards": [
+      "SG-9"
+    ],
+    "depends_on": [
+      {
+        "story": "E1-S1",
+        "kind": "behavior",
+        "reason": "deepens the tracer's shallow session into the full role matrix"
+      }
+    ],
+    "traces": [
+      "FRD-16",
+      "FRD-21"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E1-S2-AC1",
+        "given": "any underwriter or admin route",
+        "when": "it is called with no session",
+        "then": "the response is 401 and no handler body executes",
+        "traces": [
+          "FRD-55"
+        ]
+      },
+      {
+        "id": "E1-S2-AC2",
+        "given": "a CUSTOMER session",
+        "when": "an underwriter or admin route is called with it",
+        "then": "the response is 403, while each role reaches its own surfaces with 200",
+        "traces": [
+          "FRD-55"
+        ]
+      },
+      {
+        "id": "E1-S2-AC3",
+        "given": "the underwriter and admin routes enumerated from the OpenAPI schema",
+        "when": "the generated authorization suite runs",
+        "then": "it reports 100% of those routes covered by both the no-session and wrong-role cases and fails when a new route is unguarded",
+        "traces": [
+          "FRD-60"
+        ]
+      },
+      {
+        "id": "E1-S2-AC4",
+        "given": "an authenticated underwriter or admin action",
+        "when": "the action completes",
+        "then": "an audit_event row exists carrying the acting user id and a timestamp",
+        "traces": [
+          "FRD-60"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "C"
+  },
+  {
+    "id": "E3-S1",
+    "title": "Append-only policy version store and destructive migration lint",
+    "epic": "E3",
+    "layer": "Repository",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 2,
+      "data_state_impact": 2,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 8,
+      "evidence": "Repository plus schema plus two static scanners; the immutability line is fixed by D5."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an auditor, I want approved policy versions and every migration to be append-only so that the rules a past decision was made under can always be reconstructed.",
+    "business_value": "Guarantees a decision's basis is reconstructible years later, which is what lets the policy editor ship without an audit objection.",
+    "description": "Implements the D5 immutable side of the line: a policy_version repository with no update or delete method, an architecture test that counts UPDATE, DELETE and ORM mutations against that table across src/ and migrations/, and a migration lint that rejects destructive statements. Mutable loan state stays out of scope by design.",
+    "scope_in": [
+      "policy_version table and append-only repository",
+      "Architecture test counting mutations against policy_version",
+      "Migration lint over every file in migrations/, including policy migrations"
+    ],
+    "scope_out": [
+      "must not expose an update or delete method on the policy_version repository",
+      "must not restrict application.status, loan.outstanding_principal or loan.delinquency_bucket, which stay mutable per D5",
+      "must not add a destructive statement to any migration to simplify a schema change"
+    ],
+    "safeguards": [
+      "SG-8"
+    ],
+    "depends_on": [
+      {
+        "story": "E9-S1",
+        "kind": "contract",
+        "artifact": "Money value type",
+        "reason": "threshold columns are monetary and typed by the published Money artifact"
+      },
+      {
+        "story": "E1-S1",
+        "kind": "behavior",
+        "reason": "the tracer already writes and activates a policy version that this store must hold immutably"
+      }
+    ],
+    "traces": [
+      "FRD-19",
+      "FRD-22"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E3-S1-AC1",
+        "given": "the policy_version repository interface",
+        "when": "its public methods are enumerated",
+        "then": "no update method and no delete method is exposed",
+        "traces": [
+          "FRD-58"
+        ]
+      },
+      {
+        "id": "E3-S1-AC2",
+        "given": "the contents of src/ and migrations/",
+        "when": "the immutability architecture test scans them",
+        "then": "it reports 0 UPDATE statements, 0 DELETE statements and 0 ORM mutations targeting policy_version",
+        "traces": [
+          "FRD-58"
+        ]
+      },
+      {
+        "id": "E3-S1-AC3",
+        "given": "every file under migrations/",
+        "when": "the migration lint parses them",
+        "then": "it reports 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements",
+        "traces": [
+          "FRD-61"
+        ]
+      },
+      {
+        "id": "E3-S1-AC4",
+        "given": "a policy migration file",
+        "when": "it is parsed by that same lint",
+        "then": "it is held to the identical zero-destructive-statement assertion as a schema migration",
+        "traces": [
+          "FRD-61"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "C"
+  },
+  {
+    "id": "E2-S1",
+    "title": "Loan product catalog with three products bound to distinct versioned rule sets",
+    "epic": "E2",
+    "layer": "Service",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 2,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 7,
+      "evidence": "Catalog read model plus seeded policy versions for three products with distinct thresholds."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a business owner, I want Personal, Vehicle and Education products each bound to their own versioned rule set so that I can launch and tune products without a code change.",
+    "business_value": "Turns product launch into a data change, which is the platform's whole premise.",
+    "description": "Deepens the tracer's shallow list into the real catalog: at least three products, each referencing its own policy version whose income, age, score, tenure and rate thresholds differ from the others. Reads policy_version rows written through the E3-S1 append-only store.",
+    "scope_in": [
+      "Product entity and GET /products read model",
+      "Seeded Personal, Vehicle and Education products with distinct policy versions",
+      "Product-to-policy-version binding"
+    ],
+    "scope_out": [
+      "must not hardcode any threshold value in service or API code",
+      "must not add multi-currency or per-currency product variants",
+      "must not let two products share one policy version row"
+    ],
+    "safeguards": [
+      "SG-6"
+    ],
+    "depends_on": [
+      {
+        "story": "E3-S1",
+        "kind": "data",
+        "artifact": "policy_version rows",
+        "reason": "each product binds to a stored policy version"
+      },
+      {
+        "story": "E1-S1",
+        "kind": "behavior",
+        "reason": "deepens the tracer's shallow product list"
+      }
+    ],
+    "traces": [
+      "FRD-1"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E2-S1-AC1",
+        "given": "the seeded catalog",
+        "when": "GET /products is called",
+        "then": "at least 3 products are returned and Personal, Vehicle and Education are among them",
+        "traces": [
+          "FRD-40"
+        ]
+      },
+      {
+        "id": "E2-S1-AC2",
+        "given": "the returned product list",
+        "when": "each entry is inspected",
+        "then": "each carries its own policy version id and no two products reference the same one",
+        "traces": [
+          "FRD-40"
+        ]
+      },
+      {
+        "id": "E2-S1-AC3",
+        "given": "the three referenced policy versions",
+        "when": "their stored threshold values are compared",
+        "then": "the minimum income, age, score, tenure and rate values differ between the three versions",
+        "traces": [
+          "FRD-40"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "D"
+  },
+  {
+    "id": "E3-S2",
+    "title": "Policy Editor activates a new immutable policy version without a restart",
+    "epic": "E3",
+    "layer": "UI",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 2,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 9,
+      "evidence": "Editor screen plus versioned write plus hot activation across a live process."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an authorised policy owner, I want to change a product's thresholds in the UI and have the new rules take effect immediately so that the business can tune products without a deployment.",
+    "business_value": "Removes the engineering release from the product-tuning loop, which is the FR-13 no-code-change promise.",
+    "description": "The Policy Editor over income, age, score, tenure and rate thresholds. Saving appends a new immutable policy version that becomes active in the running process, leaving the prior version byte-identical. Combined with the D6 submission-time pinning rule, an activation mid-flight never changes an in-flight application's basis.",
+    "scope_in": [
+      "Policy Editor screen for the five threshold families",
+      "Versioned save endpoint that appends and activates",
+      "Hot activation with no process restart"
+    ],
+    "scope_out": [
+      "must not mutate or delete a prior policy version row",
+      "must not change the policy_version_id already pinned on a submitted application",
+      "must not expose the editor to a CUSTOMER session"
+    ],
+    "safeguards": [
+      "SG-8"
+    ],
+    "depends_on": [
+      {
+        "story": "E2-S1",
+        "kind": "behavior",
+        "reason": "edits a product's bound policy version"
+      },
+      {
+        "story": "E1-S2",
+        "kind": "behavior",
+        "reason": "the editor is an admin surface behind the controller-layer role boundary"
+      }
+    ],
+    "traces": [
+      "FRD-13"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E3-S2-AC1",
+        "given": "an authorised user editing a product's income, age, score, tenure and rate thresholds",
+        "when": "the editor form is saved",
+        "then": "a new policy version row is appended and becomes the product's active version",
+        "traces": [
+          "FRD-52"
+        ]
+      },
+      {
+        "id": "E3-S2-AC2",
+        "given": "the policy version that was active before the save",
+        "when": "it is re-read afterwards",
+        "then": "its stored values are byte-identical to their pre-save state",
+        "traces": [
+          "FRD-52"
+        ]
+      },
+      {
+        "id": "E3-S2-AC3",
+        "given": "the newly activated policy version",
+        "when": "a subsequent application is decided in the same running process",
+        "then": "the decision cites the new policy version id with no process restart",
+        "traces": [
+          "FRD-52"
+        ]
+      },
+      {
+        "id": "E3-S2-AC4",
+        "given": "a CUSTOMER session",
+        "when": "the Policy Editor save endpoint is called with it",
+        "then": "the response is 403 and no policy version row is appended",
+        "traces": [
+          "FRD-55"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "E"
+  },
+  {
+    "id": "E16-S1",
+    "title": "Architecture invariant test registry and agent provenance evidence",
+    "epic": "E16",
+    "layer": "Service",
+    "story_points": 3,
+    "estimation_confidence": "medium",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 0,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 6,
+      "evidence": "Registry-with-no-orphans harness over three named invariants plus a provenance evidence check."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an architecture reviewer, I want every named invariant to have a test and every production commit to carry agent provenance so that the capstone's structural claims are checkable rather than narrated.",
+    "business_value": "Converts the architecture rules and the no-manual-coding constraint from prose into a suite that fails when either is broken.",
+    "description": "Registers the named invariants — policy-version immutability, the EMI principal/rate/tenure invariant, and the six-layer one-way dependency rule — and fails the suite when a registered invariant has no test. Also records the D7 and D23 governance control: NFR-11 has no product story, and the pre-commit gate set plus the /gate attestation record is its evidence.",
+    "scope_in": [
+      "Invariant registry and orphan-detection assertion",
+      "One or more tests per registered invariant",
+      "Provenance check over branch commits and the attestation record"
+    ],
+    "scope_out": [
+      "must not loosen an invariant's assertion to make a failing test pass",
+      "must not implement product behavior — this story adds no loan-platform capability",
+      "must not remove or weaken a pre-commit gate to clear the provenance check"
+    ],
+    "safeguards": [
+      "SG-8"
+    ],
+    "depends_on": [
+      {
+        "story": "E15-S2",
+        "kind": "behavior",
+        "reason": "registers the layer-dependency test that story introduces"
+      },
+      {
+        "story": "E3-S1",
+        "kind": "behavior",
+        "reason": "registers the policy-version immutability test that story introduces"
+      }
+    ],
+    "traces": [
+      "FRD-25",
+      "FRD-28"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E16-S1-AC1",
+        "given": "a registry naming policy-version immutability, the EMI principal/rate/tenure invariant and the six-layer one-way dependency rule",
+        "when": "the architecture suite runs",
+        "then": "at least one test exists and executes for every registered invariant",
+        "traces": [
+          "FRD-64"
+        ]
+      },
+      {
+        "id": "E16-S1-AC2",
+        "given": "a registered invariant with no corresponding test",
+        "when": "the architecture suite runs",
+        "then": "the suite fails and names the orphaned invariant",
+        "traces": [
+          "FRD-64"
+        ]
+      },
+      {
+        "id": "E16-S1-AC3",
+        "given": "every production commit on the branch",
+        "when": "the provenance check inspects them",
+        "then": "each carries agent co-authorship and a passing record from the standard pre-commit gate set",
+        "traces": [
+          "FRD-67"
+        ]
+      },
+      {
+        "id": "E16-S1-AC4",
+        "given": "the /gate attestation record",
+        "when": "it is read for the head commit",
+        "then": "it is present and records 0 hand-written production lines as the NFR-11 evidence",
+        "traces": [
+          "FRD-67"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "D"
+  },
+  {
+    "id": "E4-S1",
+    "title": "Tracer M2: submit an application, score it and return a decision",
+    "epic": "E4",
+    "layer": "API",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 2,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 8,
+      "evidence": "Thin submit-score-decide slice creating the application aggregate and the decision seam."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a product owner, I want a thin slice from application submission through a returned decision so that the M2 done-when is demoable before intake, scoring and underwriting go deep.",
+    "business_value": "Establishes the submit-score-decide seam early, so the three M2 epics add depth behind a working flow rather than integrating late.",
+    "description": "The D8 tracer bullet for M2. A customer submits against a chosen product, the application is persisted in SUBMITTED state pinned to that product's current policy version per D6, a score is returned, and a decision of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW comes back with at least one reason code.",
+    "scope_in": [
+      "Application aggregate and submit endpoint",
+      "Submission-time policy_version_id pinning",
+      "Shallow score and decision response"
+    ],
+    "scope_out": [
+      "must not implement the full document checklist — that is E4-S2",
+      "must not call an external credit bureau or payment rail",
+      "must not accept a co-applicant or guarantor on the application"
+    ],
+    "safeguards": [
+      "SG-2",
+      "SG-7"
+    ],
+    "depends_on": [
+      {
+        "story": "E2-S1",
+        "kind": "behavior",
+        "reason": "an application is submitted against a catalog product and its bound policy version"
+      },
+      {
+        "story": "E1-S2",
+        "kind": "behavior",
+        "reason": "submission and decision run under the controller-layer role boundary"
+      }
+    ],
+    "traces": [
+      "FRD-2",
+      "FRD-3",
+      "FRD-4"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E4-S1-AC1",
+        "given": "a chosen product and a CUSTOMER session",
+        "when": "an application is submitted",
+        "then": "a persisted application in SUBMITTED state is returned carrying the product's current policy version id",
+        "traces": [
+          "FRD-41"
+        ]
+      },
+      {
+        "id": "E4-S1-AC2",
+        "given": "that application's age, income and credit-history flags",
+        "when": "the scoring stub is called for it",
+        "then": "a numeric credit score is returned and stored against the application",
+        "traces": [
+          "FRD-42"
+        ]
+      },
+      {
+        "id": "E4-S1-AC3",
+        "given": "the scored application",
+        "when": "it is decided",
+        "then": "the response carries one of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW together with at least one reason code",
+        "traces": [
+          "FRD-43"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "E"
+  },
+  {
+    "id": "E4-S2",
+    "title": "Application intake with product derived document checklist and submission time policy pinning",
+    "epic": "E4",
+    "layer": "Service",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 2,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 8,
+      "evidence": "Checklist generation driven off the policy version plus the pinning guarantee against hot activation."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a customer, I want the required-document checklist for the product I chose so that I know exactly what to supply, judged against the rules in force when I applied.",
+    "business_value": "Cuts back-and-forth on missing documents and makes each application's basis reproducible after a policy change.",
+    "description": "Deepens the tracer into real intake: the required-document checklist is derived item for item from the selected product's policy version, and the application stores the policy_version_id resolved at submission. Per D6, a version activated later never changes an in-flight application's basis.",
+    "scope_in": [
+      "Checklist generation from the product's policy version",
+      "Persisted policy_version_id pinned at submission",
+      "Checklist item entity with document type and unverified status"
+    ],
+    "scope_out": [
+      "must not re-resolve an application's policy version after submission",
+      "must not verify PAN or Aadhaar against an external registry",
+      "must not accept more than one applicant per application"
+    ],
+    "safeguards": [
+      "SG-7",
+      "SG-9"
+    ],
+    "depends_on": [
+      {
+        "story": "E4-S1",
+        "kind": "behavior",
+        "reason": "deepens the tracer's shallow submit into full intake"
+      }
+    ],
+    "traces": [
+      "FRD-2"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E4-S2-AC1",
+        "given": "a selected product with a required-document list on its policy version",
+        "when": "an application is submitted against it",
+        "then": "the generated checklist matches that policy version's list item for item",
+        "traces": [
+          "FRD-41"
+        ]
+      },
+      {
+        "id": "E4-S2-AC2",
+        "given": "a submitted application",
+        "when": "it is read back from storage",
+        "then": "it is in SUBMITTED state and stores the policy_version_id resolved at submission",
+        "traces": [
+          "FRD-41"
+        ]
+      },
+      {
+        "id": "E4-S2-AC3",
+        "given": "a policy version activated after that submission",
+        "when": "the application is re-read",
+        "then": "its stored policy_version_id and checklist are unchanged",
+        "traces": [
+          "FRD-41"
+        ]
+      },
+      {
+        "id": "E4-S2-AC4",
+        "given": "a generated checklist item",
+        "when": "it is inspected",
+        "then": "it carries its document type and an unverified status",
+        "traces": [
+          "FRD-41"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "F"
+  },
+  {
+    "id": "E4-S3",
+    "title": "Apply screen for product selection, applicant details and checklist display",
+    "epic": "E4",
+    "layer": "UI",
+    "story_points": 3,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 0,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 6,
+      "evidence": "One form screen over an existing intake service, plus the checklist confirmation view."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a customer, I want an Apply screen that walks me through product choice and my details so that I can submit an application and immediately see what documents I owe.",
+    "business_value": "Gives the origination funnel its entry point and surfaces the document checklist at the moment of highest attention.",
+    "description": "The customer-facing Apply screen over the E4-S2 intake service: product selection, applicant detail capture, submission, and a confirmation that lists the generated required-document checklist. This is one of the three screens NFR-10 holds to WCAG 2.1 AA.",
+    "scope_in": [
+      "Apply form with product selection and applicant detail fields",
+      "Submission confirmation showing the application state",
+      "Checklist display on the confirmation"
+    ],
+    "scope_out": [
+      "must not add a co-applicant or guarantor field",
+      "must not render a native or responsive mobile client shell",
+      "must not compute eligibility client-side"
+    ],
+    "safeguards": [
+      "SG-3",
+      "SG-7"
+    ],
+    "depends_on": [
+      {
+        "story": "E4-S2",
+        "kind": "behavior",
+        "reason": "the screen submits through the intake service and renders its checklist"
+      }
+    ],
+    "traces": [
+      "FRD-2"
+    ],
+    "invest": {
+      "independent": false,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E4-S3-AC1",
+        "given": "the Apply screen with a product selected",
+        "when": "the applicant submits valid details",
+        "then": "the confirmation shows the newly created application in SUBMITTED state",
+        "traces": [
+          "FRD-41"
+        ]
+      },
+      {
+        "id": "E4-S3-AC2",
+        "given": "the submitted application",
+        "when": "the Apply screen renders its confirmation",
+        "then": "every required-document checklist item for the chosen product is listed",
+        "traces": [
+          "FRD-41"
+        ]
+      },
+      {
+        "id": "E4-S3-AC3",
+        "given": "the Apply form",
+        "when": "it is rendered",
+        "then": "no co-applicant or guarantor field is present",
+        "traces": [
+          "FRD-41"
+        ]
+      }
+    ],
+    "cluster": "C4",
+    "group": "G"
+  },
+  {
+    "id": "E4-S4",
+    "title": "Minimum income threshold rejects submission with PolicyViolationException",
+    "epic": "E4",
+    "layer": "Service",
+    "story_points": 3,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 1,
+      "data_state_impact": 1,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 5,
+      "evidence": "One guard on an existing submit path with a no-row-persisted assertion."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an underwriting lead, I want submissions below a product's minimum income refused at intake so that ineligible applications never enter the underwriting queue.",
+    "business_value": "Keeps the underwriter queue free of applications that policy already excludes, and tells the applicant which threshold they missed.",
+    "description": "Adds the FR-05 intake guard: when declared income is below the selected product's minimum income threshold, submission fails with PolicyViolationException naming the breached threshold, and no application row is persisted.",
+    "scope_in": [
+      "Minimum-income guard on the submit path",
+      "PolicyViolationException error contract naming the breached threshold",
+      "Transactional rollback so no application row survives"
+    ],
+    "scope_out": [
+      "must not persist a partial application row on a refused submission",
+      "must not hardcode the minimum income value outside the policy version",
+      "must not charge a fee or penalty for a refused submission"
+    ],
+    "safeguards": [
+      "SG-7"
+    ],
+    "depends_on": [
+      {
+        "story": "E4-S2",
+        "kind": "behavior",
+        "reason": "guards the intake path that story establishes"
+      }
+    ],
+    "traces": [
+      "FRD-5"
+    ],
+    "invest": {
+      "independent": false,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E4-S4-AC1",
+        "given": "declared income below the selected product's minimum income threshold",
+        "when": "the application is submitted",
+        "then": "the error response identifies PolicyViolationException",
+        "traces": [
+          "FRD-44"
+        ]
+      },
+      {
+        "id": "E4-S4-AC2",
+        "given": "that refused submission",
+        "when": "the error body is inspected",
+        "then": "it names the breached threshold and the configured value it was checked against",
+        "traces": [
+          "FRD-44"
+        ]
+      },
+      {
+        "id": "E4-S4-AC3",
+        "given": "that refused submission",
+        "when": "the application table is queried afterwards",
+        "then": "no application row was persisted for it",
+        "traces": [
+          "FRD-44"
+        ]
+      }
+    ],
+    "cluster": "C5",
+    "group": "G"
+  },
+  {
+    "id": "E5-S1",
+    "title": "Deterministic credit scoring stub over age, income and credit history flags",
+    "epic": "E5",
+    "layer": "Service",
+    "story_points": 3,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 1,
+      "data_state_impact": 0,
+      "integration_surface": 1,
+      "uncertainty_risk": 2,
+      "total": 5,
+      "evidence": "Pure function, but determinism and flag sensitivity must both be provable."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an underwriter, I want a deterministic credit score from the applicant's age, income and credit-history flags so that two identical applications are never judged differently.",
+    "business_value": "Makes every decision reproducible and disputable on the record, without a live bureau dependency.",
+    "description": "Deepens the tracer's shallow score into the real FR-03 stub: a pure function over age, income and credit-history flags that returns the identical score for identical input and a different score when only the credit-history flags change. No external bureau is called, per SG-2.",
+    "scope_in": [
+      "Scoring function over age, income and credit-history flags",
+      "Determinism and flag-sensitivity tests",
+      "Score persisted against the application"
+    ],
+    "scope_out": [
+      "must not call an external credit bureau or any live provider",
+      "must not introduce randomness, wall-clock time or request order into the score",
+      "must not read a threshold from anywhere but the application's pinned policy version"
+    ],
+    "safeguards": [
+      "SG-2"
+    ],
+    "depends_on": [
+      {
+        "story": "E4-S2",
+        "kind": "behavior",
+        "reason": "scores the application that intake persists with its pinned policy version"
+      }
+    ],
+    "traces": [
+      "FRD-3"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E5-S1-AC1",
+        "given": "one set of age, income and credit-history-flag values",
+        "when": "the scoring stub is called repeatedly with it",
+        "then": "every call returns the identical score",
+        "traces": [
+          "FRD-42"
+        ]
+      },
+      {
+        "id": "E5-S1-AC2",
+        "given": "two inputs differing only in their credit-history flags",
+        "when": "both are scored",
+        "then": "the two returned scores differ",
+        "traces": [
+          "FRD-42"
+        ]
+      },
+      {
+        "id": "E5-S1-AC3",
+        "given": "the scoring stub under test",
+        "when": "its outbound collaborators are inspected",
+        "then": "no external credit-bureau call and no live provider credential is used",
+        "traces": [
+          "FRD-42"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "G"
+  },
+  {
+    "id": "E5-S2",
+    "title": "Underwriting decision with reason codes from the pinned policy version",
+    "epic": "E5",
+    "layer": "Service",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 2,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 8,
+      "evidence": "Three-outcome rule evaluation plus an append-only decision_record with reason-code provenance."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an underwriter, I want each application decided against the policy version it was submitted under, with reason codes drawn from that version, so that the basis of every decision is reconstructible.",
+    "business_value": "Gives every approval and rejection a defensible, versioned rationale, which is what makes the policy editor safe to use in production.",
+    "description": "Evaluates the pinned policy version's rules to return AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW with at least one reason code, appending a decision_record per D5. Per D6, a MANUAL_REVIEW re-decision and any later override still cite the version pinned at submission.",
+    "scope_in": [
+      "Rule evaluation producing the three decision outcomes",
+      "Reason codes resolved from the application's pinned policy version",
+      "Append-only decision_record with latest-record-wins semantics"
+    ],
+    "scope_out": [
+      "must not update or delete an existing decision_record row",
+      "must not return a reason code absent from the application's pinned policy version",
+      "must not re-resolve the policy version at decision time"
+    ],
+    "safeguards": [
+      "SG-2"
+    ],
+    "depends_on": [
+      {
+        "story": "E5-S1",
+        "kind": "behavior",
+        "reason": "the decision consumes the score that story produces"
+      }
+    ],
+    "traces": [
+      "FRD-4"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E5-S2-AC1",
+        "given": "a scored application",
+        "when": "it is decided",
+        "then": "the response carries AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code",
+        "traces": [
+          "FRD-43"
+        ]
+      },
+      {
+        "id": "E5-S2-AC2",
+        "given": "the reason codes on that decision",
+        "when": "each is looked up",
+        "then": "it exists in the policy version pinned on the application",
+        "traces": [
+          "FRD-43"
+        ]
+      },
+      {
+        "id": "E5-S2-AC3",
+        "given": "a decided application",
+        "when": "the decision is recorded",
+        "then": "a new decision_record row is appended and the application's current decision is its latest record",
+        "traces": [
+          "FRD-43"
+        ]
+      },
+      {
+        "id": "E5-S2-AC4",
+        "given": "a MANUAL_REVIEW application re-decided after a newer policy version was activated",
+        "when": "its decision is read",
+        "then": "the re-decision still cites the policy version pinned at submission",
+        "traces": [
+          "FRD-43"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "H"
+  },
+  {
+    "id": "E6-S1",
+    "title": "Document verification queue with VERIFIED and REJECTED transitions",
+    "epic": "E6",
+    "layer": "API",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 1,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 7,
+      "evidence": "Queue read model plus a guarded two-outcome transition with a mandatory reason."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an underwriter, I want to work a queue of submitted documents and mark each VERIFIED or REJECTED with a reason so that the applicant knows precisely what to resupply.",
+    "business_value": "Turns document chasing into a worked queue with a recorded reason, cutting repeat rejections.",
+    "description": "The FR-06 verification queue over the checklist items intake generates. Each document transitions to VERIFIED, or to REJECTED with a non-empty reason; actioned documents leave the queue. Runs under the E1-S2 role boundary and is audited as a privileged action.",
+    "scope_in": [
+      "Verification queue read model over unactioned checklist documents",
+      "VERIFIED and REJECTED transitions with a mandatory rejection reason",
+      "Queue exclusion of already-actioned documents"
+    ],
+    "scope_out": [
+      "must not accept a REJECTED transition with an empty reason",
+      "must not verify a document against an external registry",
+      "must not block schedule generation on document verification, per D9"
+    ],
+    "safeguards": [
+      "SG-9"
+    ],
+    "depends_on": [
+      {
+        "story": "E4-S2",
+        "kind": "behavior",
+        "reason": "the queue works the checklist items intake generates"
+      },
+      {
+        "story": "E1-S2",
+        "kind": "behavior",
+        "reason": "verification is an underwriter action behind the role boundary and audit"
+      }
+    ],
+    "traces": [
+      "FRD-6"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E6-S1-AC1",
+        "given": "a checklist document in the verification queue",
+        "when": "an underwriter marks it VERIFIED",
+        "then": "its stored status reads VERIFIED",
+        "traces": [
+          "FRD-45"
+        ]
+      },
+      {
+        "id": "E6-S1-AC2",
+        "given": "a checklist document in the verification queue",
+        "when": "an underwriter marks it REJECTED with a reason",
+        "then": "the stored row reads REJECTED and carries that non-empty reason",
+        "traces": [
+          "FRD-45"
+        ]
+      },
+      {
+        "id": "E6-S1-AC3",
+        "given": "a document being rejected with an empty reason",
+        "when": "the transition is attempted",
+        "then": "it is refused and the document's stored status is unchanged",
+        "traces": [
+          "FRD-45"
+        ]
+      },
+      {
+        "id": "E6-S1-AC4",
+        "given": "documents that have already been actioned",
+        "when": "the verification queue is listed",
+        "then": "those documents are absent from the returned queue",
+        "traces": [
+          "FRD-45"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "G"
+  },
+  {
+    "id": "E6-S2",
+    "title": "Underwriter workbench queue and MANUAL_REVIEW decision review screen",
+    "epic": "E6",
+    "layer": "UI",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 1,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 7,
+      "evidence": "Two screens over existing decision and verification services with a state-filtered queue."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an underwriter, I want one queue of applications awaiting my action and a review screen for MANUAL_REVIEW cases so that I can decide them with the score, reason codes and document state in front of me.",
+    "business_value": "Concentrates underwriter attention on exactly the applications that need a human, with the evidence already assembled.",
+    "description": "The FR-17 workbench: a queue listing exactly the applications in SUBMITTED or MANUAL_REVIEW state, and a decision-review screen showing a MANUAL_REVIEW case's credit score, decision reason codes and per-document verification state, from which the underwriter records a decision.",
+    "scope_in": [
+      "Workbench queue filtered to SUBMITTED and MANUAL_REVIEW applications",
+      "Decision-review screen showing score, reason codes and document state",
+      "Underwriter decision recorded through the decision service"
+    ],
+    "scope_out": [
+      "must not list applications outside SUBMITTED or MANUAL_REVIEW state in the queue",
+      "must not render a native or responsive mobile client shell",
+      "must not write a decision by any path other than an appended decision_record"
+    ],
+    "safeguards": [
+      "SG-3"
+    ],
+    "depends_on": [
+      {
+        "story": "E5-S2",
+        "kind": "behavior",
+        "reason": "the review screen renders and records decisions through the decision service"
+      },
+      {
+        "story": "E6-S1",
+        "kind": "behavior",
+        "reason": "the review screen shows per-document verification state"
+      }
+    ],
+    "traces": [
+      "FRD-17"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E6-S2-AC1",
+        "given": "applications spread across every lifecycle state",
+        "when": "the workbench queue is listed",
+        "then": "it contains exactly those applications in SUBMITTED or MANUAL_REVIEW state",
+        "traces": [
+          "FRD-56"
+        ]
+      },
+      {
+        "id": "E6-S2-AC2",
+        "given": "a MANUAL_REVIEW application",
+        "when": "its review screen is opened",
+        "then": "the screen shows its credit score, its decision reason codes and the verification state of each checklist document",
+        "traces": [
+          "FRD-56"
+        ]
+      },
+      {
+        "id": "E6-S2-AC3",
+        "given": "an underwriter deciding a MANUAL_REVIEW case from the review screen",
+        "when": "the decision is saved",
+        "then": "the application's latest decision record reflects that decision and the case leaves the queue",
+        "traces": [
+          "FRD-56"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "I"
+  },
+  {
+    "id": "E7-S1",
+    "title": "Admin console application list with filters and audited AUTO_REJECT override",
+    "epic": "E7",
+    "layer": "UI",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 2,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 9,
+      "evidence": "Filtered list plus an override that appends a decision record and an audit entry with four required fields."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an admin, I want to filter applications by status and product and override an AUTO_REJECT with a comment and reason code so that genuine exceptions can be granted on the record.",
+    "business_value": "Gives the business a controlled exception path that leaves a complete audit trail instead of an off-system workaround.",
+    "description": "The FR-10 admin console. Overriding an AUTO_REJECT appends a new decision_record rather than mutating the old one, per D5, and writes an audit_event carrying the comment, reason code, acting user id and timestamp. The override's reason code is resolved from the application's pinned policy version, per D6.",
+    "scope_in": [
+      "Application list with status and product filters",
+      "AUTO_REJECT override capturing a comment and a reason code",
+      "Audit entry with comment, reason code, acting user id and timestamp"
+    ],
+    "scope_out": [
+      "must not update or delete the overridden decision_record row",
+      "must not accept a reason code absent from the application's pinned policy version",
+      "must not modify a disbursed loan or restructure it"
+    ],
+    "safeguards": [
+      "SG-8"
+    ],
+    "depends_on": [
+      {
+        "story": "E5-S2",
+        "kind": "behavior",
+        "reason": "the override appends onto the decision record the decision service writes"
+      },
+      {
+        "story": "E1-S2",
+        "kind": "behavior",
+        "reason": "the console is an admin surface and the override must be audited"
+      },
+      {
+        "story": "E15-S3",
+        "kind": "contract",
+        "artifact": "read-heavy endpoint registry and load harness",
+        "reason": "the application-list read surface registers with the SLO harness and must meet the budget"
+      }
+    ],
+    "traces": [
+      "FRD-10"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E7-S1-AC1",
+        "given": "applications across several statuses and products",
+        "when": "the list is filtered to one status and one product",
+        "then": "only the matching rows are returned",
+        "traces": [
+          "FRD-49"
+        ]
+      },
+      {
+        "id": "E7-S1-AC2",
+        "given": "an application decided AUTO_REJECT",
+        "when": "an admin overrides it with a comment and a reason code",
+        "then": "a new decision_record is appended and the application's current decision is the override",
+        "traces": [
+          "FRD-49"
+        ]
+      },
+      {
+        "id": "E7-S1-AC3",
+        "given": "that override",
+        "when": "the audit trail is read",
+        "then": "it contains an entry carrying the comment, the reason code, the acting user id and a timestamp",
+        "traces": [
+          "FRD-49"
+        ]
+      },
+      {
+        "id": "E7-S1-AC4",
+        "given": "the reason code supplied with the override",
+        "when": "it is looked up",
+        "then": "it exists in the policy version pinned on the application",
+        "traces": [
+          "FRD-49"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "I"
+  },
+  {
+    "id": "E8-S1",
+    "title": "Customer application tracking view",
+    "epic": "E8",
+    "layer": "UI",
+    "story_points": 3,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 1,
+      "integration_surface": 2,
+      "uncertainty_risk": 0,
+      "total": 6,
+      "evidence": "One read screen composing application status, checklist and decision state."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a customer, I want to track my application's status, outstanding documents and decision so that I do not have to be notified or call to find out where it stands.",
+    "business_value": "Replaces outbound notifications with a pull surface, which is why the deny-list can forbid email and SMS entirely.",
+    "description": "The FR-11 tracking view: current application status, every still-unverified checklist item, and — once decided — the decision with its reason codes. This is one of the three screens NFR-10 holds to WCAG 2.1 AA.",
+    "scope_in": [
+      "Tracking screen showing current application status",
+      "List of unverified required documents",
+      "Decision and reason codes once the application is decided"
+    ],
+    "scope_out": [
+      "must not send an email or SMS notification on any state change",
+      "must not expose another customer's application",
+      "must not show a decision section before the application is decided"
+    ],
+    "safeguards": [
+      "SG-4"
+    ],
+    "depends_on": [
+      {
+        "story": "E5-S2",
+        "kind": "behavior",
+        "reason": "the view renders the decision and reason codes that service produces"
+      },
+      {
+        "story": "E6-S1",
+        "kind": "behavior",
+        "reason": "the view lists documents still unverified in the verification queue"
+      },
+      {
+        "story": "E17-S1",
+        "kind": "contract",
+        "artifact": "accessibility harness and customer-facing screen registry",
+        "reason": "the Track screen registers with the existing harness and must pass it to land"
+      }
+    ],
+    "traces": [
+      "FRD-11"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E8-S1-AC1",
+        "given": "a submitted application belonging to the signed-in customer",
+        "when": "its tracking view is opened",
+        "then": "the view shows the application's current status",
+        "traces": [
+          "FRD-50"
+        ]
+      },
+      {
+        "id": "E8-S1-AC2",
+        "given": "an application with documents still unverified",
+        "when": "the tracking view renders",
+        "then": "every unverified required document is listed",
+        "traces": [
+          "FRD-50"
+        ]
+      },
+      {
+        "id": "E8-S1-AC3",
+        "given": "a decided application",
+        "when": "the tracking view renders",
+        "then": "the decision and each of its reason codes are shown",
+        "traces": [
+          "FRD-50"
+        ]
+      },
+      {
+        "id": "E8-S1-AC4",
+        "given": "an application that has not been decided yet",
+        "when": "the tracking view renders",
+        "then": "no decision section is shown and no notification was dispatched to the customer",
+        "traces": [
+          "FRD-50"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "I"
+  },
+  {
+    "id": "E11-S1",
+    "title": "Delinquency bucket ladder over days past due",
+    "epic": "E11",
+    "layer": "Types",
+    "story_points": 3,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 2,
+      "data_state_impact": 0,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 5,
+      "evidence": "Pure classifier over a five-band ladder; boundary semantics fixed by D3."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a portfolio manager, I want one canonical days-past-due ladder so that repayment posting, the end-of-day job and the dashboard never disagree about a loan's bucket.",
+    "business_value": "One classifier means one answer: the posting path, the batch job and the dashboard cannot drift into three different delinquency views.",
+    "description": "Publishes the D3 bucket ladder as an interface-layer artifact: the CURRENT, DPD-30, DPD-60, DPD-90 and NPA enum plus the floor boundaries 0-29, 30-59, 60-89, 90-179 and 180 or more, computed from the oldest unpaid installment's due date. E11-S2 and E12-S1 both consume it.",
+    "scope_in": [
+      "Delinquency bucket enum with the five FR-09 buckets",
+      "Pure classification function over days past due and an as-of date",
+      "Boundary tests at every floor"
+    ],
+    "scope_out": [
+      "must not compute or charge a late fee, penal interest or any lateness charge",
+      "must not read or write loan state — the classifier stays pure",
+      "must not introduce a sixth bucket or an orthogonal NPA flag, per D3"
+    ],
+    "safeguards": [
+      "SG-1"
+    ],
+    "depends_on": [],
+    "traces": [
+      "FRD-9"
+    ],
+    "invest": {
+      "independent": false,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E11-S1-AC1",
+        "given": "the floors CURRENT 0-29, DPD-30 30-59, DPD-60 60-89, DPD-90 90-179 and NPA at 180 or more days past due",
+        "when": "a loan whose oldest unpaid installment is 35 days past due is classified",
+        "then": "the returned bucket is DPD-30",
+        "traces": [
+          "FRD-48"
+        ]
+      },
+      {
+        "id": "E11-S1-AC2",
+        "given": "days-past-due values sampled across 0 through 400",
+        "when": "each value is classified",
+        "then": "exactly one of the five buckets is returned for every value, with no gap and no overlap",
+        "traces": [
+          "FRD-48"
+        ]
+      },
+      {
+        "id": "E11-S1-AC3",
+        "given": "a loan with no installment past its due date as of a given date",
+        "when": "it is classified as of that date",
+        "then": "the returned bucket is CURRENT",
+        "traces": [
+          "FRD-48"
+        ]
+      },
+      {
+        "id": "E11-S1-AC4",
+        "given": "any classification result",
+        "when": "it is inspected",
+        "then": "it carries a bucket only, with no fee, penal interest or charge of any kind",
+        "traces": [
+          "FRD-48"
+        ]
+      }
+    ],
+    "cluster": "C2",
+    "group": "A"
+  },
+  {
+    "id": "E9-S2",
+    "title": "Tracer M3: approve, disburse and post a first repayment",
+    "epic": "E9",
+    "layer": "API",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 2,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 8,
+      "evidence": "Thin approve-disburse-repay slice creating the loan aggregate and the schedule seam."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a product owner, I want a thin slice from approval through disbursement to a posted repayment so that the M3 done-when is demoable before the money epics go deep.",
+    "business_value": "Proves the origination-to-repayment lifecycle end to end at the first M3 story boundary, which is the graded deliverable.",
+    "description": "The D8 tracer bullet for M3. An approved application becomes a loan with a schedule, the loan is disbursed with a released amount and a stub funding source, and a repayment posting lowers outstanding principal. Per D9 it depends only on an approved decision, not on document verification.",
+    "scope_in": [
+      "Loan aggregate created from an approved decision",
+      "Shallow schedule with one row per tenure month",
+      "Disbursement and a first repayment posting"
+    ],
+    "scope_out": [
+      "must not implement the full EMI and residual rules — that is E9-S3",
+      "must not call a real payment rail or move real money",
+      "must not offer an early settlement, foreclosure or prepayment quote"
+    ],
+    "safeguards": [
+      "SG-2",
+      "SG-10"
+    ],
+    "depends_on": [
+      {
+        "story": "E5-S2",
+        "kind": "behavior",
+        "reason": "schedule generation triggers on an AUTO_APPROVE or an approved MANUAL_REVIEW decision, per D9"
+      }
+    ],
+    "traces": [
+      "FRD-7",
+      "FRD-8",
+      "FRD-9"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E9-S2-AC1",
+        "given": "an application with an approved decision",
+        "when": "its loan is created",
+        "then": "a repayment schedule exists with one installment row per month of the product tenure",
+        "traces": [
+          "FRD-46"
+        ]
+      },
+      {
+        "id": "E9-S2-AC2",
+        "given": "that loan",
+        "when": "it is disbursed",
+        "then": "it is in DISBURSED state holding the released amount and a funding-source identifier",
+        "traces": [
+          "FRD-47"
+        ]
+      },
+      {
+        "id": "E9-S2-AC3",
+        "given": "the disbursed loan",
+        "when": "a repayment is posted against it",
+        "then": "the loan's outstanding principal is lower than it was before the posting",
+        "traces": [
+          "FRD-48"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "I"
+  },
+  {
+    "id": "E9-S3",
+    "title": "EMI computation and append-only repayment schedule generation",
+    "epic": "E9",
+    "layer": "Service",
+    "story_points": 8,
+    "estimation_confidence": "medium",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 3,
+      "data_state_impact": 2,
+      "integration_surface": 2,
+      "uncertainty_risk": 2,
+      "total": 11,
+      "evidence": "Annuity maths with a rounding-residual rule (D4) plus two append-only invariants over the schedule table."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a customer, I want a repayment schedule whose installments sum exactly to what I borrowed and owe so that my statement and the bank's ledger can never disagree.",
+    "business_value": "Makes the AC-07 invariants true by construction rather than by tolerance, which is the difference between a reconcilable book and a disputed one.",
+    "description": "Implements the D4 rounding rule: EMI rounded to 2 decimal places, per-period interest from the opening balance, principal as EMI minus interest, and the final installment's principal set to the remaining balance. total_payable is defined as the sum of principal plus interest over the stored rows, not EMI times tenure. The schedule table is append-only per D5.",
+    "scope_in": [
+      "EMI annuity computation over principal, rate and tenure in fixed-point decimal",
+      "Schedule row generation with the final-installment residual rule",
+      "Append-only schedule_installment repository and its mutation scan"
+    ],
+    "scope_out": [
+      "must not define total_payable as EMI multiplied by tenure",
+      "must not expose an update or delete method on the schedule_installment repository",
+      "must not add a late fee, penal interest or prepayment quote to any installment row"
+    ],
+    "safeguards": [
+      "SG-1",
+      "SG-10"
+    ],
+    "depends_on": [
+      {
+        "story": "E9-S2",
+        "kind": "behavior",
+        "reason": "deepens the tracer's shallow schedule into the real EMI and residual rules"
+      },
+      {
+        "story": "E9-S1",
+        "kind": "contract",
+        "artifact": "Money value type",
+        "reason": "every schedule money field is the published fixed-point Money type"
+      }
+    ],
+    "traces": [
+      "FRD-7",
+      "FRD-19"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E9-S3-AC1",
+        "given": "a generated repayment schedule",
+        "when": "the principal column across its rows is summed",
+        "then": "the sum equals the disbursed amount exactly, with no residual",
+        "traces": [
+          "FRD-46"
+        ]
+      },
+      {
+        "id": "E9-S3-AC2",
+        "given": "that same schedule",
+        "when": "total payable is read and the installments are counted",
+        "then": "total payable equals the sum of principal plus interest over the stored rows and the installment count equals the product tenure",
+        "traces": [
+          "FRD-46"
+        ]
+      },
+      {
+        "id": "E9-S3-AC3",
+        "given": "a schedule whose rounded EMI leaves a residual",
+        "when": "the final installment row is inspected",
+        "then": "its principal equals the balance remaining after all preceding rows",
+        "traces": [
+          "FRD-46"
+        ]
+      },
+      {
+        "id": "E9-S3-AC4",
+        "given": "each period of the schedule",
+        "when": "that period's interest is computed",
+        "then": "it is derived from the period's opening balance at the rate on the application's pinned policy version",
+        "traces": [
+          "FRD-46"
+        ]
+      },
+      {
+        "id": "E9-S3-AC5",
+        "given": "the schedule_installment repository together with src/ and migrations/",
+        "when": "they are scanned by the immutability architecture test",
+        "then": "no update or delete method is exposed and 0 UPDATE or DELETE statements target schedule_installment",
+        "traces": [
+          "FRD-58"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "J"
+  },
+  {
+    "id": "E10-S1",
+    "title": "Disbursement records the released amount and a stub funding source",
+    "epic": "E10",
+    "layer": "Service",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 2,
+      "data_state_impact": 2,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 7,
+      "evidence": "State transition with an idempotence guard over a money-bearing loan record."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an operations user, I want disbursement to record exactly what was released and from where so that the loan book reconciles without touching a real payment rail.",
+    "business_value": "Gives the loan book a complete, reconcilable disbursement record while keeping the funding source a stub, as the capstone requires.",
+    "description": "Deepens the tracer's disbursement into the FR-08 record: released amount, funding-source identifier, DISBURSED state with the generated schedule attached, and a guard so a second disbursement attempt cannot double-release. The funding source is a stub per SG-2.",
+    "scope_in": [
+      "Disbursement transition writing released amount and funding-source identifier",
+      "Stub funding-source adapter",
+      "Idempotence guard against a repeat disbursement"
+    ],
+    "scope_out": [
+      "must not call a real payment rail or hold live provider credentials",
+      "must not produce a signed loan agreement or e-signature artifact",
+      "must not disburse a loan without a generated schedule attached"
+    ],
+    "safeguards": [
+      "SG-2",
+      "SG-5"
+    ],
+    "depends_on": [
+      {
+        "story": "E9-S3",
+        "kind": "behavior",
+        "reason": "a loan is disbursed only once its real schedule has been generated"
+      }
+    ],
+    "traces": [
+      "FRD-8"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E10-S1-AC1",
+        "given": "an approved loan with a generated schedule",
+        "when": "it is disbursed",
+        "then": "the loan record holds the released amount",
+        "traces": [
+          "FRD-47"
+        ]
+      },
+      {
+        "id": "E10-S1-AC2",
+        "given": "that disbursement",
+        "when": "the loan is read back",
+        "then": "it holds a funding-source identifier and is in DISBURSED state with its schedule attached",
+        "traces": [
+          "FRD-47"
+        ]
+      },
+      {
+        "id": "E10-S1-AC3",
+        "given": "the stub funding source",
+        "when": "the disbursement executes",
+        "then": "no external payment rail is called and no signed agreement artifact is produced",
+        "traces": [
+          "FRD-47"
+        ]
+      },
+      {
+        "id": "E10-S1-AC4",
+        "given": "a loan already in DISBURSED state",
+        "when": "disbursement is attempted a second time",
+        "then": "the attempt is refused and the recorded released amount is unchanged",
+        "traces": [
+          "FRD-47"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "K"
+  },
+  {
+    "id": "E11-S2",
+    "title": "Repayment posting reduces outstanding principal and recalculates the delinquency bucket",
+    "epic": "E11",
+    "layer": "Service",
+    "story_points": 8,
+    "estimation_confidence": "medium",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 3,
+      "integration_surface": 1,
+      "uncertainty_risk": 2,
+      "total": 10,
+      "evidence": "Append-only posting plus a mutable-balance update plus bucket recalculation on the same transaction."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a customer, I want each repayment to reduce my outstanding principal and refresh my delinquency status so that my standing reflects what I have actually paid.",
+    "business_value": "Keeps the portfolio's delinquency picture accurate the moment money is applied, without a batch lag.",
+    "description": "Implements FR-09 on the D5 mutable/immutable line: the repayment_posting row is appended and never updated, while loan.outstanding_principal and loan.delinquency_bucket are mutable columns updated in the same transaction. Bucket recalculation calls the E11-S1 ladder rather than re-deriving boundaries.",
+    "scope_in": [
+      "Repayment posting endpoint appending an immutable repayment_posting row",
+      "Outstanding-principal reduction by the applied principal portion",
+      "Bucket recalculation through the published ladder"
+    ],
+    "scope_out": [
+      "must not update or delete an existing repayment_posting row",
+      "must not charge a late fee, penal interest or open a collections workflow",
+      "must not re-derive bucket boundaries locally instead of calling the published ladder"
+    ],
+    "safeguards": [
+      "SG-1",
+      "SG-10"
+    ],
+    "depends_on": [
+      {
+        "story": "E10-S1",
+        "kind": "behavior",
+        "reason": "repayments are posted against a disbursed loan"
+      },
+      {
+        "story": "E11-S1",
+        "kind": "contract",
+        "artifact": "delinquency bucket ladder",
+        "reason": "recalculation calls the published classifier rather than its own boundaries"
+      }
+    ],
+    "traces": [
+      "FRD-9"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E11-S2-AC1",
+        "given": "a disbursed loan with a known outstanding principal",
+        "when": "a repayment is posted against it",
+        "then": "outstanding principal falls by exactly the applied principal portion of that payment",
+        "traces": [
+          "FRD-48"
+        ]
+      },
+      {
+        "id": "E11-S2-AC2",
+        "given": "a posted repayment",
+        "when": "the repayment_posting table is read",
+        "then": "a new immutable row records the payment and no pre-existing row was updated",
+        "traces": [
+          "FRD-48"
+        ]
+      },
+      {
+        "id": "E11-S2-AC3",
+        "given": "a loan whose oldest unpaid installment is 35 days past due",
+        "when": "its bucket is recalculated after the posting",
+        "then": "the stored delinquency bucket reads DPD-30",
+        "traces": [
+          "FRD-48"
+        ]
+      },
+      {
+        "id": "E11-S2-AC4",
+        "given": "a posting that clears every overdue installment",
+        "when": "the bucket is recalculated",
+        "then": "the stored bucket reads CURRENT and no late fee or penal interest was charged",
+        "traces": [
+          "FRD-48"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "L"
+  },
+  {
+    "id": "E12-S1",
+    "title": "Idempotent as-of-date end-of-day delinquency recalculation",
+    "epic": "E12",
+    "layer": "Service",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 2,
+      "data_state_impact": 3,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 8,
+      "evidence": "Portfolio-wide batch write with a proven-idempotent second run over seeded loans."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a portfolio manager, I want a repeatable end-of-day recalculation for a given date so that a rerun after a failure cannot change the book.",
+    "business_value": "Makes the nightly delinquency refresh safe to rerun, which is what allows an operator to recover from a partial failure without reconciliation work.",
+    "description": "The FR-14 end-of-day operation, parameterised by an as-of date and idempotent by construction. Per D10 it depends on the published bucket ladder and on schedule installment data, not on the repayment posting endpoint, so it can be built and tested against seeded loans in parallel with E11-S2's API work.",
+    "scope_in": [
+      "As-of-date parameterised end-of-day operation over all active loans",
+      "Bucket assignment through the published ladder",
+      "Idempotence proof by a second run for the same date"
+    ],
+    "scope_out": [
+      "must not charge a late fee, penal interest or create a collections record",
+      "must not depend on the repayment posting endpoint, per D10",
+      "must not change any row on a second run for the same as-of date"
+    ],
+    "safeguards": [
+      "SG-1"
+    ],
+    "depends_on": [
+      {
+        "story": "E11-S1",
+        "kind": "contract",
+        "artifact": "delinquency bucket ladder",
+        "reason": "the job classifies through the published ladder, per D10"
+      },
+      {
+        "story": "E9-S3",
+        "kind": "data",
+        "artifact": "schedule_installment rows",
+        "reason": "days past due is computed from stored installment due dates on seeded loans"
+      }
+    ],
+    "traces": [
+      "FRD-14"
+    ],
+    "invest": {
+      "independent": false,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E12-S1-AC1",
+        "given": "seeded active loans with differing days past due",
+        "when": "the end-of-day operation runs for a given as-of date",
+        "then": "each loan's stored bucket matches its days past due at that date",
+        "traces": [
+          "FRD-53"
+        ]
+      },
+      {
+        "id": "E12-S1-AC2",
+        "given": "a completed end-of-day run",
+        "when": "the operation runs a second time for the same as-of date",
+        "then": "every bucket and every stored row is byte-identical to the first run's result",
+        "traces": [
+          "FRD-53"
+        ]
+      },
+      {
+        "id": "E12-S1-AC3",
+        "given": "an as-of date earlier than a loan's first installment due date",
+        "when": "the operation runs for that date",
+        "then": "that loan's stored bucket reads CURRENT",
+        "traces": [
+          "FRD-53"
+        ]
+      },
+      {
+        "id": "E12-S1-AC4",
+        "given": "the completed run",
+        "when": "the loan records are compared against their pre-run state",
+        "then": "no fee, penal interest or collections record was created",
+        "traces": [
+          "FRD-53"
+        ]
+      }
+    ],
+    "cluster": "C2",
+    "group": "K"
+  },
+  {
+    "id": "E13-S1",
+    "title": "Customer loan view with schedule, outstanding principal, bucket and repayment posting",
+    "epic": "E13",
+    "layer": "UI",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 1,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 7,
+      "evidence": "Read screen over the schedule plus a write action that must reflect on reload."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a customer, I want to see my repayment schedule and current standing and pay from the same screen so that I can stay current without contacting the bank.",
+    "business_value": "Gives borrowers a self-service repayment surface, which is what makes the no-notifications constraint workable.",
+    "description": "The FR-12 customer loan view: every installment with due date and amount, the current outstanding principal, the current delinquency bucket, and a repayment action whose effect is visible on reload. This is the Repay screen NFR-10 holds to WCAG 2.1 AA.",
+    "scope_in": [
+      "Installment list with due date and amount per row",
+      "Current outstanding principal and delinquency bucket display",
+      "Repayment posting action from the loan view"
+    ],
+    "scope_out": [
+      "must not offer an early settlement, foreclosure or prepayment quote",
+      "must not expose another customer's loan",
+      "must not compute outstanding principal client-side"
+    ],
+    "safeguards": [
+      "SG-10"
+    ],
+    "depends_on": [
+      {
+        "story": "E11-S2",
+        "kind": "behavior",
+        "reason": "the view posts repayments and renders the balance and bucket that service maintains"
+      },
+      {
+        "story": "E17-S1",
+        "kind": "contract",
+        "artifact": "accessibility harness and customer-facing screen registry",
+        "reason": "the Repay screen registers with the existing harness and must pass it to land"
+      },
+      {
+        "story": "E15-S3",
+        "kind": "contract",
+        "artifact": "read-heavy endpoint registry and load harness",
+        "reason": "the loan read surface registers with the SLO harness and must meet the budget"
+      }
+    ],
+    "traces": [
+      "FRD-12"
+    ],
+    "invest": {
+      "independent": false,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E13-S1-AC1",
+        "given": "a disbursed loan belonging to the signed-in customer",
+        "when": "its loan view is opened",
+        "then": "every installment is listed with its due date and amount",
+        "traces": [
+          "FRD-51"
+        ]
+      },
+      {
+        "id": "E13-S1-AC2",
+        "given": "that same loan view",
+        "when": "it renders",
+        "then": "the current outstanding principal and the current delinquency bucket are both shown",
+        "traces": [
+          "FRD-51"
+        ]
+      },
+      {
+        "id": "E13-S1-AC3",
+        "given": "a repayment posted from the loan view",
+        "when": "the page is reloaded",
+        "then": "the displayed outstanding principal reflects that posting",
+        "traces": [
+          "FRD-51"
+        ]
+      },
+      {
+        "id": "E13-S1-AC4",
+        "given": "the loan view for a delinquent loan",
+        "when": "it renders",
+        "then": "it offers no early settlement, foreclosure or prepayment quote",
+        "traces": [
+          "FRD-51"
+        ]
+      }
+    ],
+    "cluster": "C3",
+    "group": "M"
+  },
+  {
+    "id": "E14-S1",
+    "title": "Portfolio dashboard by product, delinquency bucket and total overdue",
+    "epic": "E14",
+    "layer": "UI",
+    "story_points": 5,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 1,
+      "data_state_impact": 1,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 7,
+      "evidence": "Aggregation read model over stored bucket state with a reconciling total-overdue figure."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As an admin, I want the portfolio broken down by product and delinquency bucket with a total overdue figure so that I can see the book's health at a glance.",
+    "business_value": "Turns loan-level delinquency state into the portfolio view the business actually manages against.",
+    "description": "The FR-15 dashboard. Per D11 it is a read model over the loan bucket state and overdue installments E11-S2 maintains, with no dependency on the end-of-day job. The total overdue figure must reconcile to the sum of overdue installment amounts across active loans.",
+    "scope_in": [
+      "Per-product, per-bucket loan count and value aggregation",
+      "Total overdue figure reconciling to overdue installment amounts",
+      "Admin-only dashboard surface"
+    ],
+    "scope_out": [
+      "must not trigger or depend on the end-of-day job, per D11",
+      "must not report a fee, penalty or collections figure",
+      "must not be reachable with a CUSTOMER session"
+    ],
+    "safeguards": [
+      "SG-1"
+    ],
+    "depends_on": [
+      {
+        "story": "E11-S2",
+        "kind": "data",
+        "artifact": "loan bucket state and overdue installments",
+        "reason": "the dashboard reads the bucket state and overdue rows that service establishes"
+      },
+      {
+        "story": "E1-S2",
+        "kind": "behavior",
+        "reason": "the dashboard is an admin surface behind the controller-layer role boundary"
+      },
+      {
+        "story": "E15-S3",
+        "kind": "contract",
+        "artifact": "read-heavy endpoint registry and load harness",
+        "reason": "the dashboard read surface registers with the SLO harness and must meet the budget"
+      }
+    ],
+    "traces": [
+      "FRD-15"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E14-S1-AC1",
+        "given": "loans spread across products and delinquency buckets",
+        "when": "an admin opens the dashboard",
+        "then": "the loan count and value are reported for every product and bucket combination",
+        "traces": [
+          "FRD-54"
+        ]
+      },
+      {
+        "id": "E14-S1-AC2",
+        "given": "those same loans",
+        "when": "the total overdue figure is read",
+        "then": "it equals the sum of overdue installment amounts across all active loans",
+        "traces": [
+          "FRD-54"
+        ]
+      },
+      {
+        "id": "E14-S1-AC3",
+        "given": "a CUSTOMER session",
+        "when": "the dashboard endpoint is called with it",
+        "then": "the response is 403 and no portfolio figures are returned",
+        "traces": [
+          "FRD-54"
+        ]
+      },
+      {
+        "id": "E14-S1-AC4",
+        "given": "the dashboard request",
+        "when": "its data source is traced",
+        "then": "the figures are served from stored loan bucket state without invoking the end-of-day job",
+        "traces": [
+          "FRD-54"
+        ]
+      }
+    ],
+    "cluster": "C1",
+    "group": "M"
+  },
+  {
+    "id": "E17-S1",
+    "title": "Accessibility harness and WCAG 2.1 AA ratchet over the customer-facing screen registry",
+    "epic": "E17",
+    "layer": "UI",
+    "story_points": 5,
+    "estimation_confidence": "medium",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 0,
+      "integration_surface": 2,
+      "uncertainty_risk": 1,
+      "total": 7,
+      "evidence": "Automated scan plus keyboard traversal across three existing screens; remediation scope is discovered."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a customer relying on assistive technology, I want every customer-facing screen held to WCAG 2.1 AA as it is built so that conformance is never a late remediation pass over three finished screens.",
+    "business_value": "Makes an accessibility regression attributable to the story that caused it, and removes the retrofit risk of remediating three screens at once at the end of the build.",
+    "description": "Applies the D22 criterion in the D28 ratchet form. Builds the axe-core plus keyboard-traversal harness over a customer-facing screen registry, registers and remediates the Apply screen, and fails closed on an unregistered customer-facing screen. Track (E8-S1) and Repay (E13-S1) then register with this harness as they land, so the three screens NFR-10 names are each covered by the story that introduces them rather than by one terminal remediation pass.",
+    "scope_in": [
+      "axe-core scan and keyboard-traversal harness wired into the frontend test suite",
+      "Customer-facing screen registry the harness enumerates, with a completeness assertion",
+      "Registration and accessibility remediation of the Apply screen"
+    ],
+    "scope_out": [
+      "must not change the behavior or contract of a registered screen endpoint",
+      "must not introduce a native or responsive mobile client shell",
+      "must not suppress an axe rule to reach a zero-violation count",
+      "must not defer a later screen conformance check to a follow-up remediation story"
+    ],
+    "safeguards": [
+      "SG-3"
+    ],
+    "depends_on": [
+      {
+        "story": "E4-S3",
+        "kind": "behavior",
+        "reason": "the Apply screen is the first screen registered with the harness"
+      }
+    ],
+    "traces": [
+      "FRD-27"
+    ],
+    "invest": {
+      "independent": false,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E17-S1-AC1",
+        "given": "the customer-facing screen registry",
+        "when": "the automated axe-core scan runs against every registered screen",
+        "then": "it reports 0 WCAG 2.1 AA violations with no rule suppressed, and asserts it covered 100% of registered screens",
+        "traces": [
+          "FRD-66"
+        ]
+      },
+      {
+        "id": "E17-S1-AC2",
+        "given": "each registered screen",
+        "when": "its primary flow is traversed using the keyboard only",
+        "then": "the flow completes, no focus trap is encountered, and every interactive control exposes an accessible name and a visible focus indicator",
+        "traces": [
+          "FRD-66"
+        ]
+      },
+      {
+        "id": "E17-S1-AC3",
+        "given": "a route that renders a customer-facing screen and is absent from the registry",
+        "when": "the accessibility suite runs",
+        "then": "the suite fails, so Apply, Track and Repay are each held to WCAG 2.1 AA by the story that lands them",
+        "traces": [
+          "FRD-66"
+        ]
+      }
+    ],
+    "cluster": "C4",
+    "group": "H"
+  },
+  {
+    "id": "E15-S3",
+    "title": "Runtime SLO load harness and ratchet over the read-heavy endpoint registry",
+    "epic": "E15",
+    "layer": "API",
+    "story_points": 2,
+    "estimation_confidence": "medium",
+    "estimation_drivers": {
+      "functional_scope": 1,
+      "technical_complexity": 1,
+      "data_state_impact": 0,
+      "integration_surface": 1,
+      "uncertainty_risk": 1,
+      "total": 4,
+      "evidence": "One measurement harness over four existing endpoints; no product behavior of its own."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a platform operator, I want the read-heavy endpoints measured against the runtime SLO so that a latency regression is caught before a reviewer meets it.",
+    "business_value": "Catches a latency regression at the story that introduces it rather than in a terminal measurement pass whose only remedy touches every read endpoint.",
+    "description": "Applies the D21 criterion in the D28 ratchet form. Builds the load harness over a read-heavy endpoint registry that must contain GET /products, GET /applications, GET /loans/{id} and GET /dashboard, measures p95 and error rate across every registered endpoint, records the figures in the evaluation report, and fails closed on an unregistered read-heavy endpoint. E7-S1, E13-S1 and E14-S1 register their read surfaces as they land.",
+    "scope_in": [
+      "Load harness measuring p95 latency and error rate per registered endpoint",
+      "Read-heavy endpoint registry with a completeness assertion, seeded with the four endpoints NFR-09 names",
+      "Measured figures recorded in the evaluation report"
+    ],
+    "scope_out": [
+      "must not change any endpoint response contract to improve a measurement",
+      "must not call an external load-testing service or hold provider credentials",
+      "must not add caching that changes a documented read freshness semantic",
+      "must not exclude a registered endpoint from a run to reach the budget"
+    ],
+    "safeguards": [
+      "SG-2"
+    ],
+    "depends_on": [
+      {
+        "story": "E2-S1",
+        "kind": "behavior",
+        "reason": "GET /products is the first read-heavy endpoint registered with the harness"
+      }
+    ],
+    "traces": [
+      "FRD-26"
+    ],
+    "invest": {
+      "independent": false,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E15-S3-AC1",
+        "given": "the read-heavy endpoint registry, which contains GET /products, GET /applications, GET /loans/{id} and GET /dashboard",
+        "when": "the load run executes against every registered endpoint",
+        "then": "the measured p95 latency is under 500 ms and the error rate is under 1% across all of them",
+        "traces": [
+          "FRD-65"
+        ]
+      },
+      {
+        "id": "E15-S3-AC2",
+        "given": "the completed load run",
+        "when": "the evaluation report is written",
+        "then": "it records the measured p95 and error-rate figures for each registered endpoint",
+        "traces": [
+          "FRD-65"
+        ]
+      },
+      {
+        "id": "E15-S3-AC3",
+        "given": "a read-heavy endpoint absent from the registry",
+        "when": "the SLO suite runs",
+        "then": "the suite fails, so a read surface added later is measured by the story that adds it",
+        "traces": [
+          "FRD-65"
+        ]
+      }
+    ],
+    "cluster": "C3",
+    "group": "E"
+  }
+]

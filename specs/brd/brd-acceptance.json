@@ -1,0 +1,147 @@
+[
+  {
+    "id": "FRD-40",
+    "requirement": "FR-01",
+    "text": "`GET /products` returns at least 3 products (Personal, Vehicle, Education); each carries a policy version id, and the three policy versions hold different threshold values."
+  },
+  {
+    "id": "FRD-41",
+    "requirement": "FR-02",
+    "text": "Submitting an application returns a persisted application in SUBMITTED state whose required-document checklist matches the selected product's policy version, item for item."
+  },
+  {
+    "id": "FRD-42",
+    "requirement": "FR-03",
+    "text": "The same age, income and credit-history-flag input returns the identical score on repeated calls, and two inputs differing only in credit-history flags return different scores."
+  },
+  {
+    "id": "FRD-43",
+    "requirement": "FR-04",
+    "text": "The decision response carries a decision of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code, and every returned reason code exists in the policy version named on the application."
+  },
+  {
+    "id": "FRD-44",
+    "requirement": "FR-05",
+    "text": "Submitting with income below the product's minimum threshold returns an error identifying PolicyViolationException and the breached threshold, and persists no application row."
+  },
+  {
+    "id": "FRD-45",
+    "requirement": "FR-06",
+    "text": "Each checklist document can be transitioned to VERIFIED or REJECTED; a REJECTED document stores a non-empty reason, and the queue no longer lists documents already actioned."
+  },
+  {
+    "id": "FRD-46",
+    "requirement": "FR-07",
+    "text": "For a generated schedule, the sum of all installment principal equals the disbursed amount, the sum of principal plus interest across installments equals total payable, and installment count equals the product tenure."
+  },
+  {
+    "id": "FRD-47",
+    "requirement": "FR-08",
+    "text": "After disbursement the loan record holds the released amount and a funding-source identifier, and the loan is in a DISBURSED state with a schedule attached."
+  },
+  {
+    "id": "FRD-48",
+    "requirement": "FR-09",
+    "text": "Posting a repayment lowers outstanding principal by the applied principal portion, and a loan whose oldest unpaid installment is 35 days past due reads as DPD-30 after recalculation."
+  },
+  {
+    "id": "FRD-49",
+    "requirement": "FR-10",
+    "text": "The application list can be filtered to a given status and product and returns only matching rows; overriding an AUTO_REJECT changes the decision and writes an audit entry containing the comment, reason code, acting user id and timestamp."
+  },
+  {
+    "id": "FRD-50",
+    "requirement": "FR-11",
+    "text": "The tracking view for an application shows its current status, every unverified checklist item, and — once decided — the decision with its reason codes."
+  },
+  {
+    "id": "FRD-51",
+    "requirement": "FR-12",
+    "text": "The customer loan view lists every installment with due date and amount, the current outstanding principal and the current bucket; a repayment posted from this view is reflected in the outstanding figure on reload."
+  },
+  {
+    "id": "FRD-52",
+    "requirement": "FR-13",
+    "text": "Saving an edited threshold in the Policy Editor creates a new policy version, leaves the prior version's stored values byte-identical, and a subsequent application decision cites the new version id without any process restart."
+  },
+  {
+    "id": "FRD-53",
+    "requirement": "FR-14",
+    "text": "Running the end-of-day operation for a given as-of date sets each active loan's bucket according to its days past due, and a second run for the same date leaves every bucket and every stored row unchanged."
+  },
+  {
+    "id": "FRD-54",
+    "requirement": "FR-15",
+    "text": "The dashboard returns, per product, the loan count and value per bucket and a total overdue figure that equals the sum of overdue installment amounts across active loans."
+  },
+  {
+    "id": "FRD-55",
+    "requirement": "FR-16",
+    "text": "A request to an underwriter or admin route with a CUSTOMER session is rejected with 403; a request with no session is rejected with 401; each role can reach its own surfaces."
+  },
+  {
+    "id": "FRD-56",
+    "requirement": "FR-17",
+    "text": "The workbench queue lists exactly the applications in SUBMITTED or MANUAL_REVIEW state, and opening a MANUAL_REVIEW case shows its score, reason codes and document verification state."
+  },
+  {
+    "id": "FRD-57",
+    "requirement": "NFR-01",
+    "text": "A property test over (principal, rate, tenure) asserts every money field on a generated schedule is a Decimal quantized to exactly 2 decimal places, and a static check reports 0 float arithmetic operations in money code paths (backend `decimal.Decimal`; frontend a Decimal value via a decimal library, never a float)."
+  },
+  {
+    "id": "FRD-58",
+    "requirement": "NFR-02",
+    "text": "The policy_version and schedule_installment repositories expose no update or delete method (asserted by interface test), and an architecture test reports 0 UPDATE or DELETE statements and 0 ORM mutations against those two tables across `src/` and `migrations/`."
+  },
+  {
+    "id": "FRD-59",
+    "requirement": "NFR-03",
+    "text": "A test submits an application carrying synthetic PAN, Aadhaar and salary-document content, captures every emitted log record, and asserts 0 occurrences of each value; a second assertion confirms the redaction filter is installed on every configured logger."
+  },
+  {
+    "id": "FRD-60",
+    "requirement": "NFR-04",
+    "text": "For every underwriter and admin route enumerated from the OpenAPI schema, a generated test issues the request with no session (expect 401) and with a CUSTOMER session (expect 403); the test asserts it covered 100% of those routes, so a newly added unguarded route fails the suite."
+  },
+  {
+    "id": "FRD-61",
+    "requirement": "NFR-05",
+    "text": "A migration-lint test parses every file under `migrations/` and asserts 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements; policy migrations are checked by the same parser."
+  },
+  {
+    "id": "FRD-62",
+    "requirement": "NFR-06",
+    "text": "Every log line emitted while serving a request parses as JSON and carries a non-empty request_id equal to the inbound X-Request-ID header, or to a generated id when the header is absent; the assertion covers 100% of request-scoped lines in the captured buffer."
+  },
+  {
+    "id": "FRD-63",
+    "requirement": "NFR-07",
+    "text": "In the deploy smoke test, after `docker compose up` reports the backend healthy, `GET /health` returns 200 with a JSON body and the measured response time is under 1 second."
+  },
+  {
+    "id": "FRD-64",
+    "requirement": "NFR-08",
+    "text": "An architecture test module holds at least one test per named invariant — policy-version immutability, the EMI principal/rate/tenure invariant, and the one-way dependency rule across Types, Config, Repository, Service, API, UI — and the suite fails if any registered invariant has no corresponding test."
+  },
+  {
+    "id": "FRD-65",
+    "requirement": "NFR-09",
+    "text": "A load run against the read-heavy endpoints (`GET /products`, `GET /applications`, `GET /loans/{id}`, `GET /dashboard`) reports p95 under 500 ms and an error rate under 1%; the measured figures are recorded in the evaluation report."
+  },
+  {
+    "id": "FRD-66",
+    "requirement": "NFR-10",
+    "text": "An automated axe-core scan of the Apply, Track and Repay screens reports 0 WCAG 2.1 AA violations, and keyboard-only traversal of each screen's primary flow completes without a focus trap."
+  },
+  {
+    "id": "FRD-67",
+    "requirement": "NFR-11",
+    "text": "Every production commit on the branch carries agent co-authorship and passes the standard pre-commit gate set, and the `/gate` attestation record is the evidence for 0 hand-written production lines."
+  },
+  {
+    "id": "FRD-68",
+    "requirement": "NFR-12",
+    "text": "`docker compose up` from a clean checkout brings up exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend, all reporting healthy; the layer-dependency architecture test reports 0 violations of the six-layer one-way rule."
+  }
+]

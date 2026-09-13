@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "story_id": "E5-S2",
+  "sprint": 1,
+  "title": "Underwriting decision with reason codes from the pinned policy version",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E5-S2-AC1",
+      "E5-S2-AC2",
+      "E5-S2-AC3",
+      "E5-S2-AC4"
+    ],
+    "brd_ids": [
+      "FRD-4"
+    ],
+    "br_acceptance_ids": [
+      "FRD-43"
+    ],
+    "scope_out": [
+      "must not update or delete an existing decision_record row; must not return a reason code absent from the application's pinned policy version; must not re-resolve the policy version at decision time"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Underwriting decision with reason codes from the pinned policy version",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/service/origination/decision.py",
+      "backend/src/repository/origination/decision_repository.py",
+      "backend/migrations/versions/0007_decision_record.py",
+      "backend/tests/unit/test_decision_reason_codes.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-2"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-051",
+      "VM-052",
+      "VM-053",
+      "VM-054"
+    ],
+    "case_ids": [
+      "VM-051",
+      "VM-052",
+      "VM-053",
+      "VM-054"
+    ],
+    "layers": [
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E5-S2.md",
+    "parents": [
+      "E5-S1"
+    ],
+    "tracker_key": null
+  }
+}

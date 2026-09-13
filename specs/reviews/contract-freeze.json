@@ -1,0 +1,58 @@
+{
+  "frozenAt": "2026-09-13T15:53:18.113Z",
+  "source": "specs\\test_artefacts\\test-plan.md",
+  "files": [
+    {
+      "path": "sprint-contracts\\A.json",
+      "sha256": "83ea09913fe8c1a6932e38cac843c83fbc2a7969b8b7d9c2a81708a028f184ff"
+    },
+    {
+      "path": "sprint-contracts\\B.json",
+      "sha256": "09e0e1990aa52e1a53e8d337c1677d6e6d12e5f823160e84baf8a48d5b69213a"
+    },
+    {
+      "path": "sprint-contracts\\C.json",
+      "sha256": "5219ca2c1958f4d153af56d18d1937ba03161afa320546ce99c042c1ead9d27d"
+    },
+    {
+      "path": "sprint-contracts\\D.json",
+      "sha256": "6aa28f3446a7c8a6bcf77e368ac4303e1aef1641b14057581bda5f2a61dd96c8"
+    },
+    {
+      "path": "sprint-contracts\\E.json",
+      "sha256": "a4d1f1fe4922b93812261be451b41bfbe92c9af616bf9e95294a82eac1f30735"
+    },
+    {
+      "path": "sprint-contracts\\F.json",
+      "sha256": "55b662f31783d683aac74ede663717e608feb5df18cb192ca3d2d4914efa7796"
+    },
+    {
+      "path": "sprint-contracts\\G.json",
+      "sha256": "3426491d289201f6af882ca68927099ebfe700621449d15d134c12374489d671"
+    },
+    {
+      "path": "sprint-contracts\\H.json",
+      "sha256": "a39e075d55b9d8823f3187d51503ea48e26c141275b44415a6ccfea57cdd988a"
+    },
+    {
+      "path": "sprint-contracts\\I.json",
+      "sha256": "38b17abb66db0c62652ef23eb3317cf9e880fc1f354d86a17cd7f2b4c53e4b49"
+    },
+    {
+      "path": "sprint-contracts\\J.json",
+      "sha256": "9ff5b7d61f50c527d5ec13653ff07ee9f2c0d14adcec20728f55a47a326d3fb9"
+    },
+    {
+      "path": "sprint-contracts\\K.json",
+      "sha256": "66da97d5caf5ce24534ae15742599201359944b48c23886e68f1d76777ed20c6"
+    },
+    {
+      "path": "sprint-contracts\\L.json",
+      "sha256": "76efaed6cb04f7cceffbe7bc290845d42aff38f7d2d0c4532bce9f4712e79c0a"
+    },
+    {
+      "path": "sprint-contracts\\M.json",
+      "sha256": "8f61cc6677e14b641a205f19f05048506d5282f0477812087c8bce2d0bc5827c"
+    }
+  ]
+}

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Story: E4-S3 — Apply screen (CUSTOMER)
+  Screen: Loan application intake — product selection, applicant details, requested
+          amount/tenure, and a post-submit confirmation showing the created
+          LoanApplication (SUBMITTED) plus its full DocumentChecklist.
+  Depends on: POST /applications
+  Notes: No co-applicant or guarantor field exists anywhere on this screen
+         (E4-S3-AC3). All money fields render as quoted 2dp strings.
+-->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apply for a loan — TrueLend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" /><!-- harness:secret-ok -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com/3.4.13"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#14231D',
+          'ink-muted': '#4E6158',
+          paper: '#F7F4EC',
+          'paper-raised': '#FFFDF7',
+          brass: '#9A6B1F',
+          'signal-red': '#8E241C',
+          'signal-amber': '#8A5B12',
+          'signal-green': '#1D5C41',
+          rule: '#D8D0BE'
+        },
+        fontFamily: {
+          display: ['Fraunces', 'serif'],
+          body: ['"Public Sans"', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<style>
+  html, body { background-color: #F7F4EC; }
+  body { font-family: 'Public Sans', sans-serif; color: #14231D; }
+  h1, h2, h3, .font-display { font-family: 'Fraunces', serif; }
+  .tnum { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+  :focus { outline: 2px solid #9A6B1F; outline-offset: 2px; }
+  :focus:not(:focus-visible) { outline: 2px solid #9A6B1F; outline-offset: 2px; }
+  .small-caps { font-variant: small-caps; letter-spacing: 0.06em; }
+</style>
+</head>
+<body class="antialiased">
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState } = React;
+
+const PRODUCTS = [
+  {
+    product_code: 'PERSONAL',
+    name: 'Personal Loan',
+    active_policy_version_id: 'b18e2a1a-6f2d-4b8b-9e3d-3a1f2c9d0e11',
+    checklist: [
+      { document_type: 'SALARY_SLIP', label: 'Latest salary slip' },
+      { document_type: 'PAN_CARD', label: 'PAN card copy' },
+      { document_type: 'BANK_STATEMENT', label: 'Last 3 months bank statement' }
+    ]
+  },
+  {
+    product_code: 'VEHICLE',
+    name: 'Vehicle Loan',
+    active_policy_version_id: 'c29f3b2b-7a3e-4c9c-af4e-4b2a3d0e1f22',
+    checklist: [
+      { document_type: 'SALARY_SLIP', label: 'Latest salary slip' },
+      { document_type: 'VEHICLE_QUOTATION', label: 'Vehicle price quotation' },
+      { document_type: 'PAN_CARD', label: 'PAN card copy' }
+    ]
+  },
+  {
+    product_code: 'EDUCATION',
+    name: 'Education Loan',
+    active_policy_version_id: 'd3a04c3c-8b4f-4dad-b05f-5c3b4e1f2033',
+    checklist: [
+      { document_type: 'ADMISSION_LETTER', label: 'Institution admission letter' },
+      { document_type: 'FEE_STRUCTURE', label: 'Fee structure document' },
+      { document_type: 'PAN_CARD', label: 'PAN card copy' }
+    ]
+  }
+];
+
+const FLAG_OPTIONS = ['PRIOR_DEFAULT', 'EXISTING_LOAN'];
+
+function toMoney(raw) {
+  const n = parseFloat(raw);
+  if (Number.isNaN(n)) return '0.00';
+  return n.toFixed(2);
+}
+
+function formatMoney(moneyString) {
+  const negative = moneyString.trim().startsWith('-');
+  const abs = negative ? moneyString.trim().slice(1) : moneyString.trim();
+  const [whole, frac] = abs.split('.');
+  const withSeparators = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (negative ? '-' : '') + withSeparators + '.' + (frac || '00');
+}
+
+function uuid() {
+  if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function LeftRail() {
+  return (
+    <nav aria-label="Primary" className="hidden md:flex md:flex-col w-[220px] shrink-0 border-r border-rule bg-paper-raised px-6 py-8">
+      <div className="font-display text-xl font-600 mb-10">TrueLend</div>
+      <ul className="space-y-1 text-sm">
+        <li><a href="#" aria-current="page" className="block px-3 py-2 border border-brass text-brass font-medium rounded-[2px]">Apply</a></li>
+        <li><a href="#" className="block px-3 py-2 text-ink-muted hover:text-ink rounded-[2px]">Track</a></li>
+        <li><a href="#" className="block px-3 py-2 text-ink-muted hover:text-ink rounded-[2px]">Repay</a></li>
+      </ul>
+    </nav>
+  );
+}
+
+function ProductCard({ product, selected, onSelect }) {
+  const inputId = 'product-' + product.product_code;
+  return (
+    <label
+      htmlFor={inputId}
+      className={
+        'block cursor-pointer border px-4 py-4 rounded-[2px] bg-paper-raised ' +
+        (selected ? 'border-brass border-2' : 'border-rule')
+      }
+    >
+      <input
+        type="radio"
+        id={inputId}
+        name="product_code"
+        value={product.product_code}
+        checked={selected}
+        onChange={() => onSelect(product.product_code)}
+        className="mr-2"
+      />
+      <span className="font-display text-lg font-600">{product.name}</span>
+      <div className="mt-1 text-xs text-ink-muted">
+        <span data-field="product_code" className="tnum">{product.product_code}</span>
+        {' · policy '}
+        <span data-field="active_policy_version_id" className="tnum">{product.active_policy_version_id.slice(0, 8)}…</span>
+      </div>
+    </label>
+  );
+}
+
+function Field({ id, label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-sm font-medium text-ink">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inputClass = 'border border-rule rounded-[2px] px-3 py-2 bg-paper-raised text-ink placeholder:text-ink-muted';
+
+function ApplyForm({ onSubmit }) {
+  const [selectedProductCode, setSelectedProductCode] = useState('PERSONAL');
+  const [fullName, setFullName] = useState('Priya Raghavan');
+  const [dob, setDob] = useState('1991-04-17');
+  const [declaredIncome, setDeclaredIncome] = useState('84000.00');
+  const [pan, setPan] = useState('ABCDE1234F');
+  const [aadhaar, setAadhaar] = useState('9999-8888-7777');
+  const [flags, setFlags] = useState([]);
+  const [requestedAmount, setRequestedAmount] = useState('450000.00');
+  const [requestedTenureMonths, setRequestedTenureMonths] = useState('36');
+
+  function toggleFlag(flag) {
+    setFlags((prev) => (prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]));
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const product = PRODUCTS.find((p) => p.product_code === selectedProductCode);
+    onSubmit({
+      product,
+      applicant: {
+        full_name: fullName,
+        date_of_birth: dob,
+        declared_income: toMoney(declaredIncome),
+        pan: pan,
+        aadhaar: aadhaar,
+        credit_history_flags: flags
+      },
+      requested_amount: toMoney(requestedAmount),
+      requested_tenure_months: parseInt(requestedTenureMonths, 10) || 1
+    });
+  }
+
+  return (
+    <form aria-labelledby="apply-heading" onSubmit={handleSubmit} className="space-y-8">
+      <section aria-labelledby="product-heading">
+        <h2 id="product-heading" className="font-display text-lg font-600 mb-3">Choose a product</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {PRODUCTS.map((p) => (
+            <ProductCard key={p.product_code} product={p} selected={p.product_code === selectedProductCode} onSelect={setSelectedProductCode} />
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="applicant-heading">
+        <h2 id="applicant-heading" className="font-display text-lg font-600 mb-3">Applicant details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-paper-raised border border-rule rounded-[2px] p-5">
+          <Field id="full_name" label="Full name">
+            <input id="full_name" name="full_name" type="text" required className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          </Field>
+          <Field id="date_of_birth" label="Date of birth">
+            <input id="date_of_birth" name="date_of_birth" type="date" required className={inputClass + ' tnum'} value={dob} onChange={(e) => setDob(e.target.value)} />
+          </Field>
+          <Field id="declared_income" label="Declared income (rupees / month)">
+            <input id="declared_income" name="declared_income" type="text" inputMode="decimal" required className={inputClass + ' tnum'} value={declaredIncome} onChange={(e) => setDeclaredIncome(e.target.value)} />
+          </Field>
+          <Field id="pan" label="PAN">
+            <input id="pan" name="pan" type="text" required maxLength={10} className={inputClass + ' tnum'} value={pan} onChange={(e) => setPan(e.target.value.toUpperCase())} />
+          </Field>
+          <Field id="aadhaar" label="Aadhaar">
+            <input id="aadhaar" name="aadhaar" type="text" required className={inputClass + ' tnum'} value={aadhaar} onChange={(e) => setAadhaar(e.target.value)} />
+          </Field>
+          <fieldset className="flex flex-col gap-1">
+            <legend className="text-sm font-medium text-ink">Credit history flags</legend>
+            <div className="flex flex-col gap-1 mt-1">
+              {FLAG_OPTIONS.map((flag) => (
+                <label key={flag} htmlFor={'flag-' + flag} className="text-sm text-ink-muted flex items-center gap-2">
+                  <input id={'flag-' + flag} type="checkbox" checked={flags.includes(flag)} onChange={() => toggleFlag(flag)} />
+                  {flag}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section aria-labelledby="loan-heading">
+        <h2 id="loan-heading" className="font-display text-lg font-600 mb-3">Requested loan</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-paper-raised border border-rule rounded-[2px] p-5">
+          <Field id="requested_amount" label="Requested amount (rupees)">
+            <input id="requested_amount" name="requested_amount" type="text" inputMode="decimal" required className={inputClass + ' tnum'} value={requestedAmount} onChange={(e) => setRequestedAmount(e.target.value)} />
+          </Field>
+          <Field id="requested_tenure_months" label="Requested tenure (months)">
+            <input id="requested_tenure_months" name="requested_tenure_months" type="number" min="1" required className={inputClass + ' tnum'} value={requestedTenureMonths} onChange={(e) => setRequestedTenureMonths(e.target.value)} />
+          </Field>
+        </div>
+      </section>
+
+      <div>
+        <button type="submit" className="bg-brass text-paper-raised px-6 py-3 rounded-[2px] font-medium hover:opacity-90">
+          Submit application
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function ChecklistTable({ items }) {
+  return (
+    <table className="w-full text-sm">
+      <caption className="text-left font-display text-lg font-600 mb-2">Document checklist</caption>
+      <thead>
+        <tr className="border-b border-rule small-caps text-ink-muted font-600 text-xs">
+          <th scope="col" className="text-left py-2">Document type</th>
+          <th scope="col" className="text-left py-2">Label</th>
+          <th scope="col" className="text-left py-2">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item) => (
+          <tr key={item.id} className="border-b border-rule h-11">
+            <td data-field="document_type" className="py-2 tnum">{item.document_type}</td>
+            <td data-field="label" className="py-2">{item.label}</td>
+            <td className="py-2">
+              <span data-field="status" className="inline-block border border-ink-muted text-ink-muted text-xs px-2 py-0.5 rounded-[2px] small-caps">
+                {item.status}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function Confirmation({ result, onReset }) {
+  const { application, document_checklist } = result;
+  return (
+    <section aria-labelledby="confirmation-heading" className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 id="confirmation-heading" className="font-display text-2xl font-700">Application submitted</h2>
+        <span data-field="status" className="border border-signal-green text-signal-green text-xs px-2 py-1 rounded-[2px] small-caps font-600">
+          {application.status}
+        </span>
+      </div>
+      <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-paper-raised border border-rule rounded-[2px] p-5 text-sm">
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Application id</dt>
+          <dd data-field="id" className="tnum">{application.id}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Product</dt>
+          <dd data-field="product_code" className="tnum">{application.product_code}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Policy version</dt>
+          <dd data-field="policy_version_id" className="tnum">{application.policy_version_id}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Requested amount</dt>
+          <dd data-field="requested_amount" className="tnum">Rs. {formatMoney(application.requested_amount)}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Requested tenure</dt>
+          <dd data-field="requested_tenure_months" className="tnum">{application.requested_tenure_months} months</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Applicant</dt>
+          <dd data-field="full_name">{application.applicant.full_name}</dd>
+        </div>
+      </dl>
+      <div className="bg-paper-raised border border-rule rounded-[2px] p-5">
+        <ChecklistTable items={document_checklist} />
+      </div>
+      <button type="button" onClick={onReset} className="border border-ink text-ink px-5 py-2.5 rounded-[2px] font-medium hover:bg-paper">
+        Start a new application
+      </button>
+    </section>
+  );
+}
+
+function App() {
+  const [result, setResult] = useState(null);
+
+  function handleSubmit({ product, applicant, requested_amount, requested_tenure_months }) {
+    const applicationId = uuid();
+    const application = {
+      id: applicationId,
+      product_code: product.product_code,
+      policy_version_id: product.active_policy_version_id,
+      status: 'SUBMITTED',
+      requested_amount,
+      requested_tenure_months,
+      applicant,
+      credit_score: null,
+      submitted_at: new Date().toISOString()
+    };
+    const document_checklist = product.checklist.map((item) => ({
+      id: uuid(),
+      application_id: applicationId,
+      document_type: item.document_type,
+      label: item.label,
+      status: 'PENDING'
+    }));
+    setResult({ application, document_checklist });
+  }
+
+  return (
+    <div className="min-h-screen flex bg-paper">
+      <LeftRail />
+      <main className="flex-1 px-6 md:px-12 py-10 max-w-[1180px] mx-auto w-full">
+        <header className="mb-8">
+          <h1 id="apply-heading" className="font-display text-3xl font-700">Apply for a loan</h1>
+          <p className="text-ink-muted mt-1">Choose a product and complete the applicant details below.</p>
+        </header>
+        {result ? <Confirmation result={result} onReset={() => setResult(null)} /> : <ApplyForm onSubmit={handleSubmit} />}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

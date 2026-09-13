@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "story_id": "E7-S1",
+  "sprint": 1,
+  "title": "Admin console application list with filters and audited AUTO_REJECT override",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E7-S1-AC1",
+      "E7-S1-AC2",
+      "E7-S1-AC3",
+      "E7-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-10"
+    ],
+    "br_acceptance_ids": [
+      "FRD-49"
+    ],
+    "scope_out": [
+      "must not update or delete the overridden decision_record row; must not accept a reason code absent from the application's pinned policy version; must not modify a disbursed loan or restructure it"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Admin console application list with filters and audited AUTO_REJECT override",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/service/origination/override.py",
+      "backend/src/api/origination/override_routes.py",
+      "frontend/src/api/admin.ts",
+      "frontend/src/ui/pages/AdminApplications.tsx",
+      "backend/tests/integration/test_override_audit.py"
+    ],
+    "layer": "UI"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-8"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-062",
+      "VM-063",
+      "VM-064",
+      "VM-065"
+    ],
+    "case_ids": [
+      "VM-062",
+      "VM-063",
+      "VM-064",
+      "VM-065"
+    ],
+    "layers": [
+      "e2e"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E7-S1.md",
+    "parents": [
+      "E5-S2",
+      "E1-S2",
+      "E15-S3"
+    ],
+    "tracker_key": null
+  }
+}

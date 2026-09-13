@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "story_id": "E6-S2",
+  "sprint": 1,
+  "title": "Underwriter workbench queue and MANUAL_REVIEW decision review screen",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E6-S2-AC1",
+      "E6-S2-AC2",
+      "E6-S2-AC3"
+    ],
+    "brd_ids": [
+      "FRD-17"
+    ],
+    "br_acceptance_ids": [
+      "FRD-56"
+    ],
+    "scope_out": [
+      "must not list applications outside SUBMITTED or MANUAL_REVIEW state in the queue; must not render a native or responsive mobile client shell; must not write a decision by any path other than an appended decision_record"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Underwriter workbench queue and MANUAL_REVIEW decision review screen",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "frontend/src/api/workbench.ts",
+      "frontend/src/ui/pages/Workbench.tsx",
+      "frontend/src/ui/pages/DecisionReview.tsx",
+      "frontend/src/ui/components/ReasonCodeList.tsx"
+    ],
+    "layer": "UI"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-3"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-059",
+      "VM-060",
+      "VM-061"
+    ],
+    "case_ids": [
+      "VM-059",
+      "VM-060",
+      "VM-061"
+    ],
+    "layers": [
+      "e2e"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E6-S2.md",
+    "parents": [
+      "E5-S2",
+      "E6-S1"
+    ],
+    "tracker_key": null
+  }
+}

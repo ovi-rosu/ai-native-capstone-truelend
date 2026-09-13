@@ -1,0 +1,57 @@
+{
+  "frameworkPacks": [
+    {
+      "key": "python-ai-agents",
+      "source": "local",
+      "skills": ["langgraph-code", "langchain-code", "deepagents-code"]
+    },
+    {
+      "key": "fastapi-code",
+      "source": "local",
+      "skills": ["fastapi-code"]
+    },
+    {
+      "key": "react-code",
+      "source": "local",
+      "skills": ["react-code"]
+    },
+    {
+      "key": "langchain",
+      "source": "github",
+      "repo": "cwijayasundara/agent_cli_langchain",
+      "prefix": "langchain-agents-",
+      "expected_skills": 9
+    },
+    {
+      "key": "google-adk",
+      "source": "github",
+      "repo": "google/agents-cli",
+      "prefix": "google-agents-cli-",
+      "expected_skills": 7
+    }
+  ],
+  "verticalPacks": [
+    {
+      "plugin": "private-equity",
+      "enabled_plugin_prefix": "private-equity@",
+      "marketplace": "claude-for-financial-services",
+      "install_id": "private-equity@claude-for-financial-services",
+      "marketplace_skills_subpath": ".claude/plugins/marketplaces/claude-for-financial-services/plugins/vertical-plugins/private-equity/skills",
+      "cache_skills_subpath": ".claude/plugins/cache/claude-for-financial-services/private-equity/skills",
+      "bounded_contexts": [
+        {
+          "name": "Deal Lifecycle (Sourcing, Screening & Diligence)",
+          "skills": ["deal-sourcing", "deal-screening", "dd-checklist", "dd-meeting-prep"]
+        },
+        {
+          "name": "Investment Decision & Returns",
+          "skills": ["ic-memo", "returns-analysis"]
+        },
+        {
+          "name": "Portfolio Operations & Value Creation",
+          "skills": ["portfolio-monitoring", "value-creation-plan", "unit-economics", "ai-readiness"]
+        }
+      ]
+    }
+  ]
+}

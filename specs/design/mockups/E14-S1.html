@@ -1,0 +1,359 @@
+<!--
+  Story: E14-S1 — Portfolio dashboard (ADMIN)
+  Screen: Delinquency-bucket x product matrix plus an overdue total, read from stored
+          loan bucket state. Does not trigger the End-Of-Day Run.
+  Endpoint depended on:
+    GET /dashboard -> 200 PortfolioSummary { by_product[], total_overdue, as_of }
+  Fields shown are drawn from PortfolioSummary / DelinquencyBucket per
+  specs/design/api-contracts.md / api-contracts.schema.json. No fee, penalty or
+  collections figure is rendered anywhere on this screen (E14-S1 forbids them).
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portfolio Dashboard — TrueLend Admin</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght&#64;9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght&#64;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght&#64;400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com/3.4.10"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: "#14231D",
+          "ink-muted": "#4E6158",
+          paper: "#F7F4EC",
+          "paper-raised": "#FFFDF7",
+          brass: "#9A6B1F",
+          "signal-red": "#8E241C",
+          "signal-amber": "#8A5B12",
+          "signal-green": "#1D5C41",
+          rule: "#D8D0BE",
+        },
+        fontFamily: {
+          display: ["Fraunces", "serif"],
+          body: ["Public Sans", "sans-serif"],
+          mono: ["IBM Plex Mono", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  body { font-family: "Public Sans", sans-serif; background-color: #F7F4EC; color: #14231D; }
+  .font-display { font-family: "Fraunces", serif; }
+  .font-mono-num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  :focus-visible {
+    outline: 2px solid #9A6B1F !important;
+    outline-offset: 2px !important;
+  }
+  button:focus, a:focus {
+    outline: 2px solid #9A6B1F;
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body class="bg-paper text-ink">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react,typescript">
+const { useState, useMemo } = React;
+
+/* ---------- hardcoded PortfolioSummary (matches GET /dashboard response shape) ---------- */
+
+const portfolioSummary = {
+  by_product: [
+    {
+      product_code: "PERSONAL",
+      loan_count: 24,
+      loan_value: "48250000.00",
+      by_bucket: [
+        { delinquency_bucket: "CURRENT", loan_count: 17, loan_value: "37450000.00" },
+        { delinquency_bucket: "DPD-30", loan_count: 3, loan_value: "5400000.00" },
+        { delinquency_bucket: "DPD-60", loan_count: 2, loan_value: "3850000.00" },
+        { delinquency_bucket: "DPD-90", loan_count: 1, loan_value: "1350000.00" },
+        { delinquency_bucket: "NPA", loan_count: 1, loan_value: "200000.00" },
+      ],
+    },
+    {
+      product_code: "VEHICLE",
+      loan_count: 15,
+      loan_value: "27600000.00",
+      by_bucket: [
+        { delinquency_bucket: "CURRENT", loan_count: 11, loan_value: "20400000.00" },
+        { delinquency_bucket: "DPD-30", loan_count: 2, loan_value: "3600000.00" },
+        { delinquency_bucket: "DPD-60", loan_count: 1, loan_value: "2100000.00" },
+        { delinquency_bucket: "DPD-90", loan_count: 1, loan_value: "1500000.00" },
+        { delinquency_bucket: "NPA", loan_count: 0, loan_value: "0.00" },
+      ],
+    },
+    {
+      product_code: "EDUCATION",
+      loan_count: 9,
+      loan_value: "9850000.00",
+      by_bucket: [
+        { delinquency_bucket: "CURRENT", loan_count: 7, loan_value: "7650000.00" },
+        { delinquency_bucket: "DPD-30", loan_count: 1, loan_value: "1200000.00" },
+        { delinquency_bucket: "DPD-60", loan_count: 1, loan_value: "1000000.00" },
+        { delinquency_bucket: "DPD-90", loan_count: 0, loan_value: "0.00" },
+        { delinquency_bucket: "NPA", loan_count: 0, loan_value: "0.00" },
+      ],
+    },
+  ],
+  total_overdue: "812340.00",
+  as_of: "2026-03-31T18:30:00Z",
+};
+
+const BUCKET_ORDER = ["CURRENT", "DPD-30", "DPD-60", "DPD-90", "NPA"];
+
+const BUCKET_COLOR = {
+  CURRENT: { text: "text-signal-green", bar: "#1D5C41" },
+  "DPD-30": { text: "text-signal-amber", bar: "#8A5B12" },
+  "DPD-60": { text: "text-signal-amber", bar: "#8A5B12" },
+  "DPD-90": { text: "text-signal-red", bar: "#8E241C" },
+  NPA: { text: "text-signal-red", bar: "#8E241C" },
+};
+
+/* ---------- helpers ---------- */
+
+function formatMoney(decimalString) {
+  if (decimalString === undefined || decimalString === null) return "—";
+  const [whole, frac] = String(decimalString).split(".");
+  const negative = whole.startsWith("-");
+  const digits = negative ? whole.slice(1) : whole;
+  const withSeparators = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return (negative ? "-" : "") + "₹" + withSeparators + "." + (frac || "00");
+}
+
+function addMoney(a, b) {
+  const cents = (s) => Math.round(parseFloat(s) * 100);
+  const total = cents(a) + cents(b);
+  const neg = total < 0;
+  const abs = Math.abs(total);
+  return (neg ? "-" : "") + (Math.floor(abs / 100)).toString() + "." + String(abs % 100).padStart(2, "0");
+}
+
+function formatAsOf(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("en-IN", {
+    year: "numeric", month: "short", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", timeZoneName: "short",
+  });
+}
+
+/* ---------- derived totals (portfolio-wide, per bucket) ---------- */
+
+function computeBucketTotals(by_product) {
+  const totals = {};
+  for (const b of BUCKET_ORDER) totals[b] = { loan_count: 0, loan_value: "0.00" };
+  for (const product of by_product) {
+    for (const bucket of product.by_bucket) {
+      const t = totals[bucket.delinquency_bucket];
+      t.loan_count += bucket.loan_count;
+      t.loan_value = addMoney(t.loan_value, bucket.loan_value);
+    }
+  }
+  return totals;
+}
+
+function computeGrandTotal(by_product) {
+  let count = 0;
+  let value = "0.00";
+  for (const product of by_product) {
+    count += product.loan_count;
+    value = addMoney(value, product.loan_value);
+  }
+  return { loan_count: count, loan_value: value };
+}
+
+/* ---------- matrix table ---------- */
+
+function BucketMatrix({ by_product }) {
+  const bucketTotals = useMemo(() => computeBucketTotals(by_product), [by_product]);
+  const grandTotal = useMemo(() => computeGrandTotal(by_product), [by_product]);
+
+  return (
+    <table className="w-full border-collapse min-w-[860px]" data-testid="bucket-matrix">
+      <caption className="sr-only">Loan count and loan value by product and delinquency bucket</caption>
+      <thead>
+        <tr className="border-b border-rule">
+          <th scope="col" className="text-left text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Product</th>
+          {BUCKET_ORDER.map((b) => (
+            <th key={b} scope="col" className="text-right text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">
+              {b}
+            </th>
+          ))}
+          <th scope="col" className="text-right text-xs font-semibold uppercase tracking-wide text-ink-muted py-2 px-3">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {by_product.map((product) => (
+          <tr key={product.product_code} className="border-b border-rule h-[44px]" data-product-code={product.product_code}>
+            <th scope="row" className="text-left px-3 font-semibold">{product.product_code}</th>
+            {BUCKET_ORDER.map((bucketName) => {
+              const bucket = product.by_bucket.find((b) => b.delinquency_bucket === bucketName);
+              return (
+                <td key={bucketName} className="text-right px-3" data-bucket={bucketName}>
+                  <div className={"font-mono-num " + BUCKET_COLOR[bucketName].text}>
+                    {formatMoney(bucket.loan_value)}
+                  </div>
+                  <div className="font-mono-num text-xs text-ink-muted">{bucket.loan_count} loans</div>
+                </td>
+              );
+            })}
+            <td className="text-right px-3 border-l border-rule">
+              <div className="font-mono-num font-semibold">{formatMoney(product.loan_value)}</div>
+              <div className="font-mono-num text-xs text-ink-muted">{product.loan_count} loans</div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr className="border-t-2 border-ink h-[44px] bg-paper">
+          <th scope="row" className="text-left px-3 font-display text-base">Portfolio total</th>
+          {BUCKET_ORDER.map((bucketName) => (
+            <td key={bucketName} className="text-right px-3" data-bucket-total={bucketName}>
+              <div className={"font-mono-num font-semibold " + BUCKET_COLOR[bucketName].text}>
+                {formatMoney(bucketTotals[bucketName].loan_value)}
+              </div>
+              <div className="font-mono-num text-xs text-ink-muted">{bucketTotals[bucketName].loan_count} loans</div>
+            </td>
+          ))}
+          <td className="text-right px-3 border-l border-rule">
+            <div className="font-mono-num font-semibold">{formatMoney(grandTotal.loan_value)}</div>
+            <div className="font-mono-num text-xs text-ink-muted">{grandTotal.loan_count} loans</div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  );
+}
+
+/* ---------- inline SVG bars (no chart library) — portfolio-wide loan_value by bucket ---------- */
+
+function BucketBarsSvg({ by_product }) {
+  const bucketTotals = useMemo(() => computeBucketTotals(by_product), [by_product]);
+  const maxValue = Math.max(...BUCKET_ORDER.map((b) => parseFloat(bucketTotals[b].loan_value))) || 1;
+
+  const rowHeight = 34;
+  const chartWidth = 560;
+  const labelWidth = 90;
+  const barAreaWidth = chartWidth - labelWidth - 140;
+  const height = rowHeight * BUCKET_ORDER.length + 10;
+
+  return (
+    <svg
+      role="img"
+      aria-label="Bar chart of total loan value by delinquency bucket, across all products"
+      viewBox={`0 0 ${chartWidth} ${height}`}
+      width="100%"
+      style={{ maxWidth: chartWidth }}
+      className="font-mono-num"
+    >
+      <title>Total loan value by delinquency bucket</title>
+      {BUCKET_ORDER.map((bucketName, i) => {
+        const value = parseFloat(bucketTotals[bucketName].loan_value);
+        const barWidth = (value / maxValue) * barAreaWidth;
+        const y = i * rowHeight + 5;
+        return (
+          <g key={bucketName}>
+            <text x="0" y={y + 16} fontSize="11" fill="#14231D" fontWeight="600">
+              {bucketName}
+            </text>
+            <rect
+              x={labelWidth}
+              y={y + 4}
+              width={Math.max(barWidth, 2)}
+              height="16"
+              fill={BUCKET_COLOR[bucketName].bar}
+            />
+            <text
+              x={labelWidth + Math.max(barWidth, 2) + 8}
+              y={y + 16}
+              fontSize="11"
+              fill="#14231D"
+            >
+              {formatMoney(bucketTotals[bucketName].loan_value)} ({bucketTotals[bucketName].loan_count} loans)
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ---------- App ---------- */
+
+function App() {
+  const [summary] = useState(portfolioSummary);
+
+  return (
+    <div className="min-h-screen flex">
+      <nav aria-label="Admin sections" className="hidden md:block w-[220px] shrink-0 border-r border-rule bg-paper-raised p-6">
+        <div className="font-display text-xl mb-8">TrueLend</div>
+        <ul className="flex flex-col gap-3 text-sm font-semibold">
+          <li><span className="text-ink-muted">Applications</span></li>
+          <li><span className="text-ink-muted">Underwriting Queue</span></li>
+          <li><span className="text-ink-muted">Policy Editor</span></li>
+          <li className="text-brass border-l-2 border-brass -ml-[2px] pl-3">Portfolio Dashboard</li>
+          <li><span className="text-ink-muted">Audit Log</span></li>
+        </ul>
+      </nav>
+
+      <main className="flex-1 max-w-[1180px] mx-auto px-4 md:px-10 py-8">
+        <header className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-ink-muted font-semibold">Admin · Delinquency &amp; Portfolio</p>
+            <h1 className="font-display text-3xl md:text-4xl font-semibold mt-1">Portfolio Dashboard</h1>
+          </div>
+          <p className="font-mono-num text-sm text-ink-muted" data-field="as_of">
+            As of {formatAsOf(summary.as_of)}
+          </p>
+        </header>
+
+        <p role="note" className="border border-rule bg-paper-raised rounded-[2px] p-4 text-sm text-ink-muted mb-8">
+          These figures are read from stored loan bucket state as of the timestamp above. This screen is
+          read-only reporting and does not trigger the End-Of-Day Run — bucket recalculation happens
+          elsewhere.
+        </p>
+
+        <section aria-label="Total overdue" className="mb-8 border border-rule bg-paper-raised rounded-[2px] p-4 inline-block">
+          <p className="text-xs uppercase tracking-wide text-ink-muted font-semibold">Total overdue</p>
+          <p className="font-mono-num text-2xl font-semibold text-signal-red mt-1" data-field="total_overdue">
+            {formatMoney(summary.total_overdue)}
+          </p>
+        </section>
+
+        <section aria-label="Loan count and value by product and delinquency bucket" className="mb-10">
+          <h2 className="font-display text-2xl mb-3">By product &amp; bucket</h2>
+          <div className="border border-rule rounded-[2px] overflow-x-auto bg-paper-raised">
+            <BucketMatrix by_product={summary.by_product} />
+          </div>
+        </section>
+
+        <section aria-label="Portfolio-wide loan value by bucket" className="mb-10">
+          <h2 className="font-display text-2xl mb-3">Loan value by bucket, portfolio-wide</h2>
+          <div className="border border-rule rounded-[2px] bg-paper-raised p-4">
+            <BucketBarsSvg by_product={summary.by_product} />
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

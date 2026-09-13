@@ -1,0 +1,377 @@
+[
+  {
+    "id": "FRD-1",
+    "text": "(AC-01) The loan product catalog offers at least 3 products — Personal, Vehicle and Education — each bound to its own distinct rule set sourced from a versioned policy record.",
+    "section": "3. Functional Requirements / FR-01"
+  },
+  {
+    "id": "FRD-2",
+    "text": "(AC-02) A customer can submit a loan application against a chosen product, and the system generates that product's required-document checklist.",
+    "section": "3. Functional Requirements / FR-02"
+  },
+  {
+    "id": "FRD-3",
+    "text": "(AC-03) A credit-scoring stub returns a deterministic score computed from age, income and credit-history flags.",
+    "section": "3. Functional Requirements / FR-03"
+  },
+  {
+    "id": "FRD-4",
+    "text": "(AC-04) An underwriting decision returns AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW together with reason codes referenced from the active policy version.",
+    "section": "3. Functional Requirements / FR-04"
+  },
+  {
+    "id": "FRD-5",
+    "text": "(AC-05) Application submission fails with PolicyViolationException when declared income is below the minimum income threshold for the selected product.",
+    "section": "3. Functional Requirements / FR-05"
+  },
+  {
+    "id": "FRD-6",
+    "text": "(AC-06) An underwriter can mark each document in the document-verification queue VERIFIED or REJECTED with a reason.",
+    "section": "3. Functional Requirements / FR-06"
+  },
+  {
+    "id": "FRD-7",
+    "text": "(AC-07) On approval, a repayment schedule is generated using the EMI formula, with per-installment principal and interest summing to total payable.",
+    "section": "3. Functional Requirements / FR-07"
+  },
+  {
+    "id": "FRD-8",
+    "text": "(AC-08) Disbursement records the released amount and the funding source, the funding source being a stub.",
+    "section": "3. Functional Requirements / FR-08"
+  },
+  {
+    "id": "FRD-9",
+    "text": "(AC-09) Posting a repayment reduces outstanding principal and recalculates the loan's delinquency bucket across CURRENT, DPD-30, DPD-60, DPD-90 and NPA.",
+    "section": "3. Functional Requirements / FR-09"
+  },
+  {
+    "id": "FRD-10",
+    "text": "(AC-10) An admin can list applications, filter them by status and by product, and override an AUTO_REJECT with a comment and a reason code, with the override written to the audit trail.",
+    "section": "3. Functional Requirements / FR-10"
+  },
+  {
+    "id": "FRD-11",
+    "text": "A customer can track a submitted application: its status, outstanding required documents, the decision, and the decision's reason codes.",
+    "section": "3. Functional Requirements / FR-11"
+  },
+  {
+    "id": "FRD-12",
+    "text": "A customer can view a disbursed loan's repayment schedule, outstanding principal and current delinquency bucket, and post a repayment against it.",
+    "section": "3. Functional Requirements / FR-12"
+  },
+  {
+    "id": "FRD-13",
+    "text": "The Policy Editor lets an authorised user change a product's income, age, score, tenure and rate thresholds without a code change, producing a new immutable policy version that becomes the active version without a restart.",
+    "section": "3. Functional Requirements / FR-13"
+  },
+  {
+    "id": "FRD-14",
+    "text": "An idempotent, as-of-date-parameterised end-of-day operation recalculates delinquency buckets across all active loans, and produces the same result when run twice for the same date.",
+    "section": "3. Functional Requirements / FR-14"
+  },
+  {
+    "id": "FRD-15",
+    "text": "An admin dashboard reports the portfolio by product, the count and value of loans in each delinquency bucket, and total overdue.",
+    "section": "3. Functional Requirements / FR-15"
+  },
+  {
+    "id": "FRD-16",
+    "text": "Users authenticate and act under exactly one of the roles CUSTOMER, UNDERWRITER or ADMIN, and each surface is reachable only by its permitted roles.",
+    "section": "3. Functional Requirements / FR-16"
+  },
+  {
+    "id": "FRD-17",
+    "text": "The underwriter workbench presents the queue of applications awaiting action and a decision-review screen for MANUAL_REVIEW cases.",
+    "section": "3. Functional Requirements / FR-17"
+  },
+  {
+    "id": "FRD-18",
+    "text": "Money — principal, interest and EMI — is computed in fixed-point decimal and never in floating-point; monetary amounts carry 2 decimal places.",
+    "section": "4. Non-Functional Requirements / NFR-01"
+  },
+  {
+    "id": "FRD-19",
+    "text": "Approved policy versions and generated repayment schedules are append-only: 0 update and 0 delete operations against either, in code or in migration.",
+    "section": "4. Non-Functional Requirements / NFR-02"
+  },
+  {
+    "id": "FRD-20",
+    "text": "Synthetic identifiers (PAN, Aadhaar) and salary-document content are never written to logs: 0 occurrences in any emitted log line.",
+    "section": "4. Non-Functional Requirements / NFR-03"
+  },
+  {
+    "id": "FRD-21",
+    "text": "The authentication boundary is enforced at the controller layer, and 100% of underwriter and admin actions are audited with the acting user id and a timestamp.",
+    "section": "4. Non-Functional Requirements / NFR-04"
+  },
+  {
+    "id": "FRD-22",
+    "text": "Database migrations and policy migrations are append-only: 0 destructive migrations.",
+    "section": "4. Non-Functional Requirements / NFR-05"
+  },
+  {
+    "id": "FRD-23",
+    "text": "Logs are structured JSON, and 100% of request-scoped log lines carry a request correlation id.",
+    "section": "4. Non-Functional Requirements / NFR-06"
+  },
+  {
+    "id": "FRD-24",
+    "text": "The health endpoint returns 200 within 1 second of a successful startup.",
+    "section": "4. Non-Functional Requirements / NFR-07"
+  },
+  {
+    "id": "FRD-25",
+    "text": "Architecture rules are enforced as automated tests, at least 1 test per invariant — including that a policy version cannot be mutated and that the EMI principal-rate-tenure invariant holds.",
+    "section": "4. Non-Functional Requirements / NFR-08"
+  },
+  {
+    "id": "FRD-26",
+    "text": "API responses meet the project runtime SLO: p95 under 500 ms and an error rate under 1%.",
+    "section": "4. Non-Functional Requirements / NFR-09"
+  },
+  {
+    "id": "FRD-27",
+    "text": "Customer-facing screens — Apply, Track and Repay — meet WCAG 2.1 AA.",
+    "section": "4. Non-Functional Requirements / NFR-10"
+  },
+  {
+    "id": "FRD-28",
+    "text": "100% of production code is generated by Claude Code agents under human supervision, with 0 hand-written production lines; the capstone permits no manual coding.",
+    "section": "4. Non-Functional Requirements / NFR-11"
+  },
+  {
+    "id": "FRD-29",
+    "text": "The system is self-hosted via Docker Compose over a single Postgres database, with a Python 3.12 FastAPI backend and a TypeScript React-Vite frontend, and respects one-way dependencies across its 6 layers (Types, Config, Repository, Service, API, UI).",
+    "section": "4. Non-Functional Requirements / NFR-12"
+  },
+  {
+    "id": "FRD-30",
+    "text": "Late fees, penal interest, collections workflow and write-off. Delinquency is status only: buckets are computed, nothing is charged for lateness and no recovery process exists.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-31",
+    "text": "Real money movement and real credit-bureau calls. The funding source (FR-08) and the credit score (FR-03) are stubs; no payment rail, no external bureau, no live provider credentials.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-32",
+    "text": "Native or responsive mobile clients.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-33",
+    "text": "Customer notifications of any kind — no email or SMS on decision, disbursement or due date.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-34",
+    "text": "Electronic signature or a signed loan agreement artifact.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-35",
+    "text": "Multi-currency support. Single currency only.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-36",
+    "text": "Co-applicants, guarantors and joint applications. One applicant per application.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-37",
+    "text": "Loan top-ups, restructuring and any mid-life modification of a disbursed loan.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-38",
+    "text": "KYC/AML identity verification against external registries. Synthetic PAN and Aadhaar values are captured as application data only and are never verified.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-39",
+    "text": "Early settlement, foreclosure and prepayment quotes.",
+    "section": "5. Out of Scope"
+  },
+  {
+    "id": "FRD-40",
+    "text": "`GET /products` returns at least 3 products (Personal, Vehicle, Education); each carries a policy version id, and the three policy versions hold different threshold values.",
+    "section": "6. Acceptance / Done / FR-01 AC"
+  },
+  {
+    "id": "FRD-41",
+    "text": "Submitting an application returns a persisted application in SUBMITTED state whose required-document checklist matches the selected product's policy version, item for item.",
+    "section": "6. Acceptance / Done / FR-02 AC"
+  },
+  {
+    "id": "FRD-42",
+    "text": "The same age, income and credit-history-flag input returns the identical score on repeated calls, and two inputs differing only in credit-history flags return different scores.",
+    "section": "6. Acceptance / Done / FR-03 AC"
+  },
+  {
+    "id": "FRD-43",
+    "text": "The decision response carries a decision of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code, and every returned reason code exists in the policy version named on the application.",
+    "section": "6. Acceptance / Done / FR-04 AC"
+  },
+  {
+    "id": "FRD-44",
+    "text": "Submitting with income below the product's minimum threshold returns an error identifying PolicyViolationException and the breached threshold, and persists no application row.",
+    "section": "6. Acceptance / Done / FR-05 AC"
+  },
+  {
+    "id": "FRD-45",
+    "text": "Each checklist document can be transitioned to VERIFIED or REJECTED; a REJECTED document stores a non-empty reason, and the queue no longer lists documents already actioned.",
+    "section": "6. Acceptance / Done / FR-06 AC"
+  },
+  {
+    "id": "FRD-46",
+    "text": "For a generated schedule, the sum of all installment principal equals the disbursed amount, the sum of principal plus interest across installments equals total payable, and installment count equals the product tenure.",
+    "section": "6. Acceptance / Done / FR-07 AC"
+  },
+  {
+    "id": "FRD-47",
+    "text": "After disbursement the loan record holds the released amount and a funding-source identifier, and the loan is in a DISBURSED state with a schedule attached.",
+    "section": "6. Acceptance / Done / FR-08 AC"
+  },
+  {
+    "id": "FRD-48",
+    "text": "Posting a repayment lowers outstanding principal by the applied principal portion, and a loan whose oldest unpaid installment is 35 days past due reads as DPD-30 after recalculation.",
+    "section": "6. Acceptance / Done / FR-09 AC"
+  },
+  {
+    "id": "FRD-49",
+    "text": "The application list can be filtered to a given status and product and returns only matching rows; overriding an AUTO_REJECT changes the decision and writes an audit entry containing the comment, reason code, acting user id and timestamp.",
+    "section": "6. Acceptance / Done / FR-10 AC"
+  },
+  {
+    "id": "FRD-50",
+    "text": "The tracking view for an application shows its current status, every unverified checklist item, and — once decided — the decision with its reason codes.",
+    "section": "6. Acceptance / Done / FR-11 AC"
+  },
+  {
+    "id": "FRD-51",
+    "text": "The customer loan view lists every installment with due date and amount, the current outstanding principal and the current bucket; a repayment posted from this view is reflected in the outstanding figure on reload.",
+    "section": "6. Acceptance / Done / FR-12 AC"
+  },
+  {
+    "id": "FRD-52",
+    "text": "Saving an edited threshold in the Policy Editor creates a new policy version, leaves the prior version's stored values byte-identical, and a subsequent application decision cites the new version id without any process restart.",
+    "section": "6. Acceptance / Done / FR-13 AC"
+  },
+  {
+    "id": "FRD-53",
+    "text": "Running the end-of-day operation for a given as-of date sets each active loan's bucket according to its days past due, and a second run for the same date leaves every bucket and every stored row unchanged.",
+    "section": "6. Acceptance / Done / FR-14 AC"
+  },
+  {
+    "id": "FRD-54",
+    "text": "The dashboard returns, per product, the loan count and value per bucket and a total overdue figure that equals the sum of overdue installment amounts across active loans.",
+    "section": "6. Acceptance / Done / FR-15 AC"
+  },
+  {
+    "id": "FRD-55",
+    "text": "A request to an underwriter or admin route with a CUSTOMER session is rejected with 403; a request with no session is rejected with 401; each role can reach its own surfaces.",
+    "section": "6. Acceptance / Done / FR-16 AC"
+  },
+  {
+    "id": "FRD-56",
+    "text": "The workbench queue lists exactly the applications in SUBMITTED or MANUAL_REVIEW state, and opening a MANUAL_REVIEW case shows its score, reason codes and document verification state.",
+    "section": "6. Acceptance / Done / FR-17 AC"
+  },
+  {
+    "id": "FRD-57",
+    "text": "A property test over (principal, rate, tenure) asserts every money field on a generated schedule is a Decimal quantized to exactly 2 decimal places, and a static check reports 0 float arithmetic operations in money code paths (backend `decimal.Decimal`; frontend a Decimal value via a decimal library, never a float).",
+    "section": "6. Acceptance / Done / NFR-01 AC"
+  },
+  {
+    "id": "FRD-58",
+    "text": "The policy_version and schedule_installment repositories expose no update or delete method (asserted by interface test), and an architecture test reports 0 UPDATE or DELETE statements and 0 ORM mutations against those two tables across `src/` and `migrations/`.",
+    "section": "6. Acceptance / Done / NFR-02 AC"
+  },
+  {
+    "id": "FRD-59",
+    "text": "A test submits an application carrying synthetic PAN, Aadhaar and salary-document content, captures every emitted log record, and asserts 0 occurrences of each value; a second assertion confirms the redaction filter is installed on every configured logger.",
+    "section": "6. Acceptance / Done / NFR-03 AC"
+  },
+  {
+    "id": "FRD-60",
+    "text": "For every underwriter and admin route enumerated from the OpenAPI schema, a generated test issues the request with no session (expect 401) and with a CUSTOMER session (expect 403); the test asserts it covered 100% of those routes, so a newly added unguarded route fails the suite.",
+    "section": "6. Acceptance / Done / NFR-04 AC"
+  },
+  {
+    "id": "FRD-61",
+    "text": "A migration-lint test parses every file under `migrations/` and asserts 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements; policy migrations are checked by the same parser.",
+    "section": "6. Acceptance / Done / NFR-05 AC"
+  },
+  {
+    "id": "FRD-62",
+    "text": "Every log line emitted while serving a request parses as JSON and carries a non-empty request_id equal to the inbound X-Request-ID header, or to a generated id when the header is absent; the assertion covers 100% of request-scoped lines in the captured buffer.",
+    "section": "6. Acceptance / Done / NFR-06 AC"
+  },
+  {
+    "id": "FRD-63",
+    "text": "In the deploy smoke test, after `docker compose up` reports the backend healthy, `GET /health` returns 200 with a JSON body and the measured response time is under 1 second.",
+    "section": "6. Acceptance / Done / NFR-07 AC"
+  },
+  {
+    "id": "FRD-64",
+    "text": "An architecture test module holds at least one test per named invariant — policy-version immutability, the EMI principal/rate/tenure invariant, and the one-way dependency rule across Types, Config, Repository, Service, API, UI — and the suite fails if any registered invariant has no corresponding test.",
+    "section": "6. Acceptance / Done / NFR-08 AC"
+  },
+  {
+    "id": "FRD-65",
+    "text": "A load run against the read-heavy endpoints (`GET /products`, `GET /applications`, `GET /loans/{id}`, `GET /dashboard`) reports p95 under 500 ms and an error rate under 1%; the measured figures are recorded in the evaluation report.",
+    "section": "6. Acceptance / Done / NFR-09 AC"
+  },
+  {
+    "id": "FRD-66",
+    "text": "An automated axe-core scan of the Apply, Track and Repay screens reports 0 WCAG 2.1 AA violations, and keyboard-only traversal of each screen's primary flow completes without a focus trap.",
+    "section": "6. Acceptance / Done / NFR-10 AC"
+  },
+  {
+    "id": "FRD-67",
+    "text": "Every production commit on the branch carries agent co-authorship and passes the standard pre-commit gate set, and the `/gate` attestation record is the evidence for 0 hand-written production lines.",
+    "section": "6. Acceptance / Done / NFR-11 AC"
+  },
+  {
+    "id": "FRD-68",
+    "text": "`docker compose up` from a clean checkout brings up exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend, all reporting healthy; the layer-dependency architecture test reports 0 violations of the six-layer one-way rule.",
+    "section": "6. Acceptance / Done / NFR-12 AC"
+  },
+  {
+    "id": "FRD-69",
+    "text": "**M1 — Policy & Catalog** — FR-01, FR-02, FR-13, FR-16. Done when: an ADMIN edits a product threshold in the Policy Editor, a new policy version becomes active with no restart, and the catalog and a generated document checklist reflect it.",
+    "section": "7. Milestones"
+  },
+  {
+    "id": "FRD-70",
+    "text": "**M2 — Apply & Decide** — FR-03, FR-04, FR-05, FR-06, FR-10, FR-11, FR-17. Done when: a customer submits against each of the 3 products and receives AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW with reason codes tied to the active policy version, and an admin override of an AUTO_REJECT appears in the audit trail.",
+    "section": "7. Milestones"
+  },
+  {
+    "id": "FRD-71",
+    "text": "**M3 — Disburse & Repay** — FR-07, FR-08, FR-09, FR-12, FR-14, FR-15. Done when: an approved application disburses, its schedule's principal plus interest equals total payable, a posted repayment reduces outstanding principal, and the end-of-day operation moves a 35-day-overdue loan to DPD-30 on the portfolio dashboard.",
+    "section": "7. Milestones"
+  },
+  {
+    "id": "FRD-72",
+    "text": "**R-1 EMI rounding residual.** Fixed-point money at 2 decimal places (NFR-01) and the requirement that per-installment principal plus interest equal total payable (FR-07) are in tension: rounded equal installments rarely sum to the unrounded total. Design must state where the residual is absorbed, or the FR-07 invariant test will be loosened to hide it.",
+    "section": "10. Risks"
+  },
+  {
+    "id": "FRD-73",
+    "text": "**R-2 Append-only versus correction.** Policy versions and schedules admit no update or delete (NFR-02, NFR-05), while an override changes a decision (FR-10) and a posted repayment changes outstanding principal and bucket (FR-09). Design must draw the boundary between the immutable artifacts and the mutable loan state explicitly, or the architecture test and the features will collide.",
+    "section": "10. Risks"
+  },
+  {
+    "id": "FRD-74",
+    "text": "**R-3 Policy activation with in-flight applications.** A new version becomes active without restart (FR-13), yet every reason code must exist in the policy version named on the application (FR-04). An application decided across an activation must keep citing its own version rather than the newly active one.",
+    "section": "10. Risks"
+  },
+  {
+    "id": "FRD-75",
+    "text": "**R-4 Undefined bucket boundaries.** The delinquency buckets are named (FR-09) but no requirement fixes the day ranges, nor where NPA begins. Left unstated, the first agent to write that code picks the thresholds by accident. Design must fix the boundaries against the capstone's intent before FR-09 or FR-14 is implemented.",
+    "section": "10. Risks"
+  }
+]

@@ -1,0 +1,111 @@
+{
+  "group": "H",
+  "stories": [
+    "E5-S2",
+    "E17-S1"
+  ],
+  "features": [
+    "F051",
+    "F052",
+    "F053",
+    "F054",
+    "F102",
+    "F103",
+    "F104"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-051",
+        "matrix_ids": [
+          "VM-051"
+        ],
+        "method": "POST",
+        "path": "/applications/{application_id}/decision",
+        "expected_status": 200,
+        "description": "POST /applications/{application_id}/decision → 200 — outcome is AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW with at least one reason code"
+      },
+      {
+        "id": "QA-VM-052",
+        "matrix_ids": [
+          "VM-052"
+        ],
+        "method": "POST",
+        "path": "/applications/{application_id}/decision",
+        "expected_status": 409,
+        "description": "POST /applications/{application_id}/decision → 409 — a reason code absent from the pinned version is refused ReasonCodeNotDeclared"
+      },
+      {
+        "id": "QA-VM-053",
+        "matrix_ids": [
+          "VM-053"
+        ],
+        "method": "GET",
+        "path": "/applications/{application_id}",
+        "expected_status": 200,
+        "description": "GET /applications/{application_id} → 200 — a new decision_record is appended and the current decision is the latest record"
+      },
+      {
+        "id": "QA-VM-054",
+        "matrix_ids": [
+          "VM-054"
+        ],
+        "method": "POST",
+        "path": "/applications/{application_id}/decision",
+        "expected_status": 200,
+        "description": "POST /applications/{application_id}/decision → 200 — re-deciding a MANUAL_REVIEW case after a newer version is activated still cites the version pinned at submission"
+      }
+    ],
+    "playwright_checks": [
+      {
+        "id": "QA-VM-102",
+        "matrix_ids": [
+          "VM-102"
+        ],
+        "description": "Run the axe-core scan over every screen in the customer-facing registry — 0 WCAG 2.1 AA violations, no rule suppressed, and 100% of registered screens covered",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Run the axe-core scan over every screen in the customer-facing registry — 0 WCAG 2.1 AA violations, no rule suppressed, and 100% of registered screens covered"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-103",
+        "matrix_ids": [
+          "VM-103"
+        ],
+        "description": "Traverse each registered screen's primary flow with the keyboard only — the flow completes, no focus trap is hit, and every interactive control exposes an accessible name and a visible focus indicator",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Traverse each registered screen's primary flow with the keyboard only — the flow completes, no focus trap is hit, and every interactive control exposes an accessible name and a visible focus indicator"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-104",
+        "matrix_ids": [
+          "VM-104"
+        ],
+        "description": "Add a customer-facing route absent from the screen registry and run the accessibility suite — the suite fails and names the unregistered route",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Add a customer-facing route absent from the screen registry and run the accessibility suite — the suite fails and names the unregistered route"
+          }
+        ]
+      }
+    ],
+    "accessibility_checks": {
+      "required": true,
+      "block_impacts": [
+        "serious",
+        "critical"
+      ]
+    }
+  }
+}

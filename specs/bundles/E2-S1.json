@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "story_id": "E2-S1",
+  "sprint": 1,
+  "title": "Loan product catalog with three products bound to distinct versioned rule sets",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E2-S1-AC1",
+      "E2-S1-AC2",
+      "E2-S1-AC3"
+    ],
+    "brd_ids": [
+      "FRD-1"
+    ],
+    "br_acceptance_ids": [
+      "FRD-40"
+    ],
+    "scope_out": [
+      "must not hardcode any threshold value in service or API code; must not add multi-currency or per-currency product variants; must not let two products share one policy version row"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Loan product catalog with three products bound to distinct versioned rule sets",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/types/policy.py",
+      "backend/src/service/policy/catalog.py",
+      "backend/src/service/policy/policy_accessor.py",
+      "backend/migrations/versions/0004_seed_catalog.py",
+      "backend/tests/integration/test_catalog_binding.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-6"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-024",
+      "VM-025",
+      "VM-026"
+    ],
+    "case_ids": [
+      "VM-024",
+      "VM-025",
+      "VM-026"
+    ],
+    "layers": [
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E2-S1.md",
+    "parents": [
+      "E3-S1",
+      "E1-S1"
+    ],
+    "tracker_key": null
+  }
+}

@@ -1,0 +1,382 @@
+[
+  {
+    "id": "E15-S1",
+    "text": "Structured JSON logging, correlation id propagation, PII redaction and health endpoint",
+    "traces": [
+      "FRD-20",
+      "FRD-23",
+      "FRD-24"
+    ],
+    "acs": [
+      "E15-S1-AC1",
+      "E15-S1-AC2",
+      "E15-S1-AC3",
+      "E15-S1-AC4",
+      "E15-S1-AC5"
+    ]
+  },
+  {
+    "id": "E15-S2",
+    "text": "Self-hosted Docker Compose stack and one-way layer dependency test",
+    "traces": [
+      "FRD-29"
+    ],
+    "acs": [
+      "E15-S2-AC1",
+      "E15-S2-AC2",
+      "E15-S2-AC3"
+    ]
+  },
+  {
+    "id": "E9-S1",
+    "text": "Money value type with fixed-point decimal arithmetic",
+    "traces": [
+      "FRD-18"
+    ],
+    "acs": [
+      "E9-S1-AC1",
+      "E9-S1-AC2",
+      "E9-S1-AC3"
+    ]
+  },
+  {
+    "id": "E1-S1",
+    "text": "Tracer M1: log in, list products, edit a threshold and activate a new policy version",
+    "traces": [
+      "FRD-1",
+      "FRD-13",
+      "FRD-16"
+    ],
+    "acs": [
+      "E1-S1-AC1",
+      "E1-S1-AC2",
+      "E1-S1-AC3",
+      "E1-S1-AC4"
+    ]
+  },
+  {
+    "id": "E1-S2",
+    "text": "Role boundary enforced at the controller layer with full action audit",
+    "traces": [
+      "FRD-16",
+      "FRD-21"
+    ],
+    "acs": [
+      "E1-S2-AC1",
+      "E1-S2-AC2",
+      "E1-S2-AC3",
+      "E1-S2-AC4"
+    ]
+  },
+  {
+    "id": "E3-S1",
+    "text": "Append-only policy version store and destructive migration lint",
+    "traces": [
+      "FRD-19",
+      "FRD-22"
+    ],
+    "acs": [
+      "E3-S1-AC1",
+      "E3-S1-AC2",
+      "E3-S1-AC3",
+      "E3-S1-AC4"
+    ]
+  },
+  {
+    "id": "E2-S1",
+    "text": "Loan product catalog with three products bound to distinct versioned rule sets",
+    "traces": [
+      "FRD-1"
+    ],
+    "acs": [
+      "E2-S1-AC1",
+      "E2-S1-AC2",
+      "E2-S1-AC3"
+    ]
+  },
+  {
+    "id": "E3-S2",
+    "text": "Policy Editor activates a new immutable policy version without a restart",
+    "traces": [
+      "FRD-13"
+    ],
+    "acs": [
+      "E3-S2-AC1",
+      "E3-S2-AC2",
+      "E3-S2-AC3",
+      "E3-S2-AC4"
+    ]
+  },
+  {
+    "id": "E16-S1",
+    "text": "Architecture invariant test registry and agent provenance evidence",
+    "traces": [
+      "FRD-25",
+      "FRD-28"
+    ],
+    "acs": [
+      "E16-S1-AC1",
+      "E16-S1-AC2",
+      "E16-S1-AC3",
+      "E16-S1-AC4"
+    ]
+  },
+  {
+    "id": "E4-S1",
+    "text": "Tracer M2: submit an application, score it and return a decision",
+    "traces": [
+      "FRD-2",
+      "FRD-3",
+      "FRD-4"
+    ],
+    "acs": [
+      "E4-S1-AC1",
+      "E4-S1-AC2",
+      "E4-S1-AC3"
+    ]
+  },
+  {
+    "id": "E4-S2",
+    "text": "Application intake with product derived document checklist and submission time policy pinning",
+    "traces": [
+      "FRD-2"
+    ],
+    "acs": [
+      "E4-S2-AC1",
+      "E4-S2-AC2",
+      "E4-S2-AC3",
+      "E4-S2-AC4"
+    ]
+  },
+  {
+    "id": "E4-S3",
+    "text": "Apply screen for product selection, applicant details and checklist display",
+    "traces": [
+      "FRD-2"
+    ],
+    "acs": [
+      "E4-S3-AC1",
+      "E4-S3-AC2",
+      "E4-S3-AC3"
+    ]
+  },
+  {
+    "id": "E4-S4",
+    "text": "Minimum income threshold rejects submission with PolicyViolationException",
+    "traces": [
+      "FRD-5"
+    ],
+    "acs": [
+      "E4-S4-AC1",
+      "E4-S4-AC2",
+      "E4-S4-AC3"
+    ]
+  },
+  {
+    "id": "E5-S1",
+    "text": "Deterministic credit scoring stub over age, income and credit history flags",
+    "traces": [
+      "FRD-3"
+    ],
+    "acs": [
+      "E5-S1-AC1",
+      "E5-S1-AC2",
+      "E5-S1-AC3"
+    ]
+  },
+  {
+    "id": "E5-S2",
+    "text": "Underwriting decision with reason codes from the pinned policy version",
+    "traces": [
+      "FRD-4"
+    ],
+    "acs": [
+      "E5-S2-AC1",
+      "E5-S2-AC2",
+      "E5-S2-AC3",
+      "E5-S2-AC4"
+    ]
+  },
+  {
+    "id": "E6-S1",
+    "text": "Document verification queue with VERIFIED and REJECTED transitions",
+    "traces": [
+      "FRD-6"
+    ],
+    "acs": [
+      "E6-S1-AC1",
+      "E6-S1-AC2",
+      "E6-S1-AC3",
+      "E6-S1-AC4"
+    ]
+  },
+  {
+    "id": "E6-S2",
+    "text": "Underwriter workbench queue and MANUAL_REVIEW decision review screen",
+    "traces": [
+      "FRD-17"
+    ],
+    "acs": [
+      "E6-S2-AC1",
+      "E6-S2-AC2",
+      "E6-S2-AC3"
+    ]
+  },
+  {
+    "id": "E7-S1",
+    "text": "Admin console application list with filters and audited AUTO_REJECT override",
+    "traces": [
+      "FRD-10"
+    ],
+    "acs": [
+      "E7-S1-AC1",
+      "E7-S1-AC2",
+      "E7-S1-AC3",
+      "E7-S1-AC4"
+    ]
+  },
+  {
+    "id": "E8-S1",
+    "text": "Customer application tracking view",
+    "traces": [
+      "FRD-11"
+    ],
+    "acs": [
+      "E8-S1-AC1",
+      "E8-S1-AC2",
+      "E8-S1-AC3",
+      "E8-S1-AC4"
+    ]
+  },
+  {
+    "id": "E11-S1",
+    "text": "Delinquency bucket ladder over days past due",
+    "traces": [
+      "FRD-9"
+    ],
+    "acs": [
+      "E11-S1-AC1",
+      "E11-S1-AC2",
+      "E11-S1-AC3",
+      "E11-S1-AC4"
+    ]
+  },
+  {
+    "id": "E9-S2",
+    "text": "Tracer M3: approve, disburse and post a first repayment",
+    "traces": [
+      "FRD-7",
+      "FRD-8",
+      "FRD-9"
+    ],
+    "acs": [
+      "E9-S2-AC1",
+      "E9-S2-AC2",
+      "E9-S2-AC3"
+    ]
+  },
+  {
+    "id": "E9-S3",
+    "text": "EMI computation and append-only repayment schedule generation",
+    "traces": [
+      "FRD-7",
+      "FRD-19"
+    ],
+    "acs": [
+      "E9-S3-AC1",
+      "E9-S3-AC2",
+      "E9-S3-AC3",
+      "E9-S3-AC4",
+      "E9-S3-AC5"
+    ]
+  },
+  {
+    "id": "E10-S1",
+    "text": "Disbursement records the released amount and a stub funding source",
+    "traces": [
+      "FRD-8"
+    ],
+    "acs": [
+      "E10-S1-AC1",
+      "E10-S1-AC2",
+      "E10-S1-AC3",
+      "E10-S1-AC4"
+    ]
+  },
+  {
+    "id": "E11-S2",
+    "text": "Repayment posting reduces outstanding principal and recalculates the delinquency bucket",
+    "traces": [
+      "FRD-9"
+    ],
+    "acs": [
+      "E11-S2-AC1",
+      "E11-S2-AC2",
+      "E11-S2-AC3",
+      "E11-S2-AC4"
+    ]
+  },
+  {
+    "id": "E12-S1",
+    "text": "Idempotent as-of-date end-of-day delinquency recalculation",
+    "traces": [
+      "FRD-14"
+    ],
+    "acs": [
+      "E12-S1-AC1",
+      "E12-S1-AC2",
+      "E12-S1-AC3",
+      "E12-S1-AC4"
+    ]
+  },
+  {
+    "id": "E13-S1",
+    "text": "Customer loan view with schedule, outstanding principal, bucket and repayment posting",
+    "traces": [
+      "FRD-12"
+    ],
+    "acs": [
+      "E13-S1-AC1",
+      "E13-S1-AC2",
+      "E13-S1-AC3",
+      "E13-S1-AC4"
+    ]
+  },
+  {
+    "id": "E14-S1",
+    "text": "Portfolio dashboard by product, delinquency bucket and total overdue",
+    "traces": [
+      "FRD-15"
+    ],
+    "acs": [
+      "E14-S1-AC1",
+      "E14-S1-AC2",
+      "E14-S1-AC3",
+      "E14-S1-AC4"
+    ]
+  },
+  {
+    "id": "E17-S1",
+    "text": "Accessibility harness and WCAG 2.1 AA ratchet over the customer-facing screen registry",
+    "traces": [
+      "FRD-27"
+    ],
+    "acs": [
+      "E17-S1-AC1",
+      "E17-S1-AC2",
+      "E17-S1-AC3"
+    ]
+  },
+  {
+    "id": "E15-S3",
+    "text": "Runtime SLO load harness and ratchet over the read-heavy endpoint registry",
+    "traces": [
+      "FRD-26"
+    ],
+    "acs": [
+      "E15-S3-AC1",
+      "E15-S3-AC2",
+      "E15-S3-AC3"
+    ]
+  }
+]

@@ -1,0 +1,69 @@
+{
+  "phase": "design",
+  "status": "approved",
+  "rounds": [
+    {
+      "round": 1,
+      "verdict": "changes-requested",
+      "feedback": [
+        "U-1 money: amend E9-S1-AC3 and FRD-57 to 'decimal value, never a float'; D-G stands.",
+        "U-2 partial repayment: interest-first within the oldest unpaid Installment, then principal.",
+        "U-6 MANUAL_REVIEW: add it to the Application Status term in CONTEXT.md and to the enum (six states -> seven).",
+        "U-3 JWT TTL: 60 minutes.",
+        "U-4 privileged roles: ADMIN for both disbursement and the End-Of-Day Run.",
+        "U-5 rate limiting: confirm none in v1, login attempt-throttle gap accepted.",
+        "project-manifest.json: write the architecture block now rather than deferring to E15-S2.",
+        "backend/CLAUDE.md: fix src/services/ to singular src/service/."
+      ],
+      "changes": [],
+      "declined": [],
+      "questions_asked": 9,
+      "answered": 9,
+      "recordedAt": "2026-09-13T15:16:00.887Z"
+    },
+    {
+      "round": 2,
+      "verdict": "approved",
+      "feedback": [
+        "Approved at the design gate: all five deterministic gates pass, every unresolved item is a recorded human decision, and both verification holes found during review are closed and verified."
+      ],
+      "changes": [
+        "Six unresolved items settled as human decisions D-J..D-O and re-rendered; design-unresolved.json is now empty.",
+        "E9-S1-AC3, FRD-57, F011, E9-S1 story text and all 29 bundles amended to 'decimal value, never a float' per D-J; CONTEXT.md Application Status gained MANUAL_REVIEW per D-L.",
+        "project-manifest.json architecture block written (layer_roots backend/src + frontend/src, six layers, 10 context roots) and verified through layers.js, closing the vacuous E15-S2-AC2 layer gate.",
+        "backend/CLAUDE.md corrected from src/services/ to singular src/service/ to match the rendered layout.",
+        "Three stale pending-work claims in architecture.md corrected to match what was actually done."
+      ],
+      "declined": [
+        "The --eval artifact evaluator was not run, per the skill's rule that the deterministic grounding, canvas and vocabulary gates already prove the load-bearing properties.",
+        "specs/brd/source-frd.md left untouched as the authoritative source document; the FRD-57 amendment lives in the extracted spine and in decision D-J."
+      ],
+      "questions_asked": 10,
+      "answered": 10,
+      "recordedAt": "2026-09-13T15:28:11.515Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "specs/design/architecture.md",
+      "sha256": "36121e53ff00f66a0b2eb010faf9347c35b79551f0bc6530a355164c57b1a1d0"
+    },
+    {
+      "path": "specs/design/program-design.md",
+      "sha256": "f83208bb0a27ac16886dac0387b747cdaca0842d14587a1e920961a5cb357e4d"
+    },
+    {
+      "path": "specs/design/reasons-canvas.md",
+      "sha256": "780f8d800b83e8f7397a924e860c4ac823c436b3df8a24d9f3f8346724d9e7c0"
+    },
+    {
+      "path": "specs/design/component-map.md",
+      "sha256": "e8619724a3b324f881edbee6235ef487dc362075fb8ba4f6ee49a50edea2b36e"
+    }
+  ],
+  "low_engagement": false,
+  "waived_by": null,
+  "approvedAt": "2026-09-13T15:28:11.515Z",
+  "session_id": "ddfc5903-7f5b-470b-8b3f-0622d32b9d46",
+  "in_session": false
+}

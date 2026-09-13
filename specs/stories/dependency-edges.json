@@ -1,0 +1,317 @@
+[
+  {
+    "from": "E15-S2",
+    "to": "E15-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "compose readiness is gated on the /health probe"
+  },
+  {
+    "from": "E1-S1",
+    "to": "E15-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "every request-scoped log line must already carry a correlation id"
+  },
+  {
+    "from": "E1-S1",
+    "to": "E9-S1",
+    "kind": "contract",
+    "artifact": "Money value type",
+    "reason": "threshold values are monetary and must be fixed-point from the first write"
+  },
+  {
+    "from": "E1-S2",
+    "to": "E1-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "deepens the tracer's shallow session into the full role matrix"
+  },
+  {
+    "from": "E3-S1",
+    "to": "E9-S1",
+    "kind": "contract",
+    "artifact": "Money value type",
+    "reason": "threshold columns are monetary and typed by the published Money artifact"
+  },
+  {
+    "from": "E3-S1",
+    "to": "E1-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the tracer already writes and activates a policy version that this store must hold immutably"
+  },
+  {
+    "from": "E2-S1",
+    "to": "E3-S1",
+    "kind": "data",
+    "artifact": "policy_version rows",
+    "reason": "each product binds to a stored policy version"
+  },
+  {
+    "from": "E2-S1",
+    "to": "E1-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "deepens the tracer's shallow product list"
+  },
+  {
+    "from": "E3-S2",
+    "to": "E2-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "edits a product's bound policy version"
+  },
+  {
+    "from": "E3-S2",
+    "to": "E1-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the editor is an admin surface behind the controller-layer role boundary"
+  },
+  {
+    "from": "E16-S1",
+    "to": "E15-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "registers the layer-dependency test that story introduces"
+  },
+  {
+    "from": "E16-S1",
+    "to": "E3-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "registers the policy-version immutability test that story introduces"
+  },
+  {
+    "from": "E4-S1",
+    "to": "E2-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "an application is submitted against a catalog product and its bound policy version"
+  },
+  {
+    "from": "E4-S1",
+    "to": "E1-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "submission and decision run under the controller-layer role boundary"
+  },
+  {
+    "from": "E4-S2",
+    "to": "E4-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "deepens the tracer's shallow submit into full intake"
+  },
+  {
+    "from": "E4-S3",
+    "to": "E4-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the screen submits through the intake service and renders its checklist"
+  },
+  {
+    "from": "E4-S4",
+    "to": "E4-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "guards the intake path that story establishes"
+  },
+  {
+    "from": "E5-S1",
+    "to": "E4-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "scores the application that intake persists with its pinned policy version"
+  },
+  {
+    "from": "E5-S2",
+    "to": "E5-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the decision consumes the score that story produces"
+  },
+  {
+    "from": "E6-S1",
+    "to": "E4-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the queue works the checklist items intake generates"
+  },
+  {
+    "from": "E6-S1",
+    "to": "E1-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "verification is an underwriter action behind the role boundary and audit"
+  },
+  {
+    "from": "E6-S2",
+    "to": "E5-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the review screen renders and records decisions through the decision service"
+  },
+  {
+    "from": "E6-S2",
+    "to": "E6-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the review screen shows per-document verification state"
+  },
+  {
+    "from": "E7-S1",
+    "to": "E5-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the override appends onto the decision record the decision service writes"
+  },
+  {
+    "from": "E7-S1",
+    "to": "E1-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the console is an admin surface and the override must be audited"
+  },
+  {
+    "from": "E7-S1",
+    "to": "E15-S3",
+    "kind": "contract",
+    "artifact": "read-heavy endpoint registry and load harness",
+    "reason": "the application-list read surface registers with the SLO harness and must meet the budget"
+  },
+  {
+    "from": "E8-S1",
+    "to": "E5-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the view renders the decision and reason codes that service produces"
+  },
+  {
+    "from": "E8-S1",
+    "to": "E6-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the view lists documents still unverified in the verification queue"
+  },
+  {
+    "from": "E8-S1",
+    "to": "E17-S1",
+    "kind": "contract",
+    "artifact": "accessibility harness and customer-facing screen registry",
+    "reason": "the Track screen registers with the existing harness and must pass it to land"
+  },
+  {
+    "from": "E9-S2",
+    "to": "E5-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "schedule generation triggers on an AUTO_APPROVE or an approved MANUAL_REVIEW decision, per D9"
+  },
+  {
+    "from": "E9-S3",
+    "to": "E9-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "deepens the tracer's shallow schedule into the real EMI and residual rules"
+  },
+  {
+    "from": "E9-S3",
+    "to": "E9-S1",
+    "kind": "contract",
+    "artifact": "Money value type",
+    "reason": "every schedule money field is the published fixed-point Money type"
+  },
+  {
+    "from": "E10-S1",
+    "to": "E9-S3",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "a loan is disbursed only once its real schedule has been generated"
+  },
+  {
+    "from": "E11-S2",
+    "to": "E10-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "repayments are posted against a disbursed loan"
+  },
+  {
+    "from": "E11-S2",
+    "to": "E11-S1",
+    "kind": "contract",
+    "artifact": "delinquency bucket ladder",
+    "reason": "recalculation calls the published classifier rather than its own boundaries"
+  },
+  {
+    "from": "E12-S1",
+    "to": "E11-S1",
+    "kind": "contract",
+    "artifact": "delinquency bucket ladder",
+    "reason": "the job classifies through the published ladder, per D10"
+  },
+  {
+    "from": "E12-S1",
+    "to": "E9-S3",
+    "kind": "data",
+    "artifact": "schedule_installment rows",
+    "reason": "days past due is computed from stored installment due dates on seeded loans"
+  },
+  {
+    "from": "E13-S1",
+    "to": "E11-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the view posts repayments and renders the balance and bucket that service maintains"
+  },
+  {
+    "from": "E13-S1",
+    "to": "E17-S1",
+    "kind": "contract",
+    "artifact": "accessibility harness and customer-facing screen registry",
+    "reason": "the Repay screen registers with the existing harness and must pass it to land"
+  },
+  {
+    "from": "E13-S1",
+    "to": "E15-S3",
+    "kind": "contract",
+    "artifact": "read-heavy endpoint registry and load harness",
+    "reason": "the loan read surface registers with the SLO harness and must meet the budget"
+  },
+  {
+    "from": "E14-S1",
+    "to": "E11-S2",
+    "kind": "data",
+    "artifact": "loan bucket state and overdue installments",
+    "reason": "the dashboard reads the bucket state and overdue rows that service establishes"
+  },
+  {
+    "from": "E14-S1",
+    "to": "E1-S2",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the dashboard is an admin surface behind the controller-layer role boundary"
+  },
+  {
+    "from": "E14-S1",
+    "to": "E15-S3",
+    "kind": "contract",
+    "artifact": "read-heavy endpoint registry and load harness",
+    "reason": "the dashboard read surface registers with the SLO harness and must meet the budget"
+  },
+  {
+    "from": "E17-S1",
+    "to": "E4-S3",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "the Apply screen is the first screen registered with the harness"
+  },
+  {
+    "from": "E15-S3",
+    "to": "E2-S1",
+    "kind": "behavior",
+    "artifact": null,
+    "reason": "GET /products is the first read-heavy endpoint registered with the harness"
+  }
+]

@@ -1,0 +1,602 @@
+[
+  {
+    "id": "FRD-1",
+    "kind": "requirement",
+    "traces": [
+      "FRD-1"
+    ],
+    "text": "(AC-01) The loan product catalog offers at least 3 products — Personal, Vehicle and Education — each bound to its own distinct rule set sourced from a versioned policy record."
+  },
+  {
+    "id": "FRD-2",
+    "kind": "requirement",
+    "traces": [
+      "FRD-2"
+    ],
+    "text": "(AC-02) A customer can submit a loan application against a chosen product, and the system generates that product's required-document checklist."
+  },
+  {
+    "id": "FRD-3",
+    "kind": "requirement",
+    "traces": [
+      "FRD-3"
+    ],
+    "text": "(AC-03) A credit-scoring stub returns a deterministic score computed from age, income and credit-history flags."
+  },
+  {
+    "id": "FRD-4",
+    "kind": "requirement",
+    "traces": [
+      "FRD-4"
+    ],
+    "text": "(AC-04) An underwriting decision returns AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW together with reason codes referenced from the active policy version."
+  },
+  {
+    "id": "FRD-5",
+    "kind": "requirement",
+    "traces": [
+      "FRD-5"
+    ],
+    "text": "(AC-05) Application submission fails with PolicyViolationException when declared income is below the minimum income threshold for the selected product."
+  },
+  {
+    "id": "FRD-6",
+    "kind": "requirement",
+    "traces": [
+      "FRD-6"
+    ],
+    "text": "(AC-06) An underwriter can mark each document in the document-verification queue VERIFIED or REJECTED with a reason."
+  },
+  {
+    "id": "FRD-7",
+    "kind": "requirement",
+    "traces": [
+      "FRD-7"
+    ],
+    "text": "(AC-07) On approval, a repayment schedule is generated using the EMI formula, with per-installment principal and interest summing to total payable."
+  },
+  {
+    "id": "FRD-8",
+    "kind": "requirement",
+    "traces": [
+      "FRD-8"
+    ],
+    "text": "(AC-08) Disbursement records the released amount and the funding source, the funding source being a stub."
+  },
+  {
+    "id": "FRD-9",
+    "kind": "requirement",
+    "traces": [
+      "FRD-9"
+    ],
+    "text": "(AC-09) Posting a repayment reduces outstanding principal and recalculates the loan's delinquency bucket across CURRENT, DPD-30, DPD-60, DPD-90 and NPA."
+  },
+  {
+    "id": "FRD-10",
+    "kind": "requirement",
+    "traces": [
+      "FRD-10"
+    ],
+    "text": "(AC-10) An admin can list applications, filter them by status and by product, and override an AUTO_REJECT with a comment and a reason code, with the override written to the audit trail."
+  },
+  {
+    "id": "FRD-11",
+    "kind": "requirement",
+    "traces": [
+      "FRD-11"
+    ],
+    "text": "A customer can track a submitted application: its status, outstanding required documents, the decision, and the decision's reason codes."
+  },
+  {
+    "id": "FRD-12",
+    "kind": "requirement",
+    "traces": [
+      "FRD-12"
+    ],
+    "text": "A customer can view a disbursed loan's repayment schedule, outstanding principal and current delinquency bucket, and post a repayment against it."
+  },
+  {
+    "id": "FRD-13",
+    "kind": "requirement",
+    "traces": [
+      "FRD-13"
+    ],
+    "text": "The Policy Editor lets an authorised user change a product's income, age, score, tenure and rate thresholds without a code change, producing a new immutable policy version that becomes the active version without a restart."
+  },
+  {
+    "id": "FRD-14",
+    "kind": "requirement",
+    "traces": [
+      "FRD-14"
+    ],
+    "text": "An idempotent, as-of-date-parameterised end-of-day operation recalculates delinquency buckets across all active loans, and produces the same result when run twice for the same date."
+  },
+  {
+    "id": "FRD-15",
+    "kind": "requirement",
+    "traces": [
+      "FRD-15"
+    ],
+    "text": "An admin dashboard reports the portfolio by product, the count and value of loans in each delinquency bucket, and total overdue."
+  },
+  {
+    "id": "FRD-16",
+    "kind": "requirement",
+    "traces": [
+      "FRD-16"
+    ],
+    "text": "Users authenticate and act under exactly one of the roles CUSTOMER, UNDERWRITER or ADMIN, and each surface is reachable only by its permitted roles."
+  },
+  {
+    "id": "FRD-17",
+    "kind": "requirement",
+    "traces": [
+      "FRD-17"
+    ],
+    "text": "The underwriter workbench presents the queue of applications awaiting action and a decision-review screen for MANUAL_REVIEW cases."
+  },
+  {
+    "id": "FRD-18",
+    "kind": "requirement",
+    "traces": [
+      "FRD-18"
+    ],
+    "text": "Money — principal, interest and EMI — is computed in fixed-point decimal and never in floating-point; monetary amounts carry 2 decimal places."
+  },
+  {
+    "id": "FRD-19",
+    "kind": "requirement",
+    "traces": [
+      "FRD-19"
+    ],
+    "text": "Approved policy versions and generated repayment schedules are append-only: 0 update and 0 delete operations against either, in code or in migration."
+  },
+  {
+    "id": "FRD-20",
+    "kind": "requirement",
+    "traces": [
+      "FRD-20"
+    ],
+    "text": "Synthetic identifiers (PAN, Aadhaar) and salary-document content are never written to logs: 0 occurrences in any emitted log line."
+  },
+  {
+    "id": "FRD-21",
+    "kind": "requirement",
+    "traces": [
+      "FRD-21"
+    ],
+    "text": "The authentication boundary is enforced at the controller layer, and 100% of underwriter and admin actions are audited with the acting user id and a timestamp."
+  },
+  {
+    "id": "FRD-22",
+    "kind": "requirement",
+    "traces": [
+      "FRD-22"
+    ],
+    "text": "Database migrations and policy migrations are append-only: 0 destructive migrations."
+  },
+  {
+    "id": "FRD-23",
+    "kind": "requirement",
+    "traces": [
+      "FRD-23"
+    ],
+    "text": "Logs are structured JSON, and 100% of request-scoped log lines carry a request correlation id."
+  },
+  {
+    "id": "FRD-24",
+    "kind": "requirement",
+    "traces": [
+      "FRD-24"
+    ],
+    "text": "The health endpoint returns 200 within 1 second of a successful startup."
+  },
+  {
+    "id": "FRD-25",
+    "kind": "requirement",
+    "traces": [
+      "FRD-25"
+    ],
+    "text": "Architecture rules are enforced as automated tests, at least 1 test per invariant — including that a policy version cannot be mutated and that the EMI principal-rate-tenure invariant holds."
+  },
+  {
+    "id": "FRD-26",
+    "kind": "requirement",
+    "traces": [
+      "FRD-26"
+    ],
+    "text": "API responses meet the project runtime SLO: p95 under 500 ms and an error rate under 1%."
+  },
+  {
+    "id": "FRD-27",
+    "kind": "requirement",
+    "traces": [
+      "FRD-27"
+    ],
+    "text": "Customer-facing screens — Apply, Track and Repay — meet WCAG 2.1 AA."
+  },
+  {
+    "id": "FRD-28",
+    "kind": "requirement",
+    "traces": [
+      "FRD-28"
+    ],
+    "text": "100% of production code is generated by Claude Code agents under human supervision, with 0 hand-written production lines; the capstone permits no manual coding."
+  },
+  {
+    "id": "FRD-29",
+    "kind": "requirement",
+    "traces": [
+      "FRD-29"
+    ],
+    "text": "The system is self-hosted via Docker Compose over a single Postgres database, with a Python 3.12 FastAPI backend and a TypeScript React-Vite frontend, and respects one-way dependencies across its 6 layers (Types, Config, Repository, Service, API, UI)."
+  },
+  {
+    "id": "FRD-69",
+    "kind": "context",
+    "traces": [
+      "FRD-69"
+    ],
+    "text": "**M1 — Policy & Catalog** — FR-01, FR-02, FR-13, FR-16. Done when: an ADMIN edits a product threshold in the Policy Editor, a new policy version becomes active with no restart, and the catalog and a generated document checklist reflect it."
+  },
+  {
+    "id": "FRD-70",
+    "kind": "context",
+    "traces": [
+      "FRD-70"
+    ],
+    "text": "**M2 — Apply & Decide** — FR-03, FR-04, FR-05, FR-06, FR-10, FR-11, FR-17. Done when: a customer submits against each of the 3 products and receives AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW with reason codes tied to the active policy version, and an admin override of an AUTO_REJECT appears in the audit trail."
+  },
+  {
+    "id": "FRD-71",
+    "kind": "context",
+    "traces": [
+      "FRD-71"
+    ],
+    "text": "**M3 — Disburse & Repay** — FR-07, FR-08, FR-09, FR-12, FR-14, FR-15. Done when: an approved application disburses, its schedule's principal plus interest equals total payable, a posted repayment reduces outstanding principal, and the end-of-day operation moves a 35-day-overdue loan to DPD-30 on the portfolio dashboard."
+  },
+  {
+    "id": "FRD-72",
+    "kind": "risk",
+    "traces": [
+      "FRD-72"
+    ],
+    "text": "**R-1 EMI rounding residual.** Fixed-point money at 2 decimal places (NFR-01) and the requirement that per-installment principal plus interest equal total payable (FR-07) are in tension: rounded equal installments rarely sum to the unrounded total. Design must state where the residual is absorbed, or the FR-07 invariant test will be loosened to hide it."
+  },
+  {
+    "id": "FRD-73",
+    "kind": "risk",
+    "traces": [
+      "FRD-73"
+    ],
+    "text": "**R-2 Append-only versus correction.** Policy versions and schedules admit no update or delete (NFR-02, NFR-05), while an override changes a decision (FR-10) and a posted repayment changes outstanding principal and bucket (FR-09). Design must draw the boundary between the immutable artifacts and the mutable loan state explicitly, or the architecture test and the features will collide."
+  },
+  {
+    "id": "FRD-74",
+    "kind": "risk",
+    "traces": [
+      "FRD-74"
+    ],
+    "text": "**R-3 Policy activation with in-flight applications.** A new version becomes active without restart (FR-13), yet every reason code must exist in the policy version named on the application (FR-04). An application decided across an activation must keep citing its own version rather than the newly active one."
+  },
+  {
+    "id": "FRD-75",
+    "kind": "risk",
+    "traces": [
+      "FRD-75"
+    ],
+    "text": "**R-4 Undefined bucket boundaries.** The delinquency buckets are named (FR-09) but no requirement fixes the day ranges, nor where NPA begins. Left unstated, the first agent to write that code picks the thresholds by accident. Design must fix the boundaries against the capstone's intent before FR-09 or FR-14 is implemented."
+  },
+  {
+    "id": "FRD-40",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-40"
+    ],
+    "text": "`GET /products` returns at least 3 products (Personal, Vehicle, Education); each carries a policy version id, and the three policy versions hold different threshold values."
+  },
+  {
+    "id": "FRD-41",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-41"
+    ],
+    "text": "Submitting an application returns a persisted application in SUBMITTED state whose required-document checklist matches the selected product's policy version, item for item."
+  },
+  {
+    "id": "FRD-42",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-42"
+    ],
+    "text": "The same age, income and credit-history-flag input returns the identical score on repeated calls, and two inputs differing only in credit-history flags return different scores."
+  },
+  {
+    "id": "FRD-43",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-43"
+    ],
+    "text": "The decision response carries a decision of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code, and every returned reason code exists in the policy version named on the application."
+  },
+  {
+    "id": "FRD-44",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-44"
+    ],
+    "text": "Submitting with income below the product's minimum threshold returns an error identifying PolicyViolationException and the breached threshold, and persists no application row."
+  },
+  {
+    "id": "FRD-45",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-45"
+    ],
+    "text": "Each checklist document can be transitioned to VERIFIED or REJECTED; a REJECTED document stores a non-empty reason, and the queue no longer lists documents already actioned."
+  },
+  {
+    "id": "FRD-46",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-46"
+    ],
+    "text": "For a generated schedule, the sum of all installment principal equals the disbursed amount, the sum of principal plus interest across installments equals total payable, and installment count equals the product tenure."
+  },
+  {
+    "id": "FRD-47",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-47"
+    ],
+    "text": "After disbursement the loan record holds the released amount and a funding-source identifier, and the loan is in a DISBURSED state with a schedule attached."
+  },
+  {
+    "id": "FRD-48",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-48"
+    ],
+    "text": "Posting a repayment lowers outstanding principal by the applied principal portion, and a loan whose oldest unpaid installment is 35 days past due reads as DPD-30 after recalculation."
+  },
+  {
+    "id": "FRD-49",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-49"
+    ],
+    "text": "The application list can be filtered to a given status and product and returns only matching rows; overriding an AUTO_REJECT changes the decision and writes an audit entry containing the comment, reason code, acting user id and timestamp."
+  },
+  {
+    "id": "FRD-50",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-50"
+    ],
+    "text": "The tracking view for an application shows its current status, every unverified checklist item, and — once decided — the decision with its reason codes."
+  },
+  {
+    "id": "FRD-51",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-51"
+    ],
+    "text": "The customer loan view lists every installment with due date and amount, the current outstanding principal and the current bucket; a repayment posted from this view is reflected in the outstanding figure on reload."
+  },
+  {
+    "id": "FRD-52",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-52"
+    ],
+    "text": "Saving an edited threshold in the Policy Editor creates a new policy version, leaves the prior version's stored values byte-identical, and a subsequent application decision cites the new version id without any process restart."
+  },
+  {
+    "id": "FRD-53",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-53"
+    ],
+    "text": "Running the end-of-day operation for a given as-of date sets each active loan's bucket according to its days past due, and a second run for the same date leaves every bucket and every stored row unchanged."
+  },
+  {
+    "id": "FRD-54",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-54"
+    ],
+    "text": "The dashboard returns, per product, the loan count and value per bucket and a total overdue figure that equals the sum of overdue installment amounts across active loans."
+  },
+  {
+    "id": "FRD-55",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-55"
+    ],
+    "text": "A request to an underwriter or admin route with a CUSTOMER session is rejected with 403; a request with no session is rejected with 401; each role can reach its own surfaces."
+  },
+  {
+    "id": "FRD-56",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-56"
+    ],
+    "text": "The workbench queue lists exactly the applications in SUBMITTED or MANUAL_REVIEW state, and opening a MANUAL_REVIEW case shows its score, reason codes and document verification state."
+  },
+  {
+    "id": "FRD-57",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-57"
+    ],
+    "text": "A property test over (principal, rate, tenure) asserts every money field on a generated schedule is a Decimal quantized to exactly 2 decimal places, and a static check reports 0 float arithmetic operations in money code paths (backend `decimal.Decimal`; frontend a Decimal value via a decimal library, never a float)."
+  },
+  {
+    "id": "FRD-58",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-58"
+    ],
+    "text": "The policy_version and schedule_installment repositories expose no update or delete method (asserted by interface test), and an architecture test reports 0 UPDATE or DELETE statements and 0 ORM mutations against those two tables across `src/` and `migrations/`."
+  },
+  {
+    "id": "FRD-59",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-59"
+    ],
+    "text": "A test submits an application carrying synthetic PAN, Aadhaar and salary-document content, captures every emitted log record, and asserts 0 occurrences of each value; a second assertion confirms the redaction filter is installed on every configured logger."
+  },
+  {
+    "id": "FRD-60",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-60"
+    ],
+    "text": "For every underwriter and admin route enumerated from the OpenAPI schema, a generated test issues the request with no session (expect 401) and with a CUSTOMER session (expect 403); the test asserts it covered 100% of those routes, so a newly added unguarded route fails the suite."
+  },
+  {
+    "id": "FRD-61",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-61"
+    ],
+    "text": "A migration-lint test parses every file under `migrations/` and asserts 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements; policy migrations are checked by the same parser."
+  },
+  {
+    "id": "FRD-62",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-62"
+    ],
+    "text": "Every log line emitted while serving a request parses as JSON and carries a non-empty request_id equal to the inbound X-Request-ID header, or to a generated id when the header is absent; the assertion covers 100% of request-scoped lines in the captured buffer."
+  },
+  {
+    "id": "FRD-63",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-63"
+    ],
+    "text": "In the deploy smoke test, after `docker compose up` reports the backend healthy, `GET /health` returns 200 with a JSON body and the measured response time is under 1 second."
+  },
+  {
+    "id": "FRD-64",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-64"
+    ],
+    "text": "An architecture test module holds at least one test per named invariant — policy-version immutability, the EMI principal/rate/tenure invariant, and the one-way dependency rule across Types, Config, Repository, Service, API, UI — and the suite fails if any registered invariant has no corresponding test."
+  },
+  {
+    "id": "FRD-65",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-65"
+    ],
+    "text": "A load run against the read-heavy endpoints (`GET /products`, `GET /applications`, `GET /loans/{id}`, `GET /dashboard`) reports p95 under 500 ms and an error rate under 1%; the measured figures are recorded in the evaluation report."
+  },
+  {
+    "id": "FRD-66",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-66"
+    ],
+    "text": "An automated axe-core scan of the Apply, Track and Repay screens reports 0 WCAG 2.1 AA violations, and keyboard-only traversal of each screen's primary flow completes without a focus trap."
+  },
+  {
+    "id": "FRD-67",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-67"
+    ],
+    "text": "Every production commit on the branch carries agent co-authorship and passes the standard pre-commit gate set, and the `/gate` attestation record is the evidence for 0 hand-written production lines."
+  },
+  {
+    "id": "FRD-68",
+    "kind": "acceptance",
+    "traces": [
+      "FRD-68"
+    ],
+    "text": "`docker compose up` from a clean checkout brings up exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend, all reporting healthy; the layer-dependency architecture test reports 0 violations of the six-layer one-way rule."
+  },
+  {
+    "id": "FRD-30",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-30"
+    ],
+    "text": "Late fees, penal interest, collections workflow and write-off. Delinquency is status only: buckets are computed, nothing is charged for lateness and no recovery process exists."
+  },
+  {
+    "id": "FRD-31",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-31"
+    ],
+    "text": "Real money movement and real credit-bureau calls. The funding source (FR-08) and the credit score (FR-03) are stubs; no payment rail, no external bureau, no live provider credentials."
+  },
+  {
+    "id": "FRD-32",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-32"
+    ],
+    "text": "Native or responsive mobile clients."
+  },
+  {
+    "id": "FRD-33",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-33"
+    ],
+    "text": "Customer notifications of any kind — no email or SMS on decision, disbursement or due date."
+  },
+  {
+    "id": "FRD-34",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-34"
+    ],
+    "text": "Electronic signature or a signed loan agreement artifact."
+  },
+  {
+    "id": "FRD-35",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-35"
+    ],
+    "text": "Multi-currency support. Single currency only."
+  },
+  {
+    "id": "FRD-36",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-36"
+    ],
+    "text": "Co-applicants, guarantors and joint applications. One applicant per application."
+  },
+  {
+    "id": "FRD-37",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-37"
+    ],
+    "text": "Loan top-ups, restructuring and any mid-life modification of a disbursed loan."
+  },
+  {
+    "id": "FRD-38",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-38"
+    ],
+    "text": "KYC/AML identity verification against external registries. Synthetic PAN and Aadhaar values are captured as application data only and are never verified."
+  },
+  {
+    "id": "FRD-39",
+    "kind": "safeguard",
+    "traces": [
+      "FRD-39"
+    ],
+    "text": "Early settlement, foreclosure and prepayment quotes."
+  }
+]

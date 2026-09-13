@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<!--
+  Story:    E6-S2 — Underwriter workbench + decision review
+  Screen:   Workbench queue (SUBMITTED / MANUAL_REVIEW) + decision-review panel
+  Role:     UNDERWRITER
+  Endpoints depended on (hardcoded stand-ins, no network calls):
+    GET  /applications?status=SUBMITTED&status=MANUAL_REVIEW
+    GET  /applications/{application_id}
+    POST /applications/{application_id}/decision
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TrueLend — Underwriter Workbench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" /><!-- harness:secret-ok — Google Fonts variable-axis query syntax, not a credential -->
+<script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com/3.4.10"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: "#14231D",
+          "ink-muted": "#4E6158",
+          paper: "#F7F4EC",
+          "paper-raised": "#FFFDF7",
+          brass: "#9A6B1F",
+          "signal-red": "#8E241C",
+          "signal-amber": "#8A5B12",
+          "signal-green": "#1D5C41",
+          rule: "#D8D0BE",
+        },
+        fontFamily: {
+          display: ["Fraunces", "serif"],
+          sans: ["Public Sans", "sans-serif"],
+          mono: ["IBM Plex Mono", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { font-variant-numeric: tabular-nums; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  :focus-visible {
+    outline: 2px solid #9A6B1F;
+    outline-offset: 2px;
+  }
+  table { border-collapse: collapse; }
+</style>
+</head>
+<body class="bg-paper text-ink font-sans antialiased">
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo } = React;
+
+/* ---------- hardcoded data, shaped per api-contracts.md ---------- */
+
+const POLICY_REASON_CODES = {
+  "c2f8b3d5-aaaa-4444-8888-1111111111a1": [
+    { code: "RC-01", text: "Declared income below product minimum" },
+    { code: "RC-02", text: "Credit score below product minimum" },
+    { code: "RC-07", text: "Applicant age outside eligible band" },
+    { code: "RC-11", text: "Meets all configured thresholds" },
+  ],
+  "c2f8b3d5-bbbb-4444-8888-2222222222b2": [
+    { code: "RC-03", text: "Requested amount exceeds product ceiling" },
+    { code: "RC-04", text: "Credit score below preferred threshold, referred for manual underwriting review" },
+    { code: "RC-08", text: "Prior default flag present on credit history" },
+    { code: "RC-12", text: "Meets all configured thresholds" },
+  ],
+  "c2f8b3d5-cccc-4444-8888-3333333333c3": [
+    { code: "RC-05", text: "Declared income below product minimum" },
+    { code: "RC-09", text: "Requested tenure exceeds standard approval band, referred for manual review" },
+    { code: "RC-10", text: "Admission proof outstanding at submission" },
+    { code: "RC-13", text: "Meets all configured thresholds" },
+  ],
+};
+
+const INITIAL_APPLICATIONS = [
+  {
+    id: "b1e7a2c4-1111-4a2b-9c3d-000000000001",
+    product_code: "PERSONAL",
+    policy_version_id: "c2f8b3d5-aaaa-4444-8888-1111111111a1",
+    status: "SUBMITTED",
+    requested_amount: "450000.00",
+    requested_tenure_months: 36,
+    applicant: {
+      full_name: "Priya Raghavan",
+      date_of_birth: "1991-04-17",
+      declared_income: "84000.00",
+      pan: "ABCPR1234F",
+      aadhaar: "9999-8888-0001",
+    },
+    credit_score: 712,
+    submitted_at: "2026-02-10T09:15:00Z",
+    document_checklist: [
+      { id: "doc-001", application_id: "b1e7a2c4-1111-4a2b-9c3d-000000000001", document_type: "SALARY_SLIP", label: "Latest salary slip", status: "PENDING", rejection_reason: null },
+      { id: "doc-002", application_id: "b1e7a2c4-1111-4a2b-9c3d-000000000001", document_type: "ID_PROOF", label: "Government ID proof", status: "PENDING", rejection_reason: null },
+    ],
+    decision: null,
+    decision_history: [],
+  },
+  {
+    id: "b1e7a2c4-2222-4a2b-9c3d-000000000002",
+    product_code: "VEHICLE",
+    policy_version_id: "c2f8b3d5-bbbb-4444-8888-2222222222b2",
+    status: "MANUAL_REVIEW",
+    requested_amount: "620000.00",
+    requested_tenure_months: 48,
+    applicant: {
+      full_name: "Arjun Menon",
+      date_of_birth: "1988-11-02",
+      declared_income: "58000.00",
+      pan: "ARMEN5678K",
+      aadhaar: "9999-8888-0002",
+    },
+    credit_score: 655,
+    submitted_at: "2026-02-11T11:40:00Z",
+    document_checklist: [
+      { id: "doc-003", application_id: "b1e7a2c4-2222-4a2b-9c3d-000000000002", document_type: "SALARY_SLIP", label: "Latest salary slip", status: "VERIFIED", rejection_reason: null },
+      { id: "doc-004", application_id: "b1e7a2c4-2222-4a2b-9c3d-000000000002", document_type: "BANK_STATEMENT", label: "6-month bank statement", status: "PENDING", rejection_reason: null },
+      { id: "doc-005", application_id: "b1e7a2c4-2222-4a2b-9c3d-000000000002", document_type: "ID_PROOF", label: "Government ID proof", status: "VERIFIED", rejection_reason: null },
+      { id: "doc-006", application_id: "b1e7a2c4-2222-4a2b-9c3d-000000000002", document_type: "VEHICLE_QUOTATION", label: "Dealer quotation", status: "REJECTED", rejection_reason: "Quotation is illegible; requires resubmission" },
+    ],
+    decision: {
+      id: "dec-101",
+      application_id: "b1e7a2c4-2222-4a2b-9c3d-000000000002",
+      policy_version_id: "c2f8b3d5-bbbb-4444-8888-2222222222b2",
+      outcome: "MANUAL_REVIEW",
+      reason_codes: [{ code: "RC-04", text: "Credit score below preferred threshold, referred for manual underwriting review" }],
+      comment: null,
+      supersedes_id: null,
+      decided_by: null,
+      decided_at: "2026-02-11T11:41:00Z",
+    },
+    decision_history: [],
+  },
+  {
+    id: "b1e7a2c4-3333-4a2b-9c3d-000000000003",
+    product_code: "EDUCATION",
+    policy_version_id: "c2f8b3d5-cccc-4444-8888-3333333333c3",
+    status: "MANUAL_REVIEW",
+    requested_amount: "980000.00",
+    requested_tenure_months: 60,
+    applicant: {
+      full_name: "Kavya Iyer",
+      date_of_birth: "1999-06-23",
+      declared_income: "45000.00",
+      pan: "KVIYE9012P",
+      aadhaar: "9999-8888-0003",
+    },
+    credit_score: 601,
+    submitted_at: "2026-02-12T14:05:00Z",
+    document_checklist: [
+      { id: "doc-007", application_id: "b1e7a2c4-3333-4a2b-9c3d-000000000003", document_type: "ID_PROOF", label: "Government ID proof", status: "VERIFIED", rejection_reason: null },
+      { id: "doc-008", application_id: "b1e7a2c4-3333-4a2b-9c3d-000000000003", document_type: "ADMISSION_LETTER", label: "Institution admission letter", status: "PENDING", rejection_reason: null },
+      { id: "doc-009", application_id: "b1e7a2c4-3333-4a2b-9c3d-000000000003", document_type: "FEE_STRUCTURE", label: "Institution fee structure", status: "VERIFIED", rejection_reason: null },
+      { id: "doc-010", application_id: "b1e7a2c4-3333-4a2b-9c3d-000000000003", document_type: "INCOME_PROOF", label: "Income proof", status: "REJECTED", rejection_reason: "Document dated more than 6 months ago" },
+    ],
+    decision: {
+      id: "dec-102",
+      application_id: "b1e7a2c4-3333-4a2b-9c3d-000000000003",
+      policy_version_id: "c2f8b3d5-cccc-4444-8888-3333333333c3",
+      outcome: "MANUAL_REVIEW",
+      reason_codes: [{ code: "RC-09", text: "Requested tenure exceeds standard approval band, referred for manual review" }],
+      comment: null,
+      supersedes_id: null,
+      decided_by: null,
+      decided_at: "2026-02-12T14:06:00Z",
+    },
+    decision_history: [],
+  },
+  {
+    id: "b1e7a2c4-4444-4a2b-9c3d-000000000004",
+    product_code: "PERSONAL",
+    policy_version_id: "c2f8b3d5-aaaa-4444-8888-1111111111a1",
+    status: "SUBMITTED",
+    requested_amount: "275000.00",
+    requested_tenure_months: 24,
+    applicant: {
+      full_name: "Rohan Kulkarni",
+      date_of_birth: "1993-02-09",
+      declared_income: "96000.00",
+      pan: "ROKUL3456L",
+      aadhaar: "9999-8888-0004",
+    },
+    credit_score: 730,
+    submitted_at: "2026-02-09T08:30:00Z",
+    document_checklist: [
+      { id: "doc-011", application_id: "b1e7a2c4-4444-4a2b-9c3d-000000000004", document_type: "SALARY_SLIP", label: "Latest salary slip", status: "PENDING", rejection_reason: null },
+    ],
+    decision: null,
+    decision_history: [],
+  },
+  {
+    id: "b1e7a2c4-5555-4a2b-9c3d-000000000005",
+    product_code: "VEHICLE",
+    policy_version_id: "c2f8b3d5-bbbb-4444-8888-2222222222b2",
+    status: "SUBMITTED",
+    requested_amount: "540000.00",
+    requested_tenure_months: 36,
+    applicant: {
+      full_name: "Sneha Pillai",
+      date_of_birth: "1995-09-30",
+      declared_income: "72000.00",
+      pan: "SNPIL7890M",
+      aadhaar: "9999-8888-0005",
+    },
+    credit_score: 695,
+    submitted_at: "2026-02-13T10:00:00Z",
+    document_checklist: [
+      { id: "doc-012", application_id: "b1e7a2c4-5555-4a2b-9c3d-000000000005", document_type: "ID_PROOF", label: "Government ID proof", status: "PENDING", rejection_reason: null },
+    ],
+    decision: null,
+    decision_history: [],
+  },
+];
+
+const CURRENT_UNDERWRITER_ID = "550e8400-e29b-41d4-a716-446655440077";
+
+/* ---------- formatting helpers ---------- */
+
+function formatMoney(amountString) {
+  const n = Number(amountString);
+  return "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatDateTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function shortId(id) {
+  return id.slice(0, 8);
+}
+
+function statusBadgeClasses(status) {
+  if (status === "MANUAL_REVIEW") return "text-signal-amber border-signal-amber";
+  if (status === "SUBMITTED") return "text-ink-muted border-rule";
+  if (status === "APPROVED" || status === "DISBURSED") return "text-signal-green border-signal-green";
+  if (status === "REJECTED") return "text-signal-red border-signal-red";
+  return "text-ink-muted border-rule";
+}
+
+function verificationBadgeClasses(status) {
+  if (status === "VERIFIED") return "text-signal-green border-signal-green";
+  if (status === "REJECTED") return "text-signal-red border-signal-red";
+  return "text-signal-amber border-signal-amber";
+}
+
+/* ---------- app ---------- */
+
+function App() {
+  const [applications, setApplications] = useState(INITIAL_APPLICATIONS);
+  const [selectedId, setSelectedId] = useState(null);
+  const [outcome, setOutcome] = useState("");
+  const [reasonCode, setReasonCode] = useState("");
+  const [comment, setComment] = useState("");
+  const [formError, setFormError] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+
+  const queue = useMemo(
+    () => applications.filter((a) => a.status === "SUBMITTED" || a.status === "MANUAL_REVIEW"),
+    [applications]
+  );
+
+  const selected = applications.find((a) => a.id === selectedId) || null;
+  const availableReasonCodes = selected ? POLICY_REASON_CODES[selected.policy_version_id] || [] : [];
+
+  function selectRow(id) {
+    setSelectedId(id);
+    setOutcome("");
+    setReasonCode("");
+    setComment("");
+    setFormError("");
+    setConfirmation("");
+  }
+
+  function submitDecision(e) {
+    e.preventDefault();
+    if (!selected) return;
+    if (!outcome) {
+      setFormError("Select an outcome before saving the decision.");
+      return;
+    }
+    if (!reasonCode) {
+      setFormError("Select a reason code declared by the pinned policy version.");
+      return;
+    }
+    const chosen = availableReasonCodes.find((r) => r.code === reasonCode);
+    const nowIso = new Date().toISOString();
+    const newDecision = {
+      id: "dec-" + Math.random().toString(36).slice(2, 8),
+      application_id: selected.id,
+      policy_version_id: selected.policy_version_id,
+      outcome: outcome,
+      reason_codes: [chosen],
+      comment: comment || null,
+      supersedes_id: selected.decision ? selected.decision.id : null,
+      decided_by: CURRENT_UNDERWRITER_ID,
+      decided_at: nowIso,
+    };
+    const nextStatus = outcome === "AUTO_APPROVE" ? "APPROVED" : "REJECTED";
+
+    setApplications((prev) =>
+      prev.map((a) =>
+        a.id === selected.id
+          ? {
+              ...a,
+              status: nextStatus,
+              decision: newDecision,
+              decision_history: [newDecision, ...(a.decision ? [a.decision] : []), ...a.decision_history],
+            }
+          : a
+      )
+    );
+    setConfirmation(shortId(selected.id) + " decided " + outcome + " and removed from the queue.");
+    setFormError("");
+    setSelectedId(null);
+    setOutcome("");
+    setReasonCode("");
+    setComment("");
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      <nav aria-label="Primary" className="w-full lg:w-[220px] lg:min-h-screen bg-ink text-paper flex-shrink-0">
+        <div className="px-6 py-6 border-b border-white/10">
+          <p className="font-display text-2xl font-600 tracking-tight">TrueLend</p>
+          <p className="text-xs text-paper/60 mt-1 uppercase tracking-widest">Underwriter</p>
+        </div>
+        <ul className="px-3 py-4 text-sm">
+          <li className="px-3 py-2 rounded-sm bg-white/10 font-medium">Workbench</li>
+          <li className="px-3 py-2 text-paper/70">Documents Queue</li>
+          <li className="px-3 py-2 text-paper/70">Decision History</li>
+        </ul>
+      </nav>
+
+      <main className="flex-1 px-4 sm:px-8 py-8 max-w-[1180px]">
+        <header className="mb-8">
+          <h1 className="font-display text-3xl sm:text-4xl font-600 text-ink">Underwriting Workbench</h1>
+          <p className="text-ink-muted mt-1">Applications awaiting a decision, pulled from the pinned policy at submission.</p>
+        </header>
+
+        <section aria-labelledby="queue-heading" className="mb-10">
+          <div className="flex items-baseline justify-between mb-3 flex-wrap gap-2">
+            <h2 id="queue-heading" className="font-display text-xl font-600">Review Queue</h2>
+            <p className="text-xs uppercase tracking-widest text-ink-muted border border-rule px-3 py-1.5 bg-paper-raised">
+              Filtered to status: <span className="text-signal-amber font-semibold">SUBMITTED</span>,{" "}
+              <span className="text-signal-amber font-semibold">MANUAL_REVIEW</span> only
+            </p>
+          </div>
+
+          {confirmation && (
+            <p role="status" className="mb-3 border border-signal-green text-signal-green bg-paper-raised px-4 py-2 text-sm">
+              {confirmation}
+            </p>
+          )}
+
+          <div className="overflow-x-auto border border-rule bg-paper-raised">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-rule">
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Application</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Applicant</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Product</th>
+                  <th scope="col" className="text-right px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Requested Amount</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Status</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {queue.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-6 text-center text-ink-muted">Queue is clear. Nothing is SUBMITTED or in MANUAL_REVIEW.</td>
+                  </tr>
+                )}
+                {queue.map((app) => (
+                  <tr
+                    key={app.id}
+                    onClick={() => selectRow(app.id)}
+                    tabIndex="0"
+                    role="button"
+                    aria-pressed={selectedId === app.id}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectRow(app.id); } }}
+                    className={
+                      "border-b border-rule h-[44px] cursor-pointer hover:bg-brass/5 " +
+                      (selectedId === app.id ? "bg-brass/10" : "")
+                    }
+                  >
+                    <td className="px-4 py-2 font-mono text-ink-muted" data-field="id">{shortId(app.id)}</td>
+                    <td className="px-4 py-2" data-field="applicant.full_name">{app.applicant.full_name}</td>
+                    <td className="px-4 py-2" data-field="product_code">{app.product_code}</td>
+                    <td className="px-4 py-2 text-right font-mono tabular" data-field="requested_amount">{formatMoney(app.requested_amount)}</td>
+                    <td className="px-4 py-2" data-field="status">
+                      <span className={"inline-block border px-2 py-0.5 text-xs uppercase tracking-wide " + statusBadgeClasses(app.status)}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 font-mono text-ink-muted" data-field="submitted_at">{formatDateTime(app.submitted_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="review-heading" className="border border-rule bg-paper-raised p-5 sm:p-6">
+          <h2 id="review-heading" className="font-display text-xl font-600 mb-4">Decision Review</h2>
+
+          {!selected && (
+            <p className="text-ink-muted">Select a row above to review an application.</p>
+          )}
+
+          {selected && selected.status !== "MANUAL_REVIEW" && (
+            <div>
+              <p className="text-ink-muted mb-4">
+                <span className="font-mono">{shortId(selected.id)}</span> — {selected.applicant.full_name} is{" "}
+                <strong>{selected.status}</strong>. Only a <strong>MANUAL_REVIEW</strong> application can be decided from this panel.
+              </p>
+            </div>
+          )}
+
+          {selected && selected.status === "MANUAL_REVIEW" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <dl className="grid grid-cols-2 gap-y-2 text-sm mb-5">
+                  <dt className="text-ink-muted">Application</dt>
+                  <dd className="font-mono">{shortId(selected.id)}</dd>
+                  <dt className="text-ink-muted">Applicant</dt>
+                  <dd data-field="applicant.full_name">{selected.applicant.full_name}</dd>
+                  <dt className="text-ink-muted">Product</dt>
+                  <dd data-field="product_code">{selected.product_code}</dd>
+                  <dt className="text-ink-muted">Requested Amount</dt>
+                  <dd className="font-mono tabular" data-field="requested_amount">{formatMoney(selected.requested_amount)}</dd>
+                  <dt className="text-ink-muted">Credit Score</dt>
+                  <dd className="font-mono tabular" data-field="credit_score">{selected.credit_score}</dd>
+                </dl>
+
+                <h3 className="text-sm uppercase tracking-widest text-ink-muted font-semibold mb-2">Latest Decision Reason Codes</h3>
+                <ul className="mb-5 text-sm border border-rule divide-y divide-rule">
+                  {selected.decision && selected.decision.reason_codes.map((rc) => (
+                    <li key={rc.code} className="px-3 py-2" data-field="decision.reason_codes">
+                      <span className="font-mono text-signal-amber">{rc.code}</span> — {rc.text}
+                    </li>
+                  ))}
+                </ul>
+
+                <h3 className="text-sm uppercase tracking-widest text-ink-muted font-semibold mb-2">Document Checklist</h3>
+                <ul className="border border-rule divide-y divide-rule text-sm">
+                  {selected.document_checklist.map((doc) => (
+                    <li key={doc.id} className="px-3 py-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p data-field="document_checklist.document_type" className="font-medium">{doc.label || doc.document_type}</p>
+                        {doc.status === "REJECTED" && doc.rejection_reason && (
+                          <p className="text-signal-red text-xs mt-0.5" data-field="document_checklist.rejection_reason">{doc.rejection_reason}</p>
+                        )}
+                      </div>
+                      <span className={"inline-block border px-2 py-0.5 text-xs uppercase tracking-wide whitespace-nowrap " + verificationBadgeClasses(doc.status)} data-field="document_checklist.status">
+                        {doc.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-sm uppercase tracking-widest text-ink-muted font-semibold mb-3">Record Decision</h3>
+                <form onSubmit={submitDecision} aria-describedby={formError ? "decision-form-error" : undefined}>
+                  <div className="mb-4">
+                    <label htmlFor="outcome-select" className="block text-sm font-medium mb-1">Outcome</label>
+                    <select
+                      id="outcome-select"
+                      value={outcome}
+                      onChange={(e) => setOutcome(e.target.value)}
+                      className="w-full border border-rule rounded-[2px] bg-paper px-3 py-2 text-sm"
+                    >
+                      <option value="">Select an outcome…</option>
+                      <option value="AUTO_APPROVE">AUTO_APPROVE</option>
+                      <option value="AUTO_REJECT">AUTO_REJECT</option>
+                    </select>
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="reason-code-select" className="block text-sm font-medium mb-1">Reason Code</label>
+                    <select
+                      id="reason-code-select"
+                      value={reasonCode}
+                      onChange={(e) => setReasonCode(e.target.value)}
+                      className="w-full border border-rule rounded-[2px] bg-paper px-3 py-2 text-sm"
+                    >
+                      <option value="">Select a reason declared by this policy version…</option>
+                      {availableReasonCodes.map((rc) => (
+                        <option key={rc.code} value={rc.code}>{rc.code} — {rc.text}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="decision-comment" className="block text-sm font-medium mb-1">Comment</label>
+                    <textarea
+                      id="decision-comment"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      rows="3"
+                      className="w-full border border-rule rounded-[2px] bg-paper px-3 py-2 text-sm"
+                      placeholder="Notes for the audit trail (optional)"
+                    ></textarea>
+                  </div>
+
+                  {formError && (
+                    <p id="decision-form-error" role="alert" className="text-signal-red text-sm mb-3">{formError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="bg-brass text-paper-raised px-5 py-2.5 rounded-[2px] font-medium text-sm hover:bg-brass/90"
+                  >
+                    Save Decision
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "story_id": "E15-S1",
+  "sprint": 1,
+  "title": "Structured JSON logging, correlation id propagation, PII redaction and health endpoint",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E15-S1-AC1",
+      "E15-S1-AC2",
+      "E15-S1-AC3",
+      "E15-S1-AC4",
+      "E15-S1-AC5"
+    ],
+    "brd_ids": [
+      "FRD-20",
+      "FRD-23",
+      "FRD-24"
+    ],
+    "br_acceptance_ids": [
+      "FRD-59",
+      "FRD-62",
+      "FRD-63"
+    ],
+    "scope_out": [
+      "must not add any business endpoint beyond /health; must not write applicant PAN, Aadhaar or salary-document content to any log sink; must not introduce an external log-shipping provider or credentials"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Structured JSON logging, correlation id propagation, PII redaction and health endpoint",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/config/settings.py",
+      "backend/src/config/logging.py",
+      "backend/src/types/errors.py",
+      "backend/src/api/app.py",
+      "backend/src/api/middleware.py",
+      "backend/src/api/errors.py",
+      "backend/src/api/platform/routes.py",
+      "backend/tests/conftest.py",
+      "backend/tests/unit/test_log_redaction.py"
+    ],
+    "layer": "Config"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-9"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-001",
+      "VM-002",
+      "VM-003",
+      "VM-004",
+      "VM-005"
+    ],
+    "case_ids": [
+      "VM-001",
+      "VM-002",
+      "VM-003",
+      "VM-004",
+      "VM-005"
+    ],
+    "layers": [
+      "unit",
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E15-S1.md",
+    "parents": [],
+    "tracker_key": null
+  }
+}

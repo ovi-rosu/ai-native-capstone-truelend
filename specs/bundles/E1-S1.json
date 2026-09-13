@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "story_id": "E1-S1",
+  "sprint": 1,
+  "title": "Tracer M1: log in, list products, edit a threshold and activate a new policy version",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E1-S1-AC1",
+      "E1-S1-AC2",
+      "E1-S1-AC3",
+      "E1-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-1",
+      "FRD-13",
+      "FRD-16"
+    ],
+    "br_acceptance_ids": [
+      "FRD-55",
+      "FRD-40",
+      "FRD-52"
+    ],
+    "scope_out": [
+      "must not implement the full authorization matrix — that is E1-S2; must not implement the full three-product catalog rule sets — that is E2-S1; must not verify applicant PAN or Aadhaar against any external registry"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Tracer M1: log in, list products, edit a threshold and activate a new policy version",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/types/enums.py",
+      "backend/src/types/identity.py",
+      "backend/src/repository/models.py",
+      "backend/src/repository/identity/user_repository.py",
+      "backend/src/repository/policy/product_repository.py",
+      "backend/src/service/identity/auth.py",
+      "backend/src/api/deps.py",
+      "backend/src/api/identity/routes.py",
+      "backend/src/api/policy/routes.py",
+      "backend/migrations/versions/0001_identity_catalog_policy.py",
+      "frontend/src/config/env.ts",
+      "frontend/src/config/roles.ts",
+      "frontend/src/types/api.ts",
+      "frontend/src/types/enums.ts",
+      "frontend/src/api/client.ts",
+      "frontend/src/api/auth.ts",
+      "frontend/src/api/products.ts",
+      "frontend/src/ui/App.tsx",
+      "frontend/src/ui/routes.tsx",
+      "frontend/src/ui/pages/Login.tsx",
+      "frontend/src/ui/pages/Catalog.tsx"
+    ],
+    "layer": "API"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-3",
+      "SG-9"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-012",
+      "VM-013",
+      "VM-014",
+      "VM-015"
+    ],
+    "case_ids": [
+      "VM-012",
+      "VM-013",
+      "VM-014",
+      "VM-015"
+    ],
+    "layers": [
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E1-S1.md",
+    "parents": [
+      "E15-S1",
+      "E9-S1"
+    ],
+    "tracker_key": null
+  }
+}

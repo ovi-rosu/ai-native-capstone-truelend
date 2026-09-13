@@ -1,0 +1,56 @@
+{
+  "group": "L",
+  "stories": [
+    "E11-S2"
+  ],
+  "features": [
+    "F086",
+    "F087",
+    "F088",
+    "F089"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-086",
+        "matrix_ids": [
+          "VM-086"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/repayments",
+        "expected_status": 201,
+        "description": "POST /loans/{loan_id}/repayments → 201 — outstanding principal falls by exactly applied_principal"
+      },
+      {
+        "id": "QA-VM-087",
+        "matrix_ids": [
+          "VM-087"
+        ],
+        "method": "GET",
+        "path": "/loans/{loan_id}",
+        "expected_status": 200,
+        "description": "GET /loans/{loan_id} → 200 — a new immutable repayment_posting row records the payment and no pre-existing row was updated"
+      },
+      {
+        "id": "QA-VM-088",
+        "matrix_ids": [
+          "VM-088"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/repayments",
+        "expected_status": 201,
+        "description": "POST /loans/{loan_id}/repayments → 201 — for a loan 35 days past due, the stored delinquency_bucket reads DPD-30 after the posting"
+      },
+      {
+        "id": "QA-VM-089",
+        "matrix_ids": [
+          "VM-089"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/repayments",
+        "expected_status": 201,
+        "description": "POST /loans/{loan_id}/repayments → 201 — a posting clearing every overdue installment leaves the bucket CURRENT with no late fee or penal interest charged"
+      }
+    ]
+  }
+}

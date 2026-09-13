@@ -1,0 +1,14 @@
+[
+  {
+    "slot": "integration",
+    "na_reason": "The source PRD states no requirement for this slot; /spec authors one only if a later story needs it."
+  },
+  {
+    "slot": "privacy_retention",
+    "na_reason": "The source PRD states no requirement for this slot; /spec authors one only if a later story needs it."
+  },
+  {
+    "slot": "operability_failure",
+    "na_reason": "The source PRD states no requirement for this slot; /spec authors one only if a later story needs it."
+  }
+]

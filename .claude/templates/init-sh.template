@@ -1,0 +1,60 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "=== Bootstrapping dev environment ==="
+
+# Backend dependencies
+{{BACKEND_INSTALL}}
+
+# Frontend dependencies
+{{FRONTEND_INSTALL}}
+
+# Code-map AST indexer deps (brownfield discovery + graph-refresh hook).
+# Python repos need none of these (stdlib ast); the wheels cover JS/JSX/TS/TSX.
+# Fail-open: missing pip only degrades JS/TS indexing to the regex fallback.
+if command -v pip3 >/dev/null 2>&1; then
+  pip3 install --quiet tree-sitter tree-sitter-typescript tree-sitter-javascript \
+    tree-sitter-java tree-sitter-c-sharp tree-sitter-go \
+    || echo "WARN: tree-sitter wheels not installed — non-Python code-map degrades (JS/TS to regex; Java/C#/Go to import-less nodes)"
+  # Behavior-preservation toolkit (coverage preflight + pin-down snapshots).
+  pip3 install --quiet pytest-cov syrupy diff-cover \
+    || echo "WARN: behavior-preservation deps missing — coverage preflight degrades"
+else
+  echo "WARN: pip3 not found — JS/TS code-map falls back to regex indexing"
+fi
+
+# Playwright MCP plugin (evaluator Layer 2 + design-critic Layer 3).
+# The harness cannot verify browser behavior without it; warn loudly here so
+# the gap surfaces before the first /evaluate run instead of inside it.
+if ! grep -qs '"playwright@claude-plugins-official"' .claude/settings.json "$HOME/.claude/settings.json"; then
+  echo "WARN: playwright@claude-plugins-official is not enabled in .claude/settings.json or ~/.claude/settings.json."
+  echo "      /evaluate will degrade to API-only checks (no browser or design verification)."
+  echo "      Fix: add \"playwright@claude-plugins-official\": true to enabledPlugins and restart Claude Code."
+fi
+
+# Environment
+if [ -f ".env.example" ] && [ ! -f ".env" ]; then
+  cp .env.example .env
+  echo "Created .env from .env.example — add your API keys"
+fi
+
+# Docker services
+{{DOCKER_COMPOSE_CMD}}
+
+# Telemetry stack (OTEL Collector + Prometheus + Pushgateway + Grafana).
+# Telemetry is ENABLED by default (env vars are in .claude/settings.json), but
+# init.sh does not start the stack — the push no-ops until you bring it up.
+if [ -f "telemetry_docker_compose.yml" ]; then
+  echo "Telemetry stack copied but not started."
+  echo "Env is on by default; start the stack per docs/telemetry.md to see data in Grafana (:3001, admin/harness)."
+fi
+
+# LSP server check
+echo "Checking recommended LSP servers..."
+{{LSP_HEALTH_CHECKS}}
+
+# Health checks
+echo "Waiting for services..."
+{{HEALTH_CHECKS}}
+
+echo "=== Environment ready ==="

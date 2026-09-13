@@ -1,0 +1,12 @@
+{
+  "layer": "test",
+  "pass": true,
+  "blocking": false,
+  "accepted": 0,
+  "required_total": 384,
+  "required_covered": 384,
+  "downstream_total": 107,
+  "scope": null,
+  "net_new": [],
+  "dropped": []
+}

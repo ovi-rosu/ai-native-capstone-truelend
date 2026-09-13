@@ -1,0 +1,15 @@
+{
+  "gate": "spec-decisions",
+  "pass": true,
+  "waived_by": null,
+  "claimed_lane": null,
+  "session_lane": null,
+  "decisions_sha256": "af5275bceea636ea1ba2080cec3d7260f3bfa636b06155b99eb1815d55123e31",
+  "session_id": "74195011-db32-4571-b2ce-4a35013d184e",
+  "in_session": false,
+  "carried": true,
+  "revalidated_by": "74195011-db32-4571-b2ce-4a35013d184e",
+  "stamped_against": "af5275bceea636ea1ba2080cec3d7260f3bfa636b06155b99eb1815d55123e31",
+  "errors": [],
+  "checked_at": "2026-09-13T14:05:12.385Z"
+}

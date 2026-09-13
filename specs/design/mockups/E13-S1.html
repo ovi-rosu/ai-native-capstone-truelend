@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Story: E13-S1 — Repay screen (CUSTOMER)
+  Screen: One disbursed Loan — outstanding_principal, delinquency_bucket badge,
+          principal/annual_rate_pct/tenure_months, the full 36-row installment
+          table (the final row absorbs the rounding residual so its emi differs
+          slightly from the level emi), and a repayment posting form that
+          reduces the displayed outstanding_principal in React state.
+  Depends on: GET /loans/{loan_id}, POST /loans/{loan_id}/repayments
+  Notes: No early settlement, foreclosure or prepayment quote appears anywhere
+         on this screen (E13-S1-AC4).
+-->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Repay your loan — TrueLend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" /><!-- harness:secret-ok -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com/3.4.13"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#14231D',
+          'ink-muted': '#4E6158',
+          paper: '#F7F4EC',
+          'paper-raised': '#FFFDF7',
+          brass: '#9A6B1F',
+          'signal-red': '#8E241C',
+          'signal-amber': '#8A5B12',
+          'signal-green': '#1D5C41',
+          rule: '#D8D0BE'
+        },
+        fontFamily: {
+          display: ['Fraunces', 'serif'],
+          body: ['"Public Sans"', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<style>
+  html, body { background-color: #F7F4EC; }
+  body { font-family: 'Public Sans', sans-serif; color: #14231D; }
+  h1, h2, h3, .font-display { font-family: 'Fraunces', serif; }
+  .tnum { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+  :focus { outline: 2px solid #9A6B1F; outline-offset: 2px; }
+  :focus:not(:focus-visible) { outline: 2px solid #9A6B1F; outline-offset: 2px; }
+  .small-caps { font-variant: small-caps; letter-spacing: 0.06em; }
+  thead th { position: sticky; top: 0; background-color: #FFFDF7; }
+</style>
+</head>
+<body class="antialiased">
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo } = React;
+
+function round2(x) {
+  return Math.round((x + Number.EPSILON) * 100) / 100;
+}
+
+function formatMoney(moneyString) {
+  const negative = moneyString.trim().startsWith('-');
+  const abs = negative ? moneyString.trim().slice(1) : moneyString.trim();
+  const [whole, frac] = abs.split('.');
+  const withSeparators = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (negative ? '-' : '') + withSeparators + '.' + (frac || '00');
+}
+
+function formatDate(iso) {
+  const d = new Date(iso + 'T00:00:00Z');
+  return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: '2-digit' });
+}
+
+// Deterministic amortization built from the loan's own hardcoded principal,
+// annual_rate_pct and tenure_months — this is how the final Installment comes
+// to absorb the rounding residual rather than typing 36 slightly-wrong rows.
+function buildSchedule(principal, annualRatePct, tenureMonths, firstDueDate) {
+  const monthlyRate = annualRatePct / 1200;
+  const growth = Math.pow(1 + monthlyRate, tenureMonths);
+  const levelEmi = round2((principal * monthlyRate * growth) / (growth - 1));
+  let balance = principal;
+  const installments = [];
+  const due = new Date(firstDueDate + 'T00:00:00Z');
+  for (let seq = 1; seq <= tenureMonths; seq++) {
+    const interest = round2(balance * monthlyRate);
+    let principalComponent;
+    let emi;
+    if (seq === tenureMonths) {
+      principalComponent = round2(balance);
+      emi = round2(principalComponent + interest);
+    } else {
+      principalComponent = round2(levelEmi - interest);
+      emi = levelEmi;
+    }
+    balance = round2(balance - principalComponent);
+    const dueDate = new Date(due);
+    dueDate.setUTCMonth(due.getUTCMonth() + (seq - 1));
+    installments.push({
+      id: 'inst-' + String(seq).padStart(2, '0'),
+      sequence: seq,
+      due_date: dueDate.toISOString().slice(0, 10),
+      principal_component: principalComponent.toFixed(2),
+      interest_component: interest.toFixed(2),
+      emi: emi.toFixed(2)
+    });
+  }
+  const totalPayable = round2(installments.reduce((sum, i) => sum + parseFloat(i.emi), 0));
+  const roundingResidual = round2(parseFloat(installments[tenureMonths - 1].emi) - levelEmi);
+  return {
+    id: 'sched-9c21',
+    loan_id: 'loan-4d2e1f8a',
+    emi: levelEmi.toFixed(2),
+    total_payable: totalPayable.toFixed(2),
+    rounding_residual: roundingResidual.toFixed(2),
+    installments
+  };
+}
+
+const PRINCIPAL = 685000.0;
+const ANNUAL_RATE_PCT = 12.5;
+const TENURE_MONTHS = 36;
+const SCHEDULE = buildSchedule(PRINCIPAL, ANNUAL_RATE_PCT, TENURE_MONTHS, '2026-02-15');
+
+const LOAN_ID = 'a6c8b1d4-2e9f-4a3b-8c1d-5e7f2a9b4c60';
+const CUSTOMER_ID = 'f1e2d3c4-b5a6-4978-8c1d-3e4f5a6b7c8d';
+
+const INITIAL_LOAN = {
+  id: LOAN_ID,
+  application_id: '9b3a2c1d-4e5f-4a6b-8c7d-1e2f3a4b5c6d',
+  product_code: 'PERSONAL',
+  principal: PRINCIPAL.toFixed(2),
+  annual_rate_pct: '12.500000',
+  tenure_months: TENURE_MONTHS,
+  status: 'DISBURSED',
+  outstanding_principal: round2(PRINCIPAL - parseFloat(SCHEDULE.installments[0].principal_component)).toFixed(2),
+  delinquency_bucket: 'DPD-30',
+  days_past_due: 34,
+  disbursed_at: '2026-01-15T10:00:00Z'
+};
+
+const INITIAL_REPAYMENTS = [
+  {
+    id: 'r0f1a2b3-4c5d-4e6f-8a9b-1c2d3e4f5a60',
+    loan_id: LOAN_ID,
+    amount: SCHEDULE.installments[0].emi,
+    applied_principal: SCHEDULE.installments[0].principal_component,
+    applied_interest: SCHEDULE.installments[0].interest_component,
+    posted_at: '2026-02-16T11:20:00Z',
+    posted_by: CUSTOMER_ID
+  }
+];
+
+const BUCKET_BADGE = {
+  CURRENT: 'border-signal-green text-signal-green',
+  'DPD-30': 'border-signal-amber text-signal-amber',
+  'DPD-60': 'border-signal-amber text-signal-amber',
+  'DPD-90': 'border-signal-red text-signal-red',
+  NPA: 'border-signal-red text-signal-red'
+};
+
+function LeftRail() {
+  return (
+    <nav aria-label="Primary" className="hidden md:flex md:flex-col w-[220px] shrink-0 border-r border-rule bg-paper-raised px-6 py-8">
+      <div className="font-display text-xl font-600 mb-10">TrueLend</div>
+      <ul className="space-y-1 text-sm">
+        <li><a href="#" className="block px-3 py-2 text-ink-muted hover:text-ink rounded-[2px]">Apply</a></li>
+        <li><a href="#" className="block px-3 py-2 text-ink-muted hover:text-ink rounded-[2px]">Track</a></li>
+        <li><a href="#" aria-current="page" className="block px-3 py-2 border border-brass text-brass font-medium rounded-[2px]">Repay</a></li>
+      </ul>
+    </nav>
+  );
+}
+
+function LoanSummary({ loan }) {
+  const badgeClass = BUCKET_BADGE[loan.delinquency_bucket] || 'border-ink-muted text-ink-muted';
+  return (
+    <section aria-labelledby="summary-heading" className="bg-paper-raised border border-rule rounded-[2px] p-5 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 id="summary-heading" className="font-display text-lg font-600">Loan summary</h2>
+        <span data-field="delinquency_bucket" className={'border text-xs px-2 py-1 rounded-[2px] small-caps font-600 ' + badgeClass}>
+          {loan.delinquency_bucket}
+        </span>
+      </div>
+      <dl className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Outstanding principal</dt>
+          <dd data-field="outstanding_principal" className="tnum text-xl font-600 mt-1">Rs. {formatMoney(loan.outstanding_principal)}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Original principal</dt>
+          <dd data-field="principal" className="tnum mt-1">Rs. {formatMoney(loan.principal)}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Annual rate</dt>
+          <dd data-field="annual_rate_pct" className="tnum mt-1">{parseFloat(loan.annual_rate_pct).toFixed(2)}%</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted small-caps text-xs">Tenure</dt>
+          <dd data-field="tenure_months" className="tnum mt-1">{loan.tenure_months} months</dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
+function InstallmentTable({ installments, finalSequence }) {
+  return (
+    <section aria-labelledby="schedule-heading" className="bg-paper-raised border border-rule rounded-[2px] p-5 mb-6">
+      <h2 id="schedule-heading" className="font-display text-lg font-600 mb-3">Repayment schedule</h2>
+      <div className="max-h-[480px] overflow-y-auto border border-rule">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-rule small-caps text-ink-muted font-600 text-xs">
+              <th scope="col" className="text-left py-2 px-3">Seq</th>
+              <th scope="col" className="text-left py-2 px-3">Due date</th>
+              <th scope="col" className="text-right py-2 px-3">Principal</th>
+              <th scope="col" className="text-right py-2 px-3">Interest</th>
+              <th scope="col" className="text-right py-2 px-3">EMI</th>
+            </tr>
+          </thead>
+          <tbody>
+            {installments.map((row) => (
+              <tr key={row.id} className={'border-b border-rule h-11' + (row.sequence === finalSequence ? ' bg-paper' : '')}>
+                <td data-field="sequence" className="py-2 px-3 tnum">{row.sequence}</td>
+                <td data-field="due_date" className="py-2 px-3 tnum">{formatDate(row.due_date)}</td>
+                <td data-field="principal_component" className="py-2 px-3 tnum text-right">{formatMoney(row.principal_component)}</td>
+                <td data-field="interest_component" className="py-2 px-3 tnum text-right">{formatMoney(row.interest_component)}</td>
+                <td data-field="emi" className="py-2 px-3 tnum text-right font-600">{formatMoney(row.emi)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-ink-muted mt-2">
+        Installment {finalSequence} absorbs the rounding residual, so its emi differs slightly from the level emi of every earlier row.
+      </p>
+    </section>
+  );
+}
+
+function RepaymentForm({ onSubmit }) {
+  const [amount, setAmount] = useState('18450.00');
+  const [error, setError] = useState(null);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!/^\d{1,12}\.\d{2}$/.test(amount.trim())) {
+      setError('Enter an amount as a two-decimal value, e.g. 18450.00');
+      return;
+    }
+    setError(null);
+    onSubmit(amount.trim());
+  }
+
+  return (
+    <section aria-labelledby="repay-heading" className="bg-paper-raised border border-rule rounded-[2px] p-5">
+      <h2 id="repay-heading" className="font-display text-lg font-600 mb-3">Make a repayment</h2>
+      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row md:items-end gap-4">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="amount" className="text-sm font-medium text-ink">Amount (rupees)</label>
+          <input
+            id="amount"
+            name="amount"
+            type="text"
+            inputMode="decimal"
+            required
+            className="border border-rule rounded-[2px] px-3 py-2 bg-paper-raised text-ink tnum w-56"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            aria-describedby={error ? 'amount-error' : undefined}
+          />
+        </div>
+        <button type="submit" className="bg-brass text-paper-raised px-6 py-2.5 rounded-[2px] font-medium hover:opacity-90">
+          Post repayment
+        </button>
+      </form>
+      {error && <p id="amount-error" role="alert" className="text-signal-red text-sm mt-2">{error}</p>}
+    </section>
+  );
+}
+
+function RepaymentHistory({ repayments }) {
+  return (
+    <section aria-labelledby="history-heading" className="bg-paper-raised border border-rule rounded-[2px] p-5 mt-6">
+      <h2 id="history-heading" className="font-display text-lg font-600 mb-3">Repayment history</h2>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-rule small-caps text-ink-muted font-600 text-xs">
+            <th scope="col" className="text-left py-2">Posted</th>
+            <th scope="col" className="text-right py-2">Amount</th>
+            <th scope="col" className="text-right py-2">Applied principal</th>
+            <th scope="col" className="text-right py-2">Applied interest</th>
+          </tr>
+        </thead>
+        <tbody>
+          {repayments.map((r) => (
+            <tr key={r.id} className="border-b border-rule h-11">
+              <td data-field="posted_at" className="py-2 tnum">{new Date(r.posted_at).toLocaleString('en-IN', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+              <td data-field="amount" className="py-2 tnum text-right">Rs. {formatMoney(r.amount)}</td>
+              <td data-field="applied_principal" className="py-2 tnum text-right">Rs. {formatMoney(r.applied_principal)}</td>
+              <td data-field="applied_interest" className="py-2 tnum text-right">Rs. {formatMoney(r.applied_interest)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function App() {
+  const [loan, setLoan] = useState(INITIAL_LOAN);
+  const [repayments, setRepayments] = useState(INITIAL_REPAYMENTS);
+  const monthlyRate = useMemo(() => parseFloat(loan.annual_rate_pct) / 1200, [loan.annual_rate_pct]);
+
+  function handleRepayment(amountStr) {
+    const amountNum = parseFloat(amountStr);
+    const outstandingNum = parseFloat(loan.outstanding_principal);
+    const interestDue = round2(outstandingNum * monthlyRate);
+    const appliedInterest = Math.min(amountNum, interestDue);
+    const appliedPrincipal = round2(Math.max(amountNum - appliedInterest, 0));
+    const newOutstanding = round2(Math.max(outstandingNum - appliedPrincipal, 0));
+
+    const repayment = {
+      id: 'r-' + Date.now(),
+      loan_id: loan.id,
+      amount: amountNum.toFixed(2),
+      applied_principal: appliedPrincipal.toFixed(2),
+      applied_interest: appliedInterest.toFixed(2),
+      posted_at: new Date().toISOString(),
+      posted_by: CUSTOMER_ID
+    };
+
+    setRepayments((prev) => [repayment, ...prev]);
+    setLoan((prev) => ({ ...prev, outstanding_principal: newOutstanding.toFixed(2) }));
+  }
+
+  return (
+    <div className="min-h-screen flex bg-paper">
+      <LeftRail />
+      <main className="flex-1 px-6 md:px-12 py-10 max-w-[1180px] mx-auto w-full">
+        <header className="mb-8">
+          <h1 className="font-display text-3xl font-700">Repay your loan</h1>
+          <p className="text-ink-muted mt-1">Loan <span data-field="id" className="tnum">{loan.id}</span></p>
+        </header>
+
+        <LoanSummary loan={loan} />
+        <InstallmentTable installments={SCHEDULE.installments} finalSequence={TENURE_MONTHS} />
+        <RepaymentForm onSubmit={handleRepayment} />
+        <RepaymentHistory repayments={repayments} />
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

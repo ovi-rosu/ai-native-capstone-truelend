@@ -1,0 +1,362 @@
+{
+  "cluster_count": 6,
+  "max_points_per_cluster": 21,
+  "min_points_per_cluster": 5,
+  "clusters": [
+    {
+      "id": "C1",
+      "stories": [
+        "E1-S1",
+        "E1-S2",
+        "E10-S1",
+        "E11-S2",
+        "E14-S1",
+        "E15-S1",
+        "E15-S2",
+        "E16-S1",
+        "E2-S1",
+        "E3-S1",
+        "E3-S2",
+        "E4-S1",
+        "E4-S2",
+        "E5-S1",
+        "E5-S2",
+        "E6-S1",
+        "E6-S2",
+        "E7-S1",
+        "E8-S1",
+        "E9-S2",
+        "E9-S3"
+      ],
+      "story_points": 103,
+      "layers": [
+        "API",
+        "Config",
+        "Repository",
+        "Service",
+        "UI"
+      ],
+      "epics": [
+        "E1",
+        "E10",
+        "E11",
+        "E14",
+        "E15",
+        "E16",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9"
+      ],
+      "waves": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M"
+      ],
+      "internal_edges": 29,
+      "external_edges": 12,
+      "coordination_cost": 0.4,
+      "independently_startable": true,
+      "oversized": true
+    },
+    {
+      "id": "C2",
+      "stories": [
+        "E11-S1",
+        "E12-S1"
+      ],
+      "story_points": 8,
+      "layers": [
+        "Service",
+        "Types"
+      ],
+      "epics": [
+        "E11",
+        "E12"
+      ],
+      "waves": [
+        "A",
+        "K"
+      ],
+      "internal_edges": 1,
+      "external_edges": 2,
+      "coordination_cost": 1,
+      "independently_startable": false,
+      "oversized": false
+    },
+    {
+      "id": "C3",
+      "stories": [
+        "E13-S1",
+        "E15-S3"
+      ],
+      "story_points": 7,
+      "layers": [
+        "API",
+        "UI"
+      ],
+      "epics": [
+        "E13",
+        "E15"
+      ],
+      "waves": [
+        "E",
+        "M"
+      ],
+      "internal_edges": 1,
+      "external_edges": 5,
+      "coordination_cost": 2.5,
+      "independently_startable": false,
+      "oversized": false
+    },
+    {
+      "id": "C4",
+      "stories": [
+        "E17-S1",
+        "E4-S3"
+      ],
+      "story_points": 8,
+      "layers": [
+        "UI"
+      ],
+      "epics": [
+        "E17",
+        "E4"
+      ],
+      "waves": [
+        "G",
+        "H"
+      ],
+      "internal_edges": 1,
+      "external_edges": 3,
+      "coordination_cost": 1.5,
+      "independently_startable": false,
+      "oversized": false
+    },
+    {
+      "id": "C5",
+      "stories": [
+        "E4-S4"
+      ],
+      "story_points": 3,
+      "layers": [
+        "Service"
+      ],
+      "epics": [
+        "E4"
+      ],
+      "waves": [
+        "G"
+      ],
+      "internal_edges": 0,
+      "external_edges": 1,
+      "coordination_cost": 1,
+      "independently_startable": false,
+      "oversized": false
+    },
+    {
+      "id": "C6",
+      "stories": [
+        "E9-S1"
+      ],
+      "story_points": 3,
+      "layers": [
+        "Types"
+      ],
+      "epics": [
+        "E9"
+      ],
+      "waves": [
+        "A"
+      ],
+      "internal_edges": 0,
+      "external_edges": 3,
+      "coordination_cost": 3,
+      "independently_startable": true,
+      "oversized": false
+    }
+  ],
+  "interface_contracts": [
+    {
+      "id": "IC-1",
+      "artifact": "Money value type",
+      "kind": "contract",
+      "producer_cluster": "C6",
+      "consumer_cluster": "C1",
+      "edge": {
+        "from": "E1-S1",
+        "to": "E9-S1"
+      },
+      "contract_story": "E9-S1",
+      "reason": "threshold values are monetary and must be fixed-point from the first write"
+    },
+    {
+      "id": "IC-2",
+      "artifact": "delinquency bucket ladder",
+      "kind": "contract",
+      "producer_cluster": "C2",
+      "consumer_cluster": "C1",
+      "edge": {
+        "from": "E11-S2",
+        "to": "E11-S1"
+      },
+      "contract_story": "E11-S1",
+      "reason": "recalculation calls the published classifier rather than its own boundaries"
+    },
+    {
+      "id": "IC-3",
+      "artifact": "accessibility harness and customer-facing screen registry",
+      "kind": "contract",
+      "producer_cluster": "C4",
+      "consumer_cluster": "C3",
+      "edge": {
+        "from": "E13-S1",
+        "to": "E17-S1"
+      },
+      "contract_story": "E15-S1",
+      "reason": "the Repay screen registers with the existing harness and must pass it to land"
+    },
+    {
+      "id": "IC-4",
+      "artifact": "read-heavy endpoint registry and load harness",
+      "kind": "contract",
+      "producer_cluster": "C3",
+      "consumer_cluster": "C1",
+      "edge": {
+        "from": "E14-S1",
+        "to": "E15-S3"
+      },
+      "contract_story": "E15-S1",
+      "reason": "the dashboard read surface registers with the SLO harness and must meet the budget"
+    },
+    {
+      "id": "IC-5",
+      "artifact": "Money value type",
+      "kind": "contract",
+      "producer_cluster": "C6",
+      "consumer_cluster": "C1",
+      "edge": {
+        "from": "E3-S1",
+        "to": "E9-S1"
+      },
+      "contract_story": "E9-S1",
+      "reason": "threshold columns are monetary and typed by the published Money artifact"
+    },
+    {
+      "id": "IC-6",
+      "artifact": "read-heavy endpoint registry and load harness",
+      "kind": "contract",
+      "producer_cluster": "C3",
+      "consumer_cluster": "C1",
+      "edge": {
+        "from": "E7-S1",
+        "to": "E15-S3"
+      },
+      "contract_story": "E15-S1",
+      "reason": "the application-list read surface registers with the SLO harness and must meet the budget"
+    },
+    {
+      "id": "IC-7",
+      "artifact": "accessibility harness and customer-facing screen registry",
+      "kind": "contract",
+      "producer_cluster": "C4",
+      "consumer_cluster": "C1",
+      "edge": {
+        "from": "E8-S1",
+        "to": "E17-S1"
+      },
+      "contract_story": "E15-S1",
+      "reason": "the Track screen registers with the existing harness and must pass it to land"
+    },
+    {
+      "id": "IC-8",
+      "artifact": "Money value type",
+      "kind": "contract",
+      "producer_cluster": "C6",
+      "consumer_cluster": "C1",
+      "edge": {
+        "from": "E9-S3",
+        "to": "E9-S1"
+      },
+      "contract_story": "E9-S1",
+      "reason": "every schedule money field is the published fixed-point Money type"
+    }
+  ],
+  "unresolved_contracts": [],
+  "blocking_dependencies": [
+    {
+      "id": "BD-1",
+      "kind": "data",
+      "producer_cluster": "C1",
+      "blocked_cluster": "C2",
+      "edge": {
+        "from": "E12-S1",
+        "to": "E9-S3"
+      },
+      "reason": "days past due is computed from stored installment due dates on seeded loans"
+    },
+    {
+      "id": "BD-2",
+      "kind": "behavior",
+      "producer_cluster": "C1",
+      "blocked_cluster": "C3",
+      "edge": {
+        "from": "E13-S1",
+        "to": "E11-S2"
+      },
+      "reason": "the view posts repayments and renders the balance and bucket that service maintains"
+    },
+    {
+      "id": "BD-3",
+      "kind": "behavior",
+      "producer_cluster": "C1",
+      "blocked_cluster": "C3",
+      "edge": {
+        "from": "E15-S3",
+        "to": "E2-S1"
+      },
+      "reason": "GET /products is the first read-heavy endpoint registered with the harness"
+    },
+    {
+      "id": "BD-4",
+      "kind": "behavior",
+      "producer_cluster": "C1",
+      "blocked_cluster": "C4",
+      "edge": {
+        "from": "E4-S3",
+        "to": "E4-S2"
+      },
+      "reason": "the screen submits through the intake service and renders its checklist"
+    },
+    {
+      "id": "BD-5",
+      "kind": "behavior",
+      "producer_cluster": "C1",
+      "blocked_cluster": "C5",
+      "edge": {
+        "from": "E4-S4",
+        "to": "E4-S2"
+      },
+      "reason": "guards the intake path that story establishes"
+    }
+  ],
+  "warnings": [
+    "cluster C1 is oversized (103 points > 21 cap) and has no bridge to split on — it is tightly coupled. Decompose the epic or give it one owner.",
+    "contract edge E11-S1 → E12-S1 is not a cluster cut: hard edges still join them in C2 — do not sell this as independently startable parallelism",
+    "contract edge E15-S3 → E13-S1 is not a cluster cut: hard edges still join them in C3 — do not sell this as independently startable parallelism"
+  ]
+}

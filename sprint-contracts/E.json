@@ -1,0 +1,129 @@
+{
+  "group": "E",
+  "stories": [
+    "E3-S2",
+    "E4-S1",
+    "E15-S3"
+  ],
+  "features": [
+    "F027",
+    "F028",
+    "F029",
+    "F030",
+    "F035",
+    "F036",
+    "F037",
+    "F105",
+    "F106",
+    "F107"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-035",
+        "matrix_ids": [
+          "VM-035"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 201,
+        "description": "POST /applications → 201 — as CUSTOMER for a chosen product; the application is SUBMITTED and carries the product's current policy_version_id"
+      },
+      {
+        "id": "QA-VM-036",
+        "matrix_ids": [
+          "VM-036"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 201,
+        "description": "POST /applications → 201 — the body carries a numeric credit_score stored against the application"
+      },
+      {
+        "id": "QA-VM-037",
+        "matrix_ids": [
+          "VM-037"
+        ],
+        "method": "POST",
+        "path": "/applications",
+        "expected_status": 201,
+        "description": "POST /applications → 201 — decision.outcome is one of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW with at least one reason code"
+      },
+      {
+        "id": "QA-VM-105",
+        "matrix_ids": [
+          "VM-105"
+        ],
+        "method": "GET",
+        "path": "/products",
+        "expected_status": 200,
+        "description": "GET /products → 200 — load run across the registered read-heavy set (GET /products, GET /applications, GET /loans/{loan_id}, GET /dashboard); p95 under 500 ms and error rate under 1% on each"
+      }
+    ],
+    "playwright_checks": [
+      {
+        "id": "QA-VM-027",
+        "matrix_ids": [
+          "VM-027"
+        ],
+        "description": "Sign in as ADMIN, open the Policy Editor for PERSONAL, change income, age, score, tenure and rate, save — a new policy version is appended and shown as the product's active version",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Sign in as ADMIN, open the Policy Editor for PERSONAL, change income, age, score, tenure and rate, save — a new policy version is appended and shown as the product's active version"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-028",
+        "matrix_ids": [
+          "VM-028"
+        ],
+        "description": "With the previously active version reopened after that save — its income, age, score, tenure and rate read identical to their pre-save values",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "With the previously active version reopened after that save — its income, age, score, tenure and rate read identical to their pre-save values"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-029",
+        "matrix_ids": [
+          "VM-029"
+        ],
+        "description": "Submit an application against that product in the same running process — the decision shown cites the newly activated policy version id",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Submit an application against that product in the same running process — the decision shown cites the newly activated policy version id"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-030",
+        "matrix_ids": [
+          "VM-030"
+        ],
+        "description": "Signed in as CUSTOMER, attempt the Policy Editor save — the request is refused 403 and the version list gains no row",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Signed in as CUSTOMER, attempt the Policy Editor save — the request is refused 403 and the version list gains no row"
+          }
+        ]
+      }
+    ],
+    "accessibility_checks": {
+      "required": true,
+      "block_impacts": [
+        "serious",
+        "critical"
+      ]
+    }
+  }
+}

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<!--
+  Story:    E7-S1 — Admin application console with override
+  Screen:   Application list (status + product_code filters) + override panel
+  Role:     ADMIN
+  Endpoints depended on (hardcoded stand-ins, no network calls):
+    GET  /applications
+    POST /applications/{application_id}/override
+    GET  /audit-entries
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TrueLend — Admin Application Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" /><!-- harness:secret-ok — Google Fonts variable-axis query syntax, not a credential -->
+<script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com/3.4.10"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: "#14231D",
+          "ink-muted": "#4E6158",
+          paper: "#F7F4EC",
+          "paper-raised": "#FFFDF7",
+          brass: "#9A6B1F",
+          "signal-red": "#8E241C",
+          "signal-amber": "#8A5B12",
+          "signal-green": "#1D5C41",
+          rule: "#D8D0BE",
+        },
+        fontFamily: {
+          display: ["Fraunces", "serif"],
+          sans: ["Public Sans", "sans-serif"],
+          mono: ["IBM Plex Mono", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { font-variant-numeric: tabular-nums; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  :focus-visible {
+    outline: 2px solid #9A6B1F;
+    outline-offset: 2px;
+  }
+  table { border-collapse: collapse; }
+</style>
+</head>
+<body class="bg-paper text-ink font-sans antialiased">
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo } = React;
+
+/* ---------- hardcoded data, shaped per api-contracts.md ---------- */
+
+const CURRENT_ADMIN = { id: "550e8400-e29b-41d4-a716-446655440099", username: "meera.admin", role: "ADMIN" };
+
+const POLICY_REASON_CODES = {
+  "c2f8b3d5-aaaa-4444-8888-1111111111a1": [
+    { code: "RC-01", text: "Declared income below product minimum" },
+    { code: "RC-02", text: "Credit score below product minimum" },
+    { code: "RC-07", text: "Applicant age outside eligible band" },
+    { code: "RC-11", text: "Meets all configured thresholds" },
+  ],
+  "c2f8b3d5-bbbb-4444-8888-2222222222b2": [
+    { code: "RC-03", text: "Requested amount exceeds product ceiling" },
+    { code: "RC-04", text: "Credit score below preferred threshold, referred for manual underwriting review" },
+    { code: "RC-08", text: "Prior default flag present on credit history" },
+    { code: "RC-12", text: "Meets all configured thresholds" },
+  ],
+  "c2f8b3d5-cccc-4444-8888-3333333333c3": [
+    { code: "RC-05", text: "Declared income below product minimum" },
+    { code: "RC-09", text: "Requested tenure exceeds standard approval band, referred for manual review" },
+    { code: "RC-10", text: "Admission proof outstanding at submission" },
+    { code: "RC-13", text: "Meets all configured thresholds" },
+  ],
+};
+
+const INITIAL_APPLICATIONS = [
+  {
+    id: "b1e7a2c4-1111-4a2b-9c3d-000000000001",
+    product_code: "PERSONAL",
+    policy_version_id: "c2f8b3d5-aaaa-4444-8888-1111111111a1",
+    status: "REJECTED",
+    requested_amount: "450000.00",
+    requested_tenure_months: 36,
+    applicant: { full_name: "Priya Raghavan", date_of_birth: "1991-04-17", declared_income: "84000.00", pan: "ABCPR1234F", aadhaar: "9999-8888-0001" },
+    credit_score: 712,
+    submitted_at: "2026-02-10T09:15:00Z",
+    decision_history: [
+      {
+        id: "dec-201", application_id: "b1e7a2c4-1111-4a2b-9c3d-000000000001", policy_version_id: "c2f8b3d5-aaaa-4444-8888-1111111111a1",
+        outcome: "AUTO_REJECT", reason_codes: [{ code: "RC-01", text: "Declared income below product minimum" }],
+        comment: null, supersedes_id: null, decided_by: null, decided_at: "2026-02-10T09:20:00Z",
+      },
+    ],
+  },
+  {
+    id: "b1e7a2c4-2222-4a2b-9c3d-000000000002",
+    product_code: "VEHICLE",
+    policy_version_id: "c2f8b3d5-bbbb-4444-8888-2222222222b2",
+    status: "MANUAL_REVIEW",
+    requested_amount: "620000.00",
+    requested_tenure_months: 48,
+    applicant: { full_name: "Arjun Menon", date_of_birth: "1988-11-02", declared_income: "58000.00", pan: "ARMEN5678K", aadhaar: "9999-8888-0002" },
+    credit_score: 655,
+    submitted_at: "2026-02-11T11:40:00Z",
+    decision_history: [
+      {
+        id: "dec-202", application_id: "b1e7a2c4-2222-4a2b-9c3d-000000000002", policy_version_id: "c2f8b3d5-bbbb-4444-8888-2222222222b2",
+        outcome: "MANUAL_REVIEW", reason_codes: [{ code: "RC-04", text: "Credit score below preferred threshold, referred for manual underwriting review" }],
+        comment: null, supersedes_id: null, decided_by: null, decided_at: "2026-02-11T11:41:00Z",
+      },
+    ],
+  },
+  {
+    id: "b1e7a2c4-3333-4a2b-9c3d-000000000003",
+    product_code: "EDUCATION",
+    policy_version_id: "c2f8b3d5-cccc-4444-8888-3333333333c3",
+    status: "APPROVED",
+    requested_amount: "980000.00",
+    requested_tenure_months: 60,
+    applicant: { full_name: "Kavya Iyer", date_of_birth: "1999-06-23", declared_income: "45000.00", pan: "KVIYE9012P", aadhaar: "9999-8888-0003" },
+    credit_score: 780,
+    submitted_at: "2026-02-12T14:05:00Z",
+    decision_history: [
+      {
+        id: "dec-203", application_id: "b1e7a2c4-3333-4a2b-9c3d-000000000003", policy_version_id: "c2f8b3d5-cccc-4444-8888-3333333333c3",
+        outcome: "AUTO_APPROVE", reason_codes: [{ code: "RC-13", text: "Meets all configured thresholds" }],
+        comment: null, supersedes_id: null, decided_by: null, decided_at: "2026-02-12T14:06:00Z",
+      },
+    ],
+  },
+  {
+    id: "b1e7a2c4-4444-4a2b-9c3d-000000000004",
+    product_code: "PERSONAL",
+    policy_version_id: "c2f8b3d5-aaaa-4444-8888-1111111111a1",
+    status: "REJECTED",
+    requested_amount: "275000.00",
+    requested_tenure_months: 24,
+    applicant: { full_name: "Rohan Kulkarni", date_of_birth: "1993-02-09", declared_income: "96000.00", pan: "ROKUL3456L", aadhaar: "9999-8888-0004" },
+    credit_score: 598,
+    submitted_at: "2026-02-09T08:30:00Z",
+    decision_history: [
+      {
+        id: "dec-204", application_id: "b1e7a2c4-4444-4a2b-9c3d-000000000004", policy_version_id: "c2f8b3d5-aaaa-4444-8888-1111111111a1",
+        outcome: "AUTO_REJECT", reason_codes: [{ code: "RC-02", text: "Credit score below product minimum" }],
+        comment: null, supersedes_id: null, decided_by: null, decided_at: "2026-02-09T08:45:00Z",
+      },
+    ],
+  },
+  {
+    id: "b1e7a2c4-5555-4a2b-9c3d-000000000005",
+    product_code: "VEHICLE",
+    policy_version_id: "c2f8b3d5-bbbb-4444-8888-2222222222b2",
+    status: "DISBURSED",
+    requested_amount: "540000.00",
+    requested_tenure_months: 36,
+    applicant: { full_name: "Sneha Pillai", date_of_birth: "1995-09-30", declared_income: "72000.00", pan: "SNPIL7890M", aadhaar: "9999-8888-0005" },
+    credit_score: 695,
+    submitted_at: "2026-02-13T10:00:00Z",
+    decision_history: [
+      {
+        id: "dec-205", application_id: "b1e7a2c4-5555-4a2b-9c3d-000000000005", policy_version_id: "c2f8b3d5-bbbb-4444-8888-2222222222b2",
+        outcome: "AUTO_APPROVE", reason_codes: [{ code: "RC-12", text: "Meets all configured thresholds" }],
+        comment: null, supersedes_id: null, decided_by: null, decided_at: "2026-02-13T10:05:00Z",
+      },
+    ],
+  },
+];
+
+const INITIAL_AUDIT_ENTRIES = [
+  { id: "ae-001", actor_user_id: "550e8400-e29b-41d4-a716-446655440077", action: "record_decision", entity_type: "LoanApplication", entity_id: "b1e7a2c4-1111-4a2b-9c3d-000000000001", comment: null, reason_code: "RC-01", occurred_at: "2026-02-10T09:20:00Z" },
+  { id: "ae-002", actor_user_id: "550e8400-e29b-41d4-a716-446655440078", action: "record_decision", entity_type: "LoanApplication", entity_id: "b1e7a2c4-4444-4a2b-9c3d-000000000004", comment: null, reason_code: "RC-02", occurred_at: "2026-02-09T08:45:00Z" },
+  { id: "ae-003", actor_user_id: "550e8400-e29b-41d4-a716-446655440099", action: "append_policy_version", entity_type: "PolicyVersion", entity_id: "c2f8b3d5-aaaa-4444-8888-1111111111a1", comment: null, reason_code: null, occurred_at: "2026-01-15T12:00:00Z" },
+];
+
+const ALL_STATUSES = ["SUBMITTED", "AWAITING_DOCUMENTS", "UNDER_REVIEW", "MANUAL_REVIEW", "APPROVED", "REJECTED", "DISBURSED"];
+const ALL_PRODUCTS = ["PERSONAL", "VEHICLE", "EDUCATION"];
+
+/* ---------- formatting helpers ---------- */
+
+function formatMoney(amountString) {
+  const n = Number(amountString);
+  return "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatDateTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function shortId(id) {
+  return id.slice(0, 8);
+}
+
+function latestDecision(app) {
+  return app.decision_history.length ? app.decision_history[0] : null;
+}
+
+function outcomeBadgeClasses(outcome) {
+  if (outcome === "AUTO_APPROVE") return "text-signal-green border-signal-green";
+  if (outcome === "AUTO_REJECT") return "text-signal-red border-signal-red";
+  if (outcome === "MANUAL_REVIEW") return "text-signal-amber border-signal-amber";
+  return "text-ink-muted border-rule";
+}
+
+/* ---------- app ---------- */
+
+function App() {
+  const [applications, setApplications] = useState(INITIAL_APPLICATIONS);
+  const [auditEntries, setAuditEntries] = useState(INITIAL_AUDIT_ENTRIES);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [productFilter, setProductFilter] = useState("ALL");
+  const [selectedId, setSelectedId] = useState(null);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [reasonCode, setReasonCode] = useState("");
+  const [comment, setComment] = useState("");
+  const [formError, setFormError] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+
+  const filtered = useMemo(() => {
+    return applications.filter((a) => {
+      const statusOk = statusFilter === "ALL" || a.status === statusFilter;
+      const productOk = productFilter === "ALL" || a.product_code === productFilter;
+      return statusOk && productOk;
+    });
+  }, [applications, statusFilter, productFilter]);
+
+  const selected = applications.find((a) => a.id === selectedId) || null;
+  const selectedLatest = selected ? latestDecision(selected) : null;
+  const canOverride = selectedLatest && selectedLatest.outcome === "AUTO_REJECT";
+  const availableReasonCodes = selected ? POLICY_REASON_CODES[selected.policy_version_id] || [] : [];
+
+  function selectRow(id) {
+    setSelectedId(id);
+    setOverrideOpen(false);
+    setReasonCode("");
+    setComment("");
+    setFormError("");
+    setConfirmation("");
+  }
+
+  function submitOverride(e) {
+    e.preventDefault();
+    if (!selected || !selectedLatest) return;
+    if (!comment.trim() || !reasonCode) {
+      setFormError("An override requires both a comment and a reason code declared by the pinned policy version.");
+      return;
+    }
+    const chosen = availableReasonCodes.find((r) => r.code === reasonCode);
+    const nowIso = new Date().toISOString();
+    const supersedingDecision = {
+      id: "dec-" + Math.random().toString(36).slice(2, 8),
+      application_id: selected.id,
+      policy_version_id: selected.policy_version_id,
+      outcome: "AUTO_APPROVE",
+      reason_codes: [chosen],
+      comment: comment,
+      supersedes_id: selectedLatest.id,
+      decided_by: CURRENT_ADMIN.id,
+      decided_at: nowIso,
+    };
+    const newAuditEntry = {
+      id: "ae-" + Math.random().toString(36).slice(2, 8),
+      actor_user_id: CURRENT_ADMIN.id,
+      action: "override_decision",
+      entity_type: "LoanApplication",
+      entity_id: selected.id,
+      comment: comment,
+      reason_code: reasonCode,
+      occurred_at: nowIso,
+    };
+
+    setApplications((prev) =>
+      prev.map((a) =>
+        a.id === selected.id
+          ? { ...a, status: "APPROVED", decision_history: [supersedingDecision, ...a.decision_history] }
+          : a
+      )
+    );
+    setAuditEntries((prev) => [newAuditEntry, ...prev]);
+    setConfirmation("Override recorded for " + shortId(selected.id) + ". The prior AUTO_REJECT decision remains in history, untouched.");
+    setFormError("");
+    setOverrideOpen(false);
+    setReasonCode("");
+    setComment("");
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      <nav aria-label="Primary" className="w-full lg:w-[220px] lg:min-h-screen bg-ink text-paper flex-shrink-0">
+        <div className="px-6 py-6 border-b border-white/10">
+          <p className="font-display text-2xl font-600 tracking-tight">TrueLend</p>
+          <p className="text-xs text-paper/60 mt-1 uppercase tracking-widest">Admin</p>
+        </div>
+        <ul className="px-3 py-4 text-sm">
+          <li className="px-3 py-2 rounded-sm bg-white/10 font-medium">Applications</li>
+          <li className="px-3 py-2 text-paper/70">Portfolio Dashboard</li>
+          <li className="px-3 py-2 text-paper/70">Policy Catalog</li>
+        </ul>
+      </nav>
+
+      <main className="flex-1 px-4 sm:px-8 py-8 max-w-[1180px]">
+        <header className="mb-8">
+          <h1 className="font-display text-3xl sm:text-4xl font-600 text-ink">Application Console</h1>
+          <p className="text-ink-muted mt-1">Every application across the bank, filterable by status and product.</p>
+        </header>
+
+        <section aria-labelledby="filters-heading" className="mb-6">
+          <h2 id="filters-heading" className="sr-only">Filters</h2>
+          <form className="flex flex-col sm:flex-row gap-4 sm:items-end" onSubmit={(e) => e.preventDefault()}>
+            <div>
+              <label htmlFor="status-filter" className="block text-sm font-medium mb-1">Status</label>
+              <select
+                id="status-filter"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="border border-rule rounded-[2px] bg-paper-raised px-3 py-2 text-sm min-w-[200px]"
+              >
+                <option value="ALL">All statuses</option>
+                {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="product-filter" className="block text-sm font-medium mb-1">Product</label>
+              <select
+                id="product-filter"
+                value={productFilter}
+                onChange={(e) => setProductFilter(e.target.value)}
+                className="border border-rule rounded-[2px] bg-paper-raised px-3 py-2 text-sm min-w-[200px]"
+              >
+                <option value="ALL">All products</option>
+                {ALL_PRODUCTS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <p className="text-sm text-ink-muted">{filtered.length} of {applications.length} applications shown</p>
+          </form>
+        </section>
+
+        {confirmation && (
+          <p role="status" className="mb-4 border border-signal-green text-signal-green bg-paper-raised px-4 py-2 text-sm">
+            {confirmation}
+          </p>
+        )}
+
+        <section aria-labelledby="applications-heading" className="mb-10">
+          <h2 id="applications-heading" className="font-display text-xl font-600 mb-3">Applications</h2>
+          <div className="overflow-x-auto border border-rule bg-paper-raised">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-rule">
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Application</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Applicant</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Product</th>
+                  <th scope="col" className="text-right px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Requested Amount</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Status</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Latest Decision</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-6 text-center text-ink-muted">No applications match this status and product combination.</td>
+                  </tr>
+                )}
+                {filtered.map((app) => {
+                  const latest = latestDecision(app);
+                  return (
+                    <tr
+                      key={app.id}
+                      onClick={() => selectRow(app.id)}
+                      tabIndex="0"
+                      role="button"
+                      aria-pressed={selectedId === app.id}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectRow(app.id); } }}
+                      className={
+                        "border-b border-rule h-[44px] cursor-pointer hover:bg-brass/5 " +
+                        (selectedId === app.id ? "bg-brass/10" : "")
+                      }
+                    >
+                      <td className="px-4 py-2 font-mono text-ink-muted" data-field="id">{shortId(app.id)}</td>
+                      <td className="px-4 py-2" data-field="applicant.full_name">{app.applicant.full_name}</td>
+                      <td className="px-4 py-2" data-field="product_code">{app.product_code}</td>
+                      <td className="px-4 py-2 text-right font-mono tabular" data-field="requested_amount">{formatMoney(app.requested_amount)}</td>
+                      <td className="px-4 py-2" data-field="status">{app.status}</td>
+                      <td className="px-4 py-2" data-field="decision_history.outcome">
+                        {latest ? (
+                          <span className={"inline-block border px-2 py-0.5 text-xs uppercase tracking-wide " + outcomeBadgeClasses(latest.outcome)}>
+                            {latest.outcome}
+                          </span>
+                        ) : (
+                          <span className="text-ink-muted text-xs">No decision yet</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="detail-heading" className="border border-rule bg-paper-raised p-5 sm:p-6 mb-10">
+          <h2 id="detail-heading" className="font-display text-xl font-600 mb-4">Application Detail</h2>
+
+          {!selected && <p className="text-ink-muted">Select a row above to view its decision history and, if eligible, override the outcome.</p>}
+
+          {selected && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <dl className="grid grid-cols-2 gap-y-2 text-sm mb-5">
+                  <dt className="text-ink-muted">Application</dt>
+                  <dd className="font-mono">{shortId(selected.id)}</dd>
+                  <dt className="text-ink-muted">Applicant</dt>
+                  <dd data-field="applicant.full_name">{selected.applicant.full_name}</dd>
+                  <dt className="text-ink-muted">Product</dt>
+                  <dd data-field="product_code">{selected.product_code}</dd>
+                  <dt className="text-ink-muted">Requested Amount</dt>
+                  <dd className="font-mono tabular" data-field="requested_amount">{formatMoney(selected.requested_amount)}</dd>
+                  <dt className="text-ink-muted">Pinned Policy Version</dt>
+                  <dd className="font-mono text-xs" data-field="policy_version_id">{selected.policy_version_id}</dd>
+                </dl>
+
+                <h3 className="text-sm uppercase tracking-widest text-ink-muted font-semibold mb-2">Decision History (newest first)</h3>
+                <ul className="border border-rule divide-y divide-rule text-sm mb-5">
+                  {selected.decision_history.map((d) => (
+                    <li key={d.id} className="px-3 py-2" data-field="decision_history">
+                      <div className="flex items-center justify-between gap-3 mb-1">
+                        <span className={"inline-block border px-2 py-0.5 text-xs uppercase tracking-wide " + outcomeBadgeClasses(d.outcome)}>{d.outcome}</span>
+                        <span className="font-mono text-xs text-ink-muted">{formatDateTime(d.decided_at)}</span>
+                      </div>
+                      <p className="text-xs">
+                        {d.reason_codes.map((rc) => <span key={rc.code} className="font-mono text-signal-amber mr-1">{rc.code}</span>)}
+                        {d.reason_codes.map((rc) => rc.text).join("; ")}
+                      </p>
+                      {d.comment && <p className="text-xs text-ink-muted mt-1">"{d.comment}"</p>}
+                      {d.supersedes_id && <p className="text-xs text-ink-muted mt-1">Supersedes decision {d.supersedes_id}</p>}
+                    </li>
+                  ))}
+                </ul>
+
+                {canOverride && !overrideOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setOverrideOpen(true)}
+                    className="bg-brass text-paper-raised px-5 py-2.5 rounded-[2px] font-medium text-sm hover:bg-brass/90"
+                  >
+                    Override AUTO_REJECT
+                  </button>
+                )}
+                {!canOverride && (
+                  <p className="text-xs text-ink-muted">Override is only available when the latest decision is AUTO_REJECT.</p>
+                )}
+              </div>
+
+              <div>
+                {canOverride && overrideOpen && (
+                  <div>
+                    <h3 className="text-sm uppercase tracking-widest text-ink-muted font-semibold mb-3">Override Decision</h3>
+                    <form onSubmit={submitOverride} aria-describedby={formError ? "override-form-error" : undefined}>
+                      <div className="mb-4">
+                        <label htmlFor="override-reason-code" className="block text-sm font-medium mb-1">Reason Code (required)</label>
+                        <select
+                          id="override-reason-code"
+                          value={reasonCode}
+                          onChange={(e) => setReasonCode(e.target.value)}
+                          required
+                          className="w-full border border-rule rounded-[2px] bg-paper px-3 py-2 text-sm"
+                        >
+                          <option value="">Select a reason declared by policy {shortId(selected.policy_version_id)}…</option>
+                          {availableReasonCodes.map((rc) => (
+                            <option key={rc.code} value={rc.code}>{rc.code} — {rc.text}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="mb-4">
+                        <label htmlFor="override-comment" className="block text-sm font-medium mb-1">Comment (required)</label>
+                        <textarea
+                          id="override-comment"
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
+                          rows="3"
+                          required
+                          className="w-full border border-rule rounded-[2px] bg-paper px-3 py-2 text-sm"
+                          placeholder="Explain the basis for reversing the AUTO_REJECT outcome"
+                        ></textarea>
+                      </div>
+
+                      {formError && (
+                        <p id="override-form-error" role="alert" className="text-signal-red text-sm mb-3">{formError}</p>
+                      )}
+
+                      <div className="flex gap-3">
+                        <button type="submit" className="bg-brass text-paper-raised px-5 py-2.5 rounded-[2px] font-medium text-sm hover:bg-brass/90">
+                          Submit Override
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setOverrideOpen(false); setFormError(""); }}
+                          className="border border-rule px-5 py-2.5 rounded-[2px] font-medium text-sm hover:bg-paper"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+                {(!canOverride || !overrideOpen) && (
+                  <div>
+                    <h3 className="text-sm uppercase tracking-widest text-ink-muted font-semibold mb-2">Audit Trail (this application)</h3>
+                    <ul className="border border-rule divide-y divide-rule text-sm">
+                      {auditEntries.filter((e) => e.entity_id === selected.id).map((e) => (
+                        <li key={e.id} className="px-3 py-2" data-field="audit_entry">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-medium">{e.action}</span>
+                            <span className="font-mono text-xs text-ink-muted">{formatDateTime(e.occurred_at)}</span>
+                          </div>
+                          <p className="text-xs text-ink-muted mt-0.5">Actor {shortId(e.actor_user_id)}{e.reason_code ? " · " + e.reason_code : ""}</p>
+                          {e.comment && <p className="text-xs mt-0.5">"{e.comment}"</p>}
+                        </li>
+                      ))}
+                      {auditEntries.filter((e) => e.entity_id === selected.id).length === 0 && (
+                        <li className="px-3 py-2 text-ink-muted text-xs">No audit entries recorded yet for this application.</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section aria-labelledby="audit-heading">
+          <h2 id="audit-heading" className="font-display text-xl font-600 mb-3">Audit Trail — All Entries</h2>
+          <div className="overflow-x-auto border border-rule bg-paper-raised">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-rule">
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Actor</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Action</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Entity</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Reason Code</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Comment</th>
+                  <th scope="col" className="text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold text-ink-muted">Occurred</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditEntries.map((e) => (
+                  <tr key={e.id} className="border-b border-rule h-[44px]">
+                    <td className="px-4 py-2 font-mono text-ink-muted" data-field="actor_user_id">{shortId(e.actor_user_id)}</td>
+                    <td className="px-4 py-2" data-field="action">{e.action}</td>
+                    <td className="px-4 py-2 font-mono text-ink-muted" data-field="entity_id">{e.entity_type} · {shortId(e.entity_id)}</td>
+                    <td className="px-4 py-2 font-mono" data-field="reason_code">{e.reason_code || "—"}</td>
+                    <td className="px-4 py-2 max-w-[220px] truncate" data-field="comment" title={e.comment || ""}>{e.comment || "—"}</td>
+                    <td className="px-4 py-2 font-mono text-ink-muted" data-field="occurred_at">{formatDateTime(e.occurred_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

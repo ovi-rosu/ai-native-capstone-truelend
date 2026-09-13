@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "story_id": "E5-S1",
+  "sprint": 1,
+  "title": "Deterministic credit scoring stub over age, income and credit history flags",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E5-S1-AC1",
+      "E5-S1-AC2",
+      "E5-S1-AC3"
+    ],
+    "brd_ids": [
+      "FRD-3"
+    ],
+    "br_acceptance_ids": [
+      "FRD-42"
+    ],
+    "scope_out": [
+      "must not call an external credit bureau or any live provider; must not introduce randomness, wall-clock time or request order into the score; must not read a threshold from anywhere but the application's pinned policy version"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Deterministic credit scoring stub over age, income and credit history flags",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/service/origination/scoring.py",
+      "backend/tests/unit/test_scoring_stub.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-2"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-048",
+      "VM-049",
+      "VM-050"
+    ],
+    "case_ids": [
+      "VM-048",
+      "VM-049",
+      "VM-050"
+    ],
+    "layers": [
+      "api",
+      "unit"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E5-S1.md",
+    "parents": [
+      "E4-S2"
+    ],
+    "tracker_key": null
+  }
+}

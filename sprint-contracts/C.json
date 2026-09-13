@@ -1,0 +1,61 @@
+{
+  "group": "C",
+  "stories": [
+    "E1-S2",
+    "E3-S1"
+  ],
+  "features": [
+    "F016",
+    "F017",
+    "F018",
+    "F019",
+    "F020",
+    "F021",
+    "F022",
+    "F023"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-016",
+        "matrix_ids": [
+          "VM-016"
+        ],
+        "method": "GET",
+        "path": "/documents/queue",
+        "expected_status": 401,
+        "description": "GET /documents/queue → 401 — no Authorization header; no handler body executes"
+      },
+      {
+        "id": "QA-VM-017",
+        "matrix_ids": [
+          "VM-017"
+        ],
+        "method": "GET",
+        "path": "/documents/queue",
+        "expected_status": 403,
+        "description": "GET /documents/queue → 403 — with a CUSTOMER token, while GET /products with that same token is 200"
+      },
+      {
+        "id": "QA-VM-018",
+        "matrix_ids": [
+          "VM-018"
+        ],
+        "method": "GET",
+        "path": "/openapi.json",
+        "expected_status": 200,
+        "description": "GET /openapi.json → 200 — enumerate every UNDERWRITER/ADMIN route; the generated suite reports 100% covered by both a no-session and a wrong-role case"
+      },
+      {
+        "id": "QA-VM-019",
+        "matrix_ids": [
+          "VM-019"
+        ],
+        "method": "GET",
+        "path": "/audit-entries",
+        "expected_status": 200,
+        "description": "GET /audit-entries → 200 — as ADMIN after an UNDERWRITER decision; an entry carries the acting user id and a timestamp"
+      }
+    ]
+  }
+}

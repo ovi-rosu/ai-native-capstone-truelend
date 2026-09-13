@@ -1,0 +1,252 @@
+{
+  "status": "sealed",
+  "waived_by": null,
+  "sealedAt": "2026-09-13T17:21:59.119Z",
+  "artifacts": [
+    {
+      "path": "specs/brd/brd.md",
+      "sha256": "36b4f2cb758efc082c744cd38ab2513172a79d7d9c941a0fa6281c4a7df46997",
+      "phase": "brd"
+    },
+    {
+      "path": "specs/brd/brd-requirements.json",
+      "sha256": "3530e7fbc5d221dfa5d06f2f5c2def225219d9c709f2a98e675bfa5d6d93a008",
+      "phase": "brd"
+    },
+    {
+      "path": "prd/truelend.md",
+      "sha256": "fa77633ad1268537d9275fcc8dedeb17e68415646fc2839ead63c79f0c418b7b",
+      "phase": "brd"
+    },
+    {
+      "path": "specs/stories/epics.md",
+      "sha256": "22f84fddf125b7492bf9ca36202f7ef56fae247271621a645b0f18e6fd01677a",
+      "phase": "spec"
+    },
+    {
+      "path": "specs/stories/dependency-graph.md",
+      "sha256": "aa540d0978741d73ea45da39f292801558ef3f49eafebcdd895f392a72c94317",
+      "phase": "spec"
+    },
+    {
+      "path": "specs/stories/stories.json",
+      "sha256": "5b28a5a8ada4d549052ab74389bf2b1fed9fefba7be1cd1a09925219617881f0",
+      "phase": "spec"
+    },
+    {
+      "path": "features.json",
+      "sha256": "f7042c0399c9aa9fcc8a44ea0aa1bbd1feec4256d3b20fb614abd8b22497763d",
+      "phase": "spec"
+    },
+    {
+      "path": "specs/decisions/spec-decisions.json",
+      "sha256": "af5275bceea636ea1ba2080cec3d7260f3bfa636b06155b99eb1815d55123e31",
+      "phase": "spec"
+    },
+    {
+      "path": "specs/design/architecture.md",
+      "sha256": "36121e53ff00f66a0b2eb010faf9347c35b79551f0bc6530a355164c57b1a1d0",
+      "phase": "design"
+    },
+    {
+      "path": "specs/design/program-design.md",
+      "sha256": "f83208bb0a27ac16886dac0387b747cdaca0842d14587a1e920961a5cb357e4d",
+      "phase": "design"
+    },
+    {
+      "path": "specs/design/reasons-canvas.md",
+      "sha256": "780f8d800b83e8f7397a924e860c4ac823c436b3df8a24d9f3f8346724d9e7c0",
+      "phase": "design"
+    },
+    {
+      "path": "specs/design/component-map.md",
+      "sha256": "e8619724a3b324f881edbee6235ef487dc362075fb8ba4f6ee49a50edea2b36e",
+      "phase": "design"
+    },
+    {
+      "path": "specs/test_artefacts/test-plan.md",
+      "sha256": "6e4d8e4519fade926340573039a6ce33443c4318db000acd28e10e76b576605c",
+      "phase": "test"
+    },
+    {
+      "path": "specs/test_artefacts/verification-matrix.json",
+      "sha256": "3c07d287477a63e9d48cf32a7e5802ce0cd02b5f6fe363dc57e187dc57ac814e",
+      "phase": "test"
+    },
+    {
+      "path": "specs/test_artefacts/test-traces.json",
+      "sha256": "95b98306c5e6b9326b071399a147f44a4f1c772b3e247c0bc4eb2954e06d4ed9",
+      "phase": "test"
+    },
+    {
+      "path": "specs\\design\\component-map.md",
+      "sha256": "e8619724a3b324f881edbee6235ef487dc362075fb8ba4f6ee49a50edea2b36e",
+      "phase": null
+    },
+    {
+      "path": "specs\\design\\program-design.md",
+      "sha256": "f83208bb0a27ac16886dac0387b747cdaca0842d14587a1e920961a5cb357e4d",
+      "phase": null
+    },
+    {
+      "path": "specs\\design\\architecture.md",
+      "sha256": "36121e53ff00f66a0b2eb010faf9347c35b79551f0bc6530a355164c57b1a1d0",
+      "phase": null
+    },
+    {
+      "path": "specs\\test_artefacts\\test-plan.md",
+      "sha256": "6e4d8e4519fade926340573039a6ce33443c4318db000acd28e10e76b576605c",
+      "phase": null
+    },
+    {
+      "path": "specs\\test_artefacts\\verification-matrix.json",
+      "sha256": "3c07d287477a63e9d48cf32a7e5802ce0cd02b5f6fe363dc57e187dc57ac814e",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E1-S1.json",
+      "sha256": "d18a6bc74af6b2a00fd3db7a59d0e7bac129a833982b3baede029648850690d8",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E1-S2.json",
+      "sha256": "48f7c24cb08d38d0d443e88ed95cfb2e92add7fc1044d4164ccd8cd031c02d3b",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E10-S1.json",
+      "sha256": "9fbed6251a795dc41784e63e9e15dc8e372203f06ec4920694feae80326f618b",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E11-S1.json",
+      "sha256": "e52cf71161715cfe7a579b546251abfc3e53904a688b007ddb225a344912c2c7",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E11-S2.json",
+      "sha256": "0116b7fdc3344b136eb6729cdc150381c0826f36acf12077911e88dacd22d6ec",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E12-S1.json",
+      "sha256": "e9ab8cc3d679d1c07977e5ffff67988f885305e93a9c274561656a0ff7f4b8f2",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E13-S1.json",
+      "sha256": "ab3373db78180f1e3b59c2eb4f0d928a14e80e67df2f1942e451e6f5b98edc86",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E14-S1.json",
+      "sha256": "27c71662bfec457bdf2a09750c5fbf5f370a185d8cdd9b2fa909d794b1cba425",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E15-S1.json",
+      "sha256": "59333b7fdd882c971e2856c35991c8982a049de36499fabac59a8cedabcad601",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E15-S2.json",
+      "sha256": "6db12ba613de0b0603bd4d9ebb45845fcfef7f389276ddaeafe88816a6f72511",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E15-S3.json",
+      "sha256": "f39585085d3a44e1ea11c89b50837fcb7ecaf61ec458e921cc0c88f3dec63b0d",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E16-S1.json",
+      "sha256": "c7ec8fa374046504a8f44df54d693c7222e565400bc6777c776b7f0576839689",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E17-S1.json",
+      "sha256": "a1515f1b2d0e8bdf61b389bbd2adec370094e2a316affa7f1480edee0c653f16",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E2-S1.json",
+      "sha256": "7a04ce276a935f1679415369e271d3a863cdddb9159f32e93c6663a3e8fda3a4",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E3-S1.json",
+      "sha256": "0b3a32abbc06dabaad8bafb340991033625b285869400ac07dbe54d6bbb49ba7",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E3-S2.json",
+      "sha256": "b4f29a8a83f95994c0cf08c114f59dcb7baa6c5646464e7926f67f59bef067dd",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E4-S1.json",
+      "sha256": "5224ed55373dd590f122faecaf4a2e1ef39d39d622222b154196db8f4496ff86",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E4-S2.json",
+      "sha256": "7cbdc476188f6c3e3bb7f35d07f9c40e8b452d9a7e7b3a39bec7a43202cee2e1",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E4-S3.json",
+      "sha256": "fa1ef6518a17fa0565873d7681871d150394463150378e74950403c4367d621c",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E4-S4.json",
+      "sha256": "f0d9e95c92a135644275c0882ad48930662d6fc9a6f0e6a0345d29b3ceea3f32",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E5-S1.json",
+      "sha256": "ec73c4c69fc773e7da08edf54737adc18fd4da0f18f0f18e73377597541f4801",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E5-S2.json",
+      "sha256": "da744a4071b433a6d858adc1df1d9f338bd49df73fddb4b0a3fc95816ece8c9f",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E6-S1.json",
+      "sha256": "4d91b53100ec3ca47d9fbb81ce0dffc5e7770d75919a4d25a67503bacd3d2a97",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E6-S2.json",
+      "sha256": "6df18fc62b5ef87a6940fae34d76986b4d10d184f89c868c949adc9d702f8982",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E7-S1.json",
+      "sha256": "1a38c499e84f365b659e78f54274e6a320dffcc9bc21fdfb8308db006c5a54ca",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E8-S1.json",
+      "sha256": "018227ec27684dce072050a884dfac06931a02c856e8fcecc34fbd6906ef55e3",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E9-S1.json",
+      "sha256": "9fcca905efdd22cfe2abde92be276b59693d9e3f453b1c1ee4d19cb53ae89f48",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E9-S2.json",
+      "sha256": "94c7a651b1a94ccce4e47772881114d69a31b8fdc3c6805d3050e8d98b9dfc28",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E9-S3.json",
+      "sha256": "b72280ec30a671cdacc584bfa5160175f8f0f74a1031427ee68dd90ec1fdf586",
+      "phase": null
+    }
+  ]
+}

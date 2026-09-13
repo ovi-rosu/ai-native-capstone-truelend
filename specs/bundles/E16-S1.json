@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "story_id": "E16-S1",
+  "sprint": 1,
+  "title": "Architecture invariant test registry and agent provenance evidence",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E16-S1-AC1",
+      "E16-S1-AC2",
+      "E16-S1-AC3",
+      "E16-S1-AC4"
+    ],
+    "brd_ids": [
+      "FRD-25",
+      "FRD-28"
+    ],
+    "br_acceptance_ids": [
+      "FRD-64",
+      "FRD-67"
+    ],
+    "scope_out": [
+      "must not loosen an invariant's assertion to make a failing test pass; must not implement product behavior — this story adds no loan-platform capability; must not remove or weaken a pre-commit gate to clear the provenance check"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Architecture invariant test registry and agent provenance evidence",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/tests/architecture/invariant_registry.py",
+      "backend/tests/architecture/test_invariant_registry.py",
+      "backend/tests/architecture/test_agent_provenance.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-8"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-031",
+      "VM-032",
+      "VM-033",
+      "VM-034"
+    ],
+    "case_ids": [
+      "VM-031",
+      "VM-032",
+      "VM-033",
+      "VM-034"
+    ],
+    "layers": [
+      "unit"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E16-S1.md",
+    "parents": [
+      "E15-S2",
+      "E3-S1"
+    ],
+    "tracker_key": null
+  }
+}

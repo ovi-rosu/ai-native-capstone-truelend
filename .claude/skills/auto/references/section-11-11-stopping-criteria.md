@@ -1,0 +1,67 @@
+## SECTION 11: Stopping Criteria
+
+OR logic with priority (check in order):
+
+1. **Hard stop:** Any of — an architecture violation that self-healing cannot fix; the total iteration count exceeds 50; **or the per-task budget is exhausted** (the wall-clock / agent-spawn / est-cost cap, read at the top of each iteration via `node .claude/scripts/budget-state.js`). Stop the entire `/auto` run **cleanly at this iteration boundary** (never mid-step — committed work is always preserved). For a budget stop, set `next_action: "BUDGET — {dimension} cap reached; raise --budget or merge what's done"` in `claude-progress.txt`; raising the cap (or `--budget off`) resumes the run. Report status, then invoke `/retro` once (unless `--no-retro`; see below) — a hard stop is exactly when harness-improvement signal is richest (budget-exhaustion patterns, a self-heal ceiling repeatedly hit). Then hand off to the user.
+
+2. **Escalate (per-story):** A story fails 3 consecutive self-heal iterations. Mark it BLOCKED. Log to `failures.md`. Extract learned rule. Skip to the next group. Do NOT stop the entire run.
+
+3. **Coverage gate:** Coverage drops below the baseline AFTER a successful commit. This overrides the pass — revert the commit (`git revert HEAD --no-edit`), log the regression, and re-enter self-healing for coverage.
+
+4. **Success:** All features in `features.json` have `passes: true` AND coverage >= baseline threshold. Before claiming completion, invoke `superpowers:verification-before-completion` to run all verification commands and confirm output. Evidence before assertions. Print:
+   ```
+   === BUILD COMPLETE ===
+   Features passing: {N}/{N}
+   Coverage: {X}%
+   Groups completed: [list]
+   Blocked stories: [list or "none"]
+   Learned rules: {count}
+   Total iterations: {count}
+   ```
+   Then:
+   1. Run `docker compose down -v`
+   2. Generate `README.md` for the built application (see below)
+   3. Commit: `git add README.md && git commit -m "docs: add README with architecture, setup, and API reference"`
+   4. Invoke `/retro` once (unless `--no-retro`; see Usage) — reviews this session's loop-health scorecard and drafts any evidence-backed harness-improvement recommendations. Report-only and interactive (agentic-flywheel §4.2); never blocks completion, and stays silent if there is nothing new to recommend.
+   5. **Draft PR is the stop** (especially `/auto --sealed`). Spawn the evaluator against the running app (API + Playwright if UI) if this run has not already done so. If `specs/reviews/regression-gate-verdict.json` is missing or not `pass` for this HEAD, run `node .claude/scripts/regression-gate.js --replay` (G15). Then generate the quality card and walkthrough, and open a **draft** PR. Do not merge. Do not enable auto-merge unless `AUTO_MERGE=true` or `--auto-merge` is set.
+      ```bash
+      node .claude/scripts/quality-card.js --range <base..HEAD>
+      node .claude/scripts/pr-walkthrough.js --base <base>
+      node .claude/scripts/pr-body.js --require-gate --title "<stories delivered>" > /tmp/pr-body.md
+      node .claude/scripts/wave-pr.js --branch "$(git branch --show-current)" --base main --title "<stories delivered>" --body "$(cat /tmp/pr-body.md)"
+      ```
+      If `wave-pr.js` is the wrong shape (no cluster plan), `gh pr create --draft --title "..." --body-file /tmp/pr-body.md`. Print the PR URL, `specs/reviews/quality-card.md`, and `specs/reviews/walkthrough.md`. Human reads. `/gate` groups the diff by slice. `/pr-respond` patches comments — do not rebuild it.
+      When AUTO_MERGE is active, run `node .claude/scripts/auto-merge.js <prUrl> --auto-merge` after the draft exists. Otherwise leave the draft open.
+   6. Exit
+
+### `--no-retro` and `--once`
+
+`--once` (SECTION 10.1) exits after a single wave via a separate path and never
+reaches this section's branches — so intermediate links in a chained build never
+auto-invoke `/retro`. Only a `/auto` invocation that itself reaches Hard stop or
+Success does. `--no-retro` suppresses that invocation for callers (e.g. a
+`Workflow` script) that want to invoke `/retro` themselves at their own boundary.
+
+### README Generation (on completion)
+
+After the build completes, generate a `README.md` that describes the GENERATED APP (not the harness).
+
+Read these files for content (sealed pack + runtime, not a second BRD pass):
+- `specs/design/program-design.md` — types, signatures, call stack
+- `specs/design/component-map.md` — module structure
+- `specs/design/api-contracts.md` or `api-contracts.schema.json` — API surface (grep routes; do not dump)
+- `project-manifest.json` — tech stack
+- `init.sh` — setup steps
+- `docker-compose.yml` (if exists) — services
+- `.env.example` (if exists) — required environment variables
+- One-line problem statement from `specs/reviews/plan-seal.json` / features list — not `brd.md` whole
+
+**Required sections:** Project description, Architecture (diagram/layers), Tech Stack (table), Prerequisites, Quick Start (copy-paste commands), API Endpoints (table), Project Structure (directory tree), Running Tests, Environment Variables (table from .env.example), Development notes.
+
+**Rules:**
+- Do NOT mention Claude, the harness, `/auto`, agents, or the GAN loop. This is a developer README for the app.
+- All commands must work against the generated code.
+- API table must match actual routes, not just the spec.
+- Environment variables must match `.env.example` exactly.
+
+---

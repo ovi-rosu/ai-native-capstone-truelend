@@ -1,0 +1,201 @@
+{
+  "groups": [
+    {
+      "id": "A",
+      "stories": [
+        "E15-S1",
+        "E9-S1",
+        "E11-S1"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "B",
+      "stories": [
+        "E15-S2",
+        "E1-S1"
+      ],
+      "blockedBy": [
+        "A"
+      ]
+    },
+    {
+      "id": "C",
+      "stories": [
+        "E1-S2",
+        "E3-S1"
+      ],
+      "blockedBy": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "id": "D",
+      "stories": [
+        "E2-S1",
+        "E16-S1"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "E",
+      "stories": [
+        "E3-S2",
+        "E4-S1",
+        "E15-S3"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "F",
+      "stories": [
+        "E4-S2"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ]
+    },
+    {
+      "id": "G",
+      "stories": [
+        "E4-S3",
+        "E4-S4",
+        "E5-S1",
+        "E6-S1"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F"
+      ]
+    },
+    {
+      "id": "H",
+      "stories": [
+        "E5-S2",
+        "E17-S1"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G"
+      ]
+    },
+    {
+      "id": "I",
+      "stories": [
+        "E6-S2",
+        "E7-S1",
+        "E8-S1",
+        "E9-S2"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ]
+    },
+    {
+      "id": "J",
+      "stories": [
+        "E9-S3"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I"
+      ]
+    },
+    {
+      "id": "K",
+      "stories": [
+        "E10-S1",
+        "E12-S1"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J"
+      ]
+    },
+    {
+      "id": "L",
+      "stories": [
+        "E11-S2"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K"
+      ]
+    },
+    {
+      "id": "M",
+      "stories": [
+        "E13-S1",
+        "E14-S1"
+      ],
+      "blockedBy": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L"
+      ]
+    }
+  ]
+}

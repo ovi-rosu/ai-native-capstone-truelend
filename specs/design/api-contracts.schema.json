@@ -1,0 +1,1181 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TrueLend API",
+    "version": "1.0.0",
+    "description": "Configurable loan origination, disbursement and repayment. Every monetary field is a quoted 2-decimal string (decision D-G); never a JSON number. Authorization is a single require_roles dependency at the router (decision D-F). Schema names are CONTEXT.md terms (decision D-H)."
+  },
+  "servers": [
+    { "url": "http://localhost:8000", "description": "Docker Compose backend" }
+  ],
+  "tags": [
+    { "name": "identity", "description": "Login, session, audit" },
+    { "name": "policy", "description": "Catalog and policy versions" },
+    { "name": "origination", "description": "Application intake, scoring, decisions, documents" },
+    { "name": "servicing", "description": "Disbursement, schedule, repayment" },
+    { "name": "delinquency", "description": "End-of-day ageing and portfolio" },
+    { "name": "platform", "description": "Health and metrics" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": ["identity"],
+        "summary": "Issue a JWT naming exactly one role",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "additionalProperties": false,
+                "properties": {
+                  "username": { "type": "string", "minLength": 1, "example": "priya.customer" },
+                  "password": { "type": "string", "minLength": 1, "format": "password" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued",
+            "headers": { "X-Request-ID": { "$ref": "#/components/headers/XRequestId" } },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["access_token", "token_type", "user"],
+                  "properties": {
+                    "access_token": { "type": "string" },
+                    "token_type": { "type": "string", "enum": ["bearer"] },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
+    },
+    "/auth/session": {
+      "get": {
+        "tags": ["identity"],
+        "summary": "The authenticated user and its single role",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": ["policy"],
+        "summary": "Loan product catalog",
+        "description": "Registered read-heavy endpoint: p95 under 500 ms, error rate under 1 percent.",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "responses": {
+          "200": {
+            "description": "At least three products, each bound to its own policy version",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/LoanProduct" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/products/{product_code}": {
+      "get": {
+        "tags": ["policy"],
+        "summary": "One product with its active policy version and rules inlined",
+        "parameters": [
+          { "$ref": "#/components/parameters/ProductCode" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product detail",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoanProduct" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/products/{product_code}/policy-versions": {
+      "post": {
+        "tags": ["policy"],
+        "summary": "Append a policy version and activate it without a restart",
+        "description": "ADMIN only. Appends a row; the prior version is never updated or deleted (decision D-E).",
+        "parameters": [
+          { "$ref": "#/components/parameters/ProductCode" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/PolicyRules" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "New active policy version",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PolicyVersion" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
+    },
+    "/applications": {
+      "post": {
+        "tags": ["origination"],
+        "summary": "Submit an application, generate its checklist, score it and decide it",
+        "description": "CUSTOMER only. The policy version is pinned at submission and never retargeted (decision D-D).",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/ApplicationSubmission" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Persisted application with its checklist, score and first decision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["application", "credit_score", "decision", "document_checklist"],
+                  "properties": {
+                    "application": { "$ref": "#/components/schemas/LoanApplication" },
+                    "credit_score": { "$ref": "#/components/schemas/CreditScore" },
+                    "decision": { "$ref": "#/components/schemas/UnderwritingDecision" },
+                    "document_checklist": { "$ref": "#/components/schemas/DocumentChecklist" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": {
+            "description": "Validation failure, or a threshold breach reported as PolicyViolationException. No application row is persisted.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/PolicyViolation" } }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["origination"],
+        "summary": "List applications, scoped by the caller's role",
+        "description": "Registered read-heavy endpoint. CUSTOMER sees only its own; UNDERWRITER filters the workbench queue; ADMIN sees all.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "explode": true,
+            "style": "form",
+            "description": "Any ApplicationStatus value. Per D-L, MANUAL_REVIEW is itself a status, not a filter alias: an application whose latest Underwriting Decision outcome is MANUAL_REVIEW carries MANUAL_REVIEW as its status, so this is a plain status filter.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["SUBMITTED", "AWAITING_DOCUMENTS", "UNDER_REVIEW", "MANUAL_REVIEW", "APPROVED", "REJECTED", "DISBURSED"]
+              }
+            }
+          },
+          {
+            "name": "product_code",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching applications",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/LoanApplication" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/applications/{application_id}": {
+      "get": {
+        "tags": ["origination"],
+        "summary": "Application detail with checklist and full decision history",
+        "parameters": [
+          { "$ref": "#/components/parameters/ApplicationId" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application detail. decision is null while undecided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["application", "document_checklist", "decision", "decision_history"],
+                  "properties": {
+                    "application": { "$ref": "#/components/schemas/LoanApplication" },
+                    "document_checklist": { "$ref": "#/components/schemas/DocumentChecklist" },
+                    "decision": {
+                      "nullable": true,
+                      "allOf": [{ "$ref": "#/components/schemas/UnderwritingDecision" }]
+                    },
+                    "decision_history": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/UnderwritingDecision" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/applications/{application_id}/decision": {
+      "post": {
+        "tags": ["origination"],
+        "summary": "Record an underwriter ruling on a MANUAL_REVIEW application",
+        "description": "UNDERWRITER only. Appends a new decision record; the latest record wins.",
+        "parameters": [
+          { "$ref": "#/components/parameters/ApplicationId" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["outcome", "reason_code"],
+                "additionalProperties": false,
+                "properties": {
+                  "outcome": { "$ref": "#/components/schemas/DecisionOutcome" },
+                  "reason_code": { "type": "string", "minLength": 1, "example": "RC-07" },
+                  "comment": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Appended decision",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UnderwritingDecision" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
+    },
+    "/applications/{application_id}/override": {
+      "post": {
+        "tags": ["origination"],
+        "summary": "Override an AUTO_REJECT with a comment and a reason code",
+        "description": "ADMIN only. Appends a superseding decision; the overridden row is untouched.",
+        "parameters": [
+          { "$ref": "#/components/parameters/ApplicationId" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Override" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Superseding decision",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UnderwritingDecision" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/documents/queue": {
+      "get": {
+        "tags": ["origination"],
+        "summary": "Documents still awaiting verification",
+        "description": "UNDERWRITER only. Already-actioned documents are absent.",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "responses": {
+          "200": {
+            "description": "Verification queue",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DocumentVerificationQueue" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/applications/{application_id}/documents/{document_id}/verification": {
+      "post": {
+        "tags": ["origination"],
+        "summary": "Mark one application document VERIFIED or REJECTED with a reason",
+        "parameters": [
+          { "$ref": "#/components/parameters/ApplicationId" },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "additionalProperties": false,
+                "properties": {
+                  "status": { "$ref": "#/components/schemas/DocumentVerificationStatus" },
+                  "rejection_reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Required and non-empty when status is REJECTED."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stored verification state",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApplicationDocument" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
+    },
+    "/loans/{loan_id}/disbursement": {
+      "post": {
+        "tags": ["servicing"],
+        "summary": "Release the principal against the stub funding source",
+        "description": "ADMIN only, per D-N, which rules out UNDERWRITER disbursement. Idempotence guard refuses a second disbursement.",
+        "parameters": [
+          { "$ref": "#/components/parameters/LoanId" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": { "schema": { "type": "object", "additionalProperties": false } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Disbursement recorded",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Disbursement" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/loans": {
+      "get": {
+        "tags": ["servicing"],
+        "summary": "Loans visible to the caller",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "responses": {
+          "200": {
+            "description": "Loans with outstanding principal and delinquency bucket",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Loan" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/loans/{loan_id}": {
+      "get": {
+        "tags": ["servicing"],
+        "summary": "Loan with its repayment schedule and posted repayments",
+        "description": "Registered read-heavy endpoint: p95 under 500 ms.",
+        "parameters": [
+          { "$ref": "#/components/parameters/LoanId" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Loan detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["loan", "repayment_schedule", "repayments"],
+                  "properties": {
+                    "loan": { "$ref": "#/components/schemas/Loan" },
+                    "repayment_schedule": { "$ref": "#/components/schemas/RepaymentSchedule" },
+                    "repayments": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Repayment" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/loans/{loan_id}/repayments": {
+      "post": {
+        "tags": ["servicing"],
+        "summary": "Post a repayment, reduce outstanding principal and recalculate the bucket",
+        "parameters": [
+          { "$ref": "#/components/parameters/LoanId" },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$",
+                    "example": "18450.00",
+                    "description": "Quoted 2dp decimal string (decision D-G). Never a JSON number."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Appended repayment and the refreshed loan projections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["repayment", "loan"],
+                  "properties": {
+                    "repayment": { "$ref": "#/components/schemas/Repayment" },
+                    "loan": { "$ref": "#/components/schemas/Loan" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
+    },
+    "/operations/end-of-day": {
+      "post": {
+        "tags": ["delinquency"],
+        "summary": "Idempotent as-of-date delinquency recalculation over active loans",
+        "description": "ADMIN only, per D-N. A second run for the same as-of date changes nothing.",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["as_of_date"],
+                "additionalProperties": false,
+                "properties": { "as_of_date": { "$ref": "#/components/schemas/AsOfDate" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Run summary",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EndOfDayRun" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/ValidationFailed" }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": ["delinquency"],
+        "summary": "Portfolio by product, bucket and total overdue",
+        "description": "ADMIN only. Registered read-heavy endpoint. Served from stored bucket state; never invokes the end-of-day run.",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "responses": {
+          "200": {
+            "description": "Portfolio summary",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PortfolioSummary" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/audit-entries": {
+      "get": {
+        "tags": ["identity"],
+        "summary": "Audit trail, newest first",
+        "description": "ADMIN only.",
+        "parameters": [
+          { "name": "entity_type", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "entity_id", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/RequestId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit entries",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AuditEntry" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["platform"],
+        "summary": "Readiness probe, 200 within one second of startup",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "database": { "type": "string", "example": "ok" },
+                    "version": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": ["platform"],
+        "summary": "RED metrics labelled method, route, status",
+        "description": "Path taken from project-manifest.json observability.metrics_path, not from a story.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Prometheus exposition format",
+            "content": { "text/plain": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Signed JWT carrying sub, role and exp (decision D-F). Enforced by one require_roles dependency at the router."
+      }
+    },
+    "parameters": {
+      "RequestId": {
+        "name": "X-Request-ID",
+        "in": "header",
+        "required": false,
+        "description": "Correlation Id. Honoured when present, generated when absent, always echoed back.",
+        "schema": { "$ref": "#/components/schemas/CorrelationId" }
+      },
+      "ProductCode": {
+        "name": "product_code",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "example": "PERSONAL" }
+      },
+      "ApplicationId": {
+        "name": "application_id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      },
+      "LoanId": {
+        "name": "loan_id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      }
+    },
+    "headers": {
+      "XRequestId": {
+        "description": "Echoed correlation id",
+        "schema": { "$ref": "#/components/schemas/CorrelationId" }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "No or invalid token. No handler body executes.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["error", "detail"],
+              "properties": {
+                "error": { "type": "string", "example": "Unauthorized" },
+                "detail": { "type": "string" },
+                "context": { "type": "object", "additionalProperties": true },
+                "request_id": { "$ref": "#/components/schemas/CorrelationId" }
+              }
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Authenticated but the role may not reach this surface",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["error", "detail"],
+              "properties": {
+                "error": { "type": "string", "example": "Forbidden" },
+                "detail": { "type": "string" },
+                "context": { "type": "object", "additionalProperties": true },
+                "request_id": { "$ref": "#/components/schemas/CorrelationId" }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Unknown identifier",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["error", "detail"],
+              "properties": {
+                "error": { "type": "string", "example": "EntityNotFound" },
+                "detail": { "type": "string" },
+                "context": { "type": "object", "additionalProperties": true },
+                "request_id": { "$ref": "#/components/schemas/CorrelationId" }
+              }
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Illegal transition, already-disbursed loan, or a reason code not declared by the pinned policy version",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["error", "detail"],
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "enum": ["AlreadyDisbursed", "InvalidTransition", "ReasonCodeNotDeclared"]
+                },
+                "detail": { "type": "string" },
+                "context": { "type": "object", "additionalProperties": true },
+                "request_id": { "$ref": "#/components/schemas/CorrelationId" }
+              }
+            }
+          }
+        }
+      },
+      "ValidationFailed": {
+        "description": "Request failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["error", "detail"],
+              "properties": {
+                "error": { "type": "string", "example": "ValidationFailed" },
+                "detail": { "type": "string" },
+                "context": { "type": "object", "additionalProperties": true },
+                "request_id": { "$ref": "#/components/schemas/CorrelationId" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CorrelationId": {
+        "type": "string",
+        "minLength": 1,
+        "example": "req-abc",
+        "description": "Request-scoped identifier carried by every structured log line. Also the shape of the standard error envelope's correlation field."
+      },
+      "Role": {
+        "type": "string",
+        "enum": ["CUSTOMER", "UNDERWRITER", "ADMIN"],
+        "description": "Exactly one per user; determines which surfaces the user may reach."
+      },
+      "User": {
+        "type": "object",
+        "required": ["id", "username", "role"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "username": { "type": "string", "example": "priya.customer" },
+          "role": { "$ref": "#/components/schemas/Role" }
+        }
+      },
+      "AuditEntry": {
+        "type": "object",
+        "required": ["id", "actor_user_id", "action", "entity_type", "entity_id", "occurred_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "actor_user_id": { "type": "string", "format": "uuid" },
+          "action": { "type": "string", "example": "override_decision" },
+          "entity_type": { "type": "string", "example": "LoanApplication" },
+          "entity_id": { "type": "string" },
+          "comment": { "type": "string", "nullable": true },
+          "reason_code": { "type": "string", "nullable": true },
+          "occurred_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Threshold": {
+        "type": "object",
+        "description": "One configurable bound inside Policy Rules, projected for the Policy Editor form.",
+        "required": ["kind", "value"],
+        "properties": {
+          "kind": { "type": "string", "example": "min_income" },
+          "value": { "type": "string", "example": "25000.00" }
+        }
+      },
+      "ReasonCode": {
+        "type": "object",
+        "required": ["code", "text"],
+        "properties": {
+          "code": { "type": "string", "example": "RC-07" },
+          "text": { "type": "string", "example": "Declared income below product minimum" }
+        }
+      },
+      "RequiredDocument": {
+        "type": "object",
+        "required": ["document_type", "label"],
+        "properties": {
+          "document_type": { "type": "string", "example": "SALARY_SLIP" },
+          "label": { "type": "string", "example": "Latest salary slip" }
+        }
+      },
+      "PolicyRules": {
+        "type": "object",
+        "description": "The validated threshold document carried by a Policy Version (decision D-A). Stored as JSONB; no expression DSL.",
+        "required": [
+          "min_income", "min_age", "max_age", "min_credit_score",
+          "min_tenure_months", "max_tenure_months", "annual_rate_pct",
+          "reason_codes", "required_documents"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "min_income": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$", "example": "25000.00" },
+          "min_age": { "type": "integer", "minimum": 0 },
+          "max_age": { "type": "integer", "minimum": 0 },
+          "min_credit_score": { "type": "integer" },
+          "min_tenure_months": { "type": "integer", "minimum": 1 },
+          "max_tenure_months": { "type": "integer", "minimum": 1 },
+          "annual_rate_pct": { "type": "string", "pattern": "^[0-9]{1,3}\\.[0-9]{1,6}$", "example": "13.500000" },
+          "reason_codes": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/ReasonCode" } },
+          "required_documents": { "type": "array", "items": { "$ref": "#/components/schemas/RequiredDocument" } }
+        }
+      },
+      "PolicyVersion": {
+        "type": "object",
+        "description": "Immutable numbered rule set for exactly one Loan Product. Never updated or deleted.",
+        "required": ["id", "product_code", "version_number", "rules", "is_active", "created_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "product_code": { "type": "string" },
+          "version_number": { "type": "integer", "minimum": 1 },
+          "rules": { "$ref": "#/components/schemas/PolicyRules" },
+          "is_active": { "type": "boolean" },
+          "created_by": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "LoanProduct": {
+        "type": "object",
+        "description": "A lendable offering in the catalog. Carries no thresholds itself.",
+        "required": ["product_code", "name", "active_policy_version_id"],
+        "properties": {
+          "product_code": { "type": "string", "enum": ["PERSONAL", "VEHICLE", "EDUCATION"] },
+          "name": { "type": "string", "example": "Personal Loan" },
+          "active_policy_version_id": { "type": "string", "format": "uuid" },
+          "active_policy_version": {
+            "nullable": true,
+            "allOf": [{ "$ref": "#/components/schemas/PolicyVersion" }]
+          }
+        }
+      },
+      "Applicant": {
+        "type": "object",
+        "description": "Exactly one per Loan Application. No co-applicant or guarantor exists.",
+        "required": ["full_name", "date_of_birth", "declared_income", "pan", "aadhaar"],
+        "additionalProperties": false,
+        "properties": {
+          "full_name": { "type": "string", "example": "Priya Raghavan" },
+          "date_of_birth": { "type": "string", "format": "date", "example": "1991-04-17" },
+          "declared_income": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$", "example": "84000.00" },
+          "pan": { "type": "string", "example": "ABCDE1234F", "description": "Synthetic. Never verified, never logged." },
+          "aadhaar": { "type": "string", "example": "9999-8888-7777", "description": "Synthetic. Never verified, never logged." },
+          "credit_history_flags": { "type": "array", "items": { "type": "string", "example": "PRIOR_DEFAULT" } }
+        }
+      },
+      "ApplicationSubmission": {
+        "type": "object",
+        "description": "The inbound payload that creates a Loan Application.",
+        "required": ["product_code", "requested_amount", "requested_tenure_months", "applicant"],
+        "additionalProperties": false,
+        "properties": {
+          "product_code": { "type": "string", "example": "PERSONAL" },
+          "requested_amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$", "example": "450000.00" },
+          "requested_tenure_months": { "type": "integer", "minimum": 1, "example": 36 },
+          "applicant": { "$ref": "#/components/schemas/Applicant" }
+        }
+      },
+      "ApplicationStatus": {
+        "type": "string",
+        "enum": ["SUBMITTED", "AWAITING_DOCUMENTS", "UNDER_REVIEW", "MANUAL_REVIEW", "APPROVED", "REJECTED", "DISBURSED"],
+        "description": "Mutable projection of the append-only facts recorded against the application. Seven states per D-L, which added MANUAL_REVIEW."
+      },
+      "CreditScore": {
+        "type": "integer",
+        "minimum": 300,
+        "maximum": 900,
+        "example": 712,
+        "description": "Deterministic score from the Credit Score Stub. Not a bureau score."
+      },
+      "LoanApplication": {
+        "type": "object",
+        "required": ["id", "product_code", "policy_version_id", "status", "requested_amount", "requested_tenure_months", "applicant", "submitted_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "product_code": { "type": "string" },
+          "policy_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Pinned at submission and never retargeted by a later activation (decision D-D)."
+          },
+          "status": { "$ref": "#/components/schemas/ApplicationStatus" },
+          "requested_amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "requested_tenure_months": { "type": "integer" },
+          "applicant": { "$ref": "#/components/schemas/Applicant" },
+          "credit_score": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/CreditScore" }] },
+          "submitted_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DocumentVerificationStatus": {
+        "type": "string",
+        "enum": ["PENDING", "VERIFIED", "REJECTED"],
+        "description": "An Underwriter ruling on one Application Document."
+      },
+      "ApplicationDocument": {
+        "type": "object",
+        "required": ["id", "application_id", "document_type", "status"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "application_id": { "type": "string", "format": "uuid" },
+          "document_type": { "type": "string", "example": "SALARY_SLIP" },
+          "label": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/DocumentVerificationStatus" },
+          "rejection_reason": { "type": "string", "nullable": true },
+          "actioned_by": { "type": "string", "format": "uuid", "nullable": true },
+          "actioned_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "DocumentChecklist": {
+        "type": "array",
+        "description": "The Required Documents generated for one Loan Application at submission, from its pinned Policy Version.",
+        "items": { "$ref": "#/components/schemas/ApplicationDocument" }
+      },
+      "DocumentVerificationQueue": {
+        "type": "array",
+        "description": "Underwriter work list. Excludes already-actioned documents.",
+        "items": { "$ref": "#/components/schemas/ApplicationDocument" }
+      },
+      "DecisionOutcome": {
+        "type": "string",
+        "enum": ["AUTO_APPROVE", "AUTO_REJECT", "MANUAL_REVIEW"]
+      },
+      "UnderwritingDecision": {
+        "type": "object",
+        "description": "Append-only. An Override supersedes rather than edits.",
+        "required": ["id", "application_id", "policy_version_id", "outcome", "reason_codes", "decided_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "application_id": { "type": "string", "format": "uuid" },
+          "policy_version_id": { "type": "string", "format": "uuid" },
+          "outcome": { "$ref": "#/components/schemas/DecisionOutcome" },
+          "reason_codes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/ReasonCode" },
+            "description": "Only codes declared by the pinned Policy Version."
+          },
+          "comment": { "type": "string", "nullable": true },
+          "supersedes_id": { "type": "string", "format": "uuid", "nullable": true },
+          "decided_by": { "type": "string", "format": "uuid", "nullable": true },
+          "decided_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Override": {
+        "type": "object",
+        "description": "An Admin reversal of an AUTO_REJECT, recorded as a new superseding Underwriting Decision.",
+        "required": ["reason_code", "comment"],
+        "additionalProperties": false,
+        "properties": {
+          "reason_code": { "type": "string", "minLength": 1, "example": "RC-12" },
+          "comment": { "type": "string", "minLength": 1, "example": "Employer letter verified offline" }
+        }
+      },
+      "PolicyViolation": {
+        "type": "object",
+        "description": "Refusal of an Application Submission that breaches a Threshold outright.",
+        "required": ["error", "detail", "context"],
+        "properties": {
+          "error": { "type": "string", "enum": ["PolicyViolationException"] },
+          "detail": { "type": "string" },
+          "context": {
+            "type": "object",
+            "required": ["threshold_kind", "configured_value", "submitted_value", "policy_version_id"],
+            "properties": {
+              "threshold_kind": { "type": "string", "example": "min_income" },
+              "configured_value": { "type": "string", "example": "25000.00" },
+              "submitted_value": { "type": "string", "example": "18000.00" },
+              "policy_version_id": { "type": "string", "format": "uuid" }
+            }
+          }
+        }
+      },
+      "EMI": {
+        "type": "string",
+        "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$",
+        "example": "15264.33",
+        "description": "Equated Monthly Installment, quoted 2dp string."
+      },
+      "TotalPayable": {
+        "type": "string",
+        "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$",
+        "example": "549515.88",
+        "description": "Sum of every Installment principal and interest. The stored rows sum to it exactly."
+      },
+      "RoundingResidual": {
+        "type": "string",
+        "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$",
+        "example": "-0.07",
+        "description": "Difference absorbed wholly by the final Installment (decision D-C)."
+      },
+      "OutstandingPrincipal": {
+        "type": "string",
+        "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$",
+        "example": "412300.00",
+        "description": "Stored projection of Disbursement minus applied principal, reconcilable by replay."
+      },
+      "Installment": {
+        "type": "object",
+        "required": ["id", "sequence", "due_date", "principal_component", "interest_component", "emi"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "sequence": { "type": "integer", "minimum": 1 },
+          "due_date": { "type": "string", "format": "date" },
+          "principal_component": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "interest_component": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "emi": { "$ref": "#/components/schemas/EMI" }
+        }
+      },
+      "RepaymentSchedule": {
+        "type": "object",
+        "description": "Immutable set of Installments generated at approval. Never updated or deleted.",
+        "required": ["id", "loan_id", "emi", "total_payable", "installments"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "loan_id": { "type": "string", "format": "uuid" },
+          "emi": { "$ref": "#/components/schemas/EMI" },
+          "total_payable": { "$ref": "#/components/schemas/TotalPayable" },
+          "rounding_residual": { "$ref": "#/components/schemas/RoundingResidual" },
+          "installments": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/Installment" }
+          }
+        }
+      },
+      "FundingSource": {
+        "type": "string",
+        "example": "STUB-TREASURY-01",
+        "description": "Stubbed origin of disbursed money, recorded for audit. No payment rail is called."
+      },
+      "Disbursement": {
+        "type": "object",
+        "description": "Append-only record that released a Loan principal.",
+        "required": ["id", "loan_id", "released_amount", "funding_source", "disbursed_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "loan_id": { "type": "string", "format": "uuid" },
+          "released_amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "funding_source": { "$ref": "#/components/schemas/FundingSource" },
+          "disbursed_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Repayment": {
+        "type": "object",
+        "description": "Append-only posted payment against a Loan.",
+        "required": ["id", "loan_id", "amount", "applied_principal", "applied_interest", "posted_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "loan_id": { "type": "string", "format": "uuid" },
+          "amount": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "applied_principal": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "applied_interest": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "posted_at": { "type": "string", "format": "date-time" },
+          "posted_by": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DaysPastDue": {
+        "type": "integer",
+        "minimum": 0,
+        "example": 35,
+        "description": "Whole days between the As-Of Date and the due date of the oldest unpaid Installment. Zero when none is overdue."
+      },
+      "DelinquencyBucket": {
+        "type": "string",
+        "enum": ["CURRENT", "DPD-30", "DPD-60", "DPD-90", "NPA"],
+        "description": "Ageing band from Days Past Due (decision D-B): 0-29, 30-59, 60-89, 90-179, 180+. Status only; nothing is charged for lateness."
+      },
+      "AsOfDate": {
+        "type": "string",
+        "format": "date",
+        "example": "2026-03-31",
+        "description": "The date an End-Of-Day Run evaluates against, making the run replayable."
+      },
+      "Loan": {
+        "type": "object",
+        "description": "A disbursed Loan Application, carrying two maintained projections.",
+        "required": ["id", "application_id", "product_code", "principal", "annual_rate_pct", "tenure_months", "status", "outstanding_principal", "delinquency_bucket"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "application_id": { "type": "string", "format": "uuid" },
+          "product_code": { "type": "string" },
+          "principal": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "annual_rate_pct": { "type": "string", "pattern": "^[0-9]{1,3}\\.[0-9]{1,6}$" },
+          "tenure_months": { "type": "integer", "minimum": 1 },
+          "status": { "type": "string", "enum": ["APPROVED", "DISBURSED", "CLOSED"] },
+          "outstanding_principal": { "$ref": "#/components/schemas/OutstandingPrincipal" },
+          "delinquency_bucket": { "$ref": "#/components/schemas/DelinquencyBucket" },
+          "days_past_due": { "$ref": "#/components/schemas/DaysPastDue" },
+          "disbursed_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "EndOfDayRun": {
+        "type": "object",
+        "description": "Idempotent, As-Of-Date-parameterised recalculation over every active Loan.",
+        "required": ["as_of_date", "loans_evaluated", "buckets", "completed_at"],
+        "properties": {
+          "as_of_date": { "$ref": "#/components/schemas/AsOfDate" },
+          "loans_evaluated": { "type": "integer", "minimum": 0 },
+          "buckets": {
+            "type": "object",
+            "additionalProperties": { "type": "integer", "minimum": 0 },
+            "description": "Count per Delinquency Bucket after the run."
+          },
+          "completed_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PortfolioSummary": {
+        "type": "object",
+        "description": "Admin reporting view served from stored bucket state.",
+        "required": ["by_product", "total_overdue", "as_of"],
+        "properties": {
+          "by_product": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["product_code", "loan_count", "loan_value", "by_bucket"],
+              "properties": {
+                "product_code": { "type": "string" },
+                "loan_count": { "type": "integer", "minimum": 0 },
+                "loan_value": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+                "by_bucket": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["delinquency_bucket", "loan_count", "loan_value"],
+                    "properties": {
+                      "delinquency_bucket": { "$ref": "#/components/schemas/DelinquencyBucket" },
+                      "loan_count": { "type": "integer", "minimum": 0 },
+                      "loan_value": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "total_overdue": { "type": "string", "pattern": "^-?[0-9]{1,12}\\.[0-9]{2}$" },
+          "as_of": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

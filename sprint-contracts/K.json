@@ -1,0 +1,101 @@
+{
+  "group": "K",
+  "stories": [
+    "E10-S1",
+    "E12-S1"
+  ],
+  "features": [
+    "F082",
+    "F083",
+    "F084",
+    "F085",
+    "F090",
+    "F091",
+    "F092",
+    "F093"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-082",
+        "matrix_ids": [
+          "VM-082"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/disbursement",
+        "expected_status": 201,
+        "description": "POST /loans/{loan_id}/disbursement → 201 — the loan record holds the released amount"
+      },
+      {
+        "id": "QA-VM-083",
+        "matrix_ids": [
+          "VM-083"
+        ],
+        "method": "GET",
+        "path": "/loans/{loan_id}",
+        "expected_status": 200,
+        "description": "GET /loans/{loan_id} → 200 — holds a funding_source and reads DISBURSED with its schedule attached"
+      },
+      {
+        "id": "QA-VM-084",
+        "matrix_ids": [
+          "VM-084"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/disbursement",
+        "expected_status": 201,
+        "description": "POST /loans/{loan_id}/disbursement → 201 — with the stub funding source; no external payment rail is called and no signed agreement artifact is produced"
+      },
+      {
+        "id": "QA-VM-085",
+        "matrix_ids": [
+          "VM-085"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/disbursement",
+        "expected_status": 409,
+        "description": "POST /loans/{loan_id}/disbursement → 409 — AlreadyDisbursed on the second attempt; the recorded released amount is unchanged"
+      },
+      {
+        "id": "QA-VM-090",
+        "matrix_ids": [
+          "VM-090"
+        ],
+        "method": "POST",
+        "path": "/operations/end-of-day",
+        "expected_status": 200,
+        "description": "POST /operations/end-of-day → 200 — for a given as_of_date; each seeded loan's stored bucket matches its days past due at that date"
+      },
+      {
+        "id": "QA-VM-091",
+        "matrix_ids": [
+          "VM-091"
+        ],
+        "method": "POST",
+        "path": "/operations/end-of-day",
+        "expected_status": 200,
+        "description": "POST /operations/end-of-day → 200 — a second run for the same as_of_date leaves every bucket and stored row byte-identical"
+      },
+      {
+        "id": "QA-VM-092",
+        "matrix_ids": [
+          "VM-092"
+        ],
+        "method": "POST",
+        "path": "/operations/end-of-day",
+        "expected_status": 200,
+        "description": "POST /operations/end-of-day → 200 — for an as_of_date before a loan's first due date, that loan's bucket reads CURRENT"
+      },
+      {
+        "id": "QA-VM-093",
+        "matrix_ids": [
+          "VM-093"
+        ],
+        "method": "POST",
+        "path": "/operations/end-of-day",
+        "expected_status": 200,
+        "description": "POST /operations/end-of-day → 200 — no fee, penal interest or collections record was created by the run"
+      }
+    ]
+  }
+}

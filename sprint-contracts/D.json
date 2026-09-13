@@ -1,0 +1,50 @@
+{
+  "group": "D",
+  "stories": [
+    "E2-S1",
+    "E16-S1"
+  ],
+  "features": [
+    "F024",
+    "F025",
+    "F026",
+    "F031",
+    "F032",
+    "F033",
+    "F034"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-024",
+        "matrix_ids": [
+          "VM-024"
+        ],
+        "method": "GET",
+        "path": "/products",
+        "expected_status": 200,
+        "description": "GET /products → 200 — at least 3 products, with PERSONAL, VEHICLE and EDUCATION among them"
+      },
+      {
+        "id": "QA-VM-025",
+        "matrix_ids": [
+          "VM-025"
+        ],
+        "method": "GET",
+        "path": "/products",
+        "expected_status": 200,
+        "description": "GET /products → 200 — each entry carries its own policy_version_id and no two are equal"
+      },
+      {
+        "id": "QA-VM-026",
+        "matrix_ids": [
+          "VM-026"
+        ],
+        "method": "GET",
+        "path": "/products/{product_code}",
+        "expected_status": 200,
+        "description": "GET /products/{product_code} → 200 — for all three; minimum income, age, score, tenure and rate differ across the three pinned versions"
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "waivers": [
+    {
+      "sensor_id": "registry-names",
+      "scope": ".claude/skills/code-map/scripts/code_index/code_index.py — the flat imports compiled_index, graph_metrics, map_render, py_index, ts_index",
+      "reason": "False positive on vendored harness code. All five names are sibling modules in the same directory (compiled_index.py, graph_metrics.py, map_render.py, py_index.py, ts_index.py all exist next to code_index.py). code_index.py runs as a standalone script with its own directory on sys.path, so the imports are flat rather than relative — the sensor reads them as unresolvable third-party pypi packages. Verified by directory listing before waiving. Not fixed by rewriting to relative imports, because that would break standalone execution of a harness control-plane script this project does not own.",
+      "expires": "2026-12-31",
+      "approved_by": "ovi-rosu"
+    },
+    {
+      "sensor_id": "length-caps",
+      "scope": "Scaffold-import commit only: 10 vendored harness control-plane files under .claude/hooks/lib/ and .claude/scripts/ (impact-scope.js, length.js, registry-names.js, story-bundle.js, budget-state.js, context-pack.js, pipeline-state-readers.js, pr-walkthrough.js, scaffold-render.js, verification-matrix-gate.js)",
+      "reason": "These files arrived via the claude_harness_eng_v6 scaffold copy rather than through pre-write-gate, so the initial commit is the first time the cap sees them. They are the harness control plane, not this project's production code, and splitting them would fork vendored tooling we do not own. The 300-line cap still applies in full to backend/src and frontend/src. Expiry is deliberately one week: this waiver exists to land the scaffold-import commit, and must lapse before it can shelter any application code written later.",
+      "expires": "2026-09-20",
+      "approved_by": "ovi-rosu"
+    }
+  ]
+}

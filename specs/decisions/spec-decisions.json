@@ -1,0 +1,575 @@
+{
+  "version": 1,
+  "phase": "spec",
+  "source": "specs/brd/brd.md",
+  "confirmed_at": "2026-09-13T00:00:00Z",
+  "milestone": {
+    "name": "M1-M3 — full origination-to-repayment lifecycle (all three PRD milestones in one graph)",
+    "epics": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+    ],
+    "deferred_epics": [],
+    "requirements_in_scope": [
+      "FR-01",
+      "FR-02",
+      "FR-03",
+      "FR-04",
+      "FR-05",
+      "FR-06",
+      "FR-07",
+      "FR-08",
+      "FR-09",
+      "FR-10",
+      "FR-11",
+      "FR-12",
+      "FR-13",
+      "FR-14",
+      "FR-15",
+      "FR-16",
+      "FR-17",
+      "NFR-01",
+      "NFR-02",
+      "NFR-03",
+      "NFR-04",
+      "NFR-05",
+      "NFR-06",
+      "NFR-07",
+      "NFR-08",
+      "NFR-09",
+      "NFR-10",
+      "NFR-11",
+      "NFR-12"
+    ]
+  },
+  "epic_catalog": [
+    {
+      "id": "E1",
+      "name": "Identity & Role Boundary",
+      "milestone": "M1",
+      "requirements": [
+        "FR-16",
+        "NFR-04"
+      ]
+    },
+    {
+      "id": "E2",
+      "name": "Product Catalog",
+      "milestone": "M1",
+      "requirements": [
+        "FR-01"
+      ]
+    },
+    {
+      "id": "E3",
+      "name": "Versioned Policy & Policy Editor",
+      "milestone": "M1",
+      "requirements": [
+        "FR-13",
+        "NFR-02",
+        "NFR-05"
+      ]
+    },
+    {
+      "id": "E4",
+      "name": "Application Intake & Document Checklist",
+      "milestone": "M2",
+      "requirements": [
+        "FR-02",
+        "FR-05"
+      ]
+    },
+    {
+      "id": "E5",
+      "name": "Credit Scoring & Underwriting Decision",
+      "milestone": "M2",
+      "requirements": [
+        "FR-03",
+        "FR-04"
+      ]
+    },
+    {
+      "id": "E6",
+      "name": "Underwriter Workbench & Document Verification",
+      "milestone": "M2",
+      "requirements": [
+        "FR-06",
+        "FR-17"
+      ]
+    },
+    {
+      "id": "E7",
+      "name": "Admin Console & Decision Override Audit",
+      "milestone": "M2",
+      "requirements": [
+        "FR-10"
+      ]
+    },
+    {
+      "id": "E8",
+      "name": "Customer Application Tracking",
+      "milestone": "M2",
+      "requirements": [
+        "FR-11"
+      ]
+    },
+    {
+      "id": "E9",
+      "name": "Money, EMI & Schedule Generation",
+      "milestone": "M3",
+      "requirements": [
+        "FR-07",
+        "NFR-01"
+      ]
+    },
+    {
+      "id": "E10",
+      "name": "Disbursement",
+      "milestone": "M3",
+      "requirements": [
+        "FR-08"
+      ]
+    },
+    {
+      "id": "E11",
+      "name": "Repayment Posting & Delinquency Recalculation",
+      "milestone": "M3",
+      "requirements": [
+        "FR-09"
+      ]
+    },
+    {
+      "id": "E12",
+      "name": "End-of-Day Delinquency Job",
+      "milestone": "M3",
+      "requirements": [
+        "FR-14"
+      ]
+    },
+    {
+      "id": "E13",
+      "name": "Customer Loan & Repayment View",
+      "milestone": "M3",
+      "requirements": [
+        "FR-12"
+      ]
+    },
+    {
+      "id": "E14",
+      "name": "Portfolio Dashboard",
+      "milestone": "M3",
+      "requirements": [
+        "FR-15"
+      ]
+    },
+    {
+      "id": "E15",
+      "name": "Platform: Observability, Health, SLO, Stack",
+      "milestone": "M1",
+      "requirements": [
+        "NFR-03",
+        "NFR-06",
+        "NFR-07",
+        "NFR-09",
+        "NFR-12"
+      ]
+    },
+    {
+      "id": "E16",
+      "name": "Architecture Invariant Tests",
+      "milestone": "M1",
+      "requirements": [
+        "NFR-08",
+        "NFR-11"
+      ]
+    },
+    {
+      "id": "E17",
+      "name": "Accessibility of Apply / Track / Repay",
+      "milestone": "M3",
+      "requirements": [
+        "NFR-10"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "How much of the PRD's build order should this /spec run expand into the story graph?",
+      "options": [
+        "All 3 milestones in one graph",
+        "M1 only",
+        "M1 + M2"
+      ],
+      "proposed_default": "All 3 milestones in one graph",
+      "chosen": "All 3 milestones in one graph, epics tagged M1/M2/M3 so /auto ratchets in PRD order",
+      "rationale": "Total capstone scope is fixed by the 29 adopted requirements and bounded by 10 safeguards, so there is no scope discovery left for a later run to do. Deferring M2/M3 would buy a second full /spec-to-/design cycle for no new information, and M3's disburse-and-repay done_when is part of the graded deliverable.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D2",
+      "question": "How finely should the 29 requirements be cut into epics?",
+      "options": [
+        "Fine — 17 epics (1-2 requirements each)",
+        "Coarse — 10 epics merged by actor and lifecycle stage"
+      ],
+      "proposed_default": "Fine — 17 epics",
+      "chosen": "Fine — 17 epics, each owning 1-2 requirements (see epic_catalog)",
+      "rationale": "One-to-two requirements per epic gives each story group a disjoint file-ownership set, which is what lets /auto fan out parallel implementer teammates without write contention. Coarse epics would put Intake, Scoring and Decision in one owned tree.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D3",
+      "question": "Risk R-4: no requirement fixes the delinquency day ranges, and AC-09 pins 35 days past due to DPD-30. Which bucket ladder?",
+      "options": [
+        "CURRENT 0-29 / DPD-30 30-59 / DPD-60 60-89 / DPD-90 90-179 / NPA >=180",
+        "CURRENT 0-29 / DPD-30 30-59 / DPD-60 60-89 / DPD-90 90-119 / NPA >=120",
+        "Four buckets plus an orthogonal NPA flag at 90 DPD"
+      ],
+      "proposed_default": "CURRENT 0-29 / DPD-30 30-59 / DPD-60 60-89 / DPD-90 90-179 / NPA >=180",
+      "chosen": "Floor semantics: CURRENT 0-29, DPD-30 30-59, DPD-60 60-89, DPD-90 90-179, NPA >=180 days past due, computed from the oldest unpaid installment's due date",
+      "rationale": "AC-09 requires 35 DPD to read as DPD-30, which rules out 1-30/31-60 band semantics. Floors keep all five FR-09 buckets non-empty and mutually exclusive, and placing NPA at 180 avoids collapsing DPD-90 and NPA into the same range. The four-buckets-plus-flag option contradicts FR-09, which lists NPA as one of five buckets.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D4",
+      "question": "Risk R-1: rounded equal EMIs rarely sum to the unrounded total, yet AC-07 demands sum(principal) = disbursed AND sum(principal+interest) = total payable. Where does the rounding residual land?",
+      "options": [
+        "Final installment, total_payable derived from the schedule",
+        "First installment absorbs it",
+        "Spread cent-by-cent across earliest installments"
+      ],
+      "proposed_default": "Final installment, total_payable derived from the schedule",
+      "chosen": "EMI rounded to 2dp; per-period interest from the opening balance; principal = EMI - interest; the final installment's principal is set to the remaining balance. total_payable is DEFINED as sum(row.principal + row.interest) over the schedule, not EMI x tenure.",
+      "rationale": "Deriving total_payable from the stored rows makes both AC-07 invariants true by construction, which is the only way to satisfy them without loosening the invariant test — the failure mode R-1 predicts. Installment count still equals product tenure.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D5",
+      "question": "Risk R-2: NFR-02 and NFR-05 forbid update and delete on policy versions and schedules, but FR-10 overrides a decision and FR-09 changes outstanding principal. Where is the immutable/mutable line drawn?",
+      "options": [
+        "Immutable artifacts plus mutable loan state",
+        "Fully event-sourced, all state a projection"
+      ],
+      "proposed_default": "Immutable artifacts plus mutable loan state",
+      "chosen": "Append-only tables: policy_version, schedule_installment, decision_record, audit_event, repayment_posting. Mutable columns: application.status, loan.outstanding_principal, loan.delinquency_bucket. An FR-10 override appends a new decision_record plus audit_event; an application's current decision is its latest decision_record.",
+      "rationale": "Confines the NFR-02/NFR-05 zero-update guarantee to the artifacts the requirements actually name, so the architecture test asserts no UPDATE/DELETE against those five tables only and stops colliding with FR-09 and FR-10. Full event sourcing would turn every read surface (FR-11, FR-12, FR-15) into a projection and put the dashboard's p95 under 500ms at risk.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D6",
+      "question": "Risk R-3: FR-13 activates a new policy version with no restart, but FR-04 requires reason codes to exist in the version named on the application. When is the policy version pinned?",
+      "options": [
+        "Pin at application submission",
+        "Pin at decision time"
+      ],
+      "proposed_default": "Pin at application submission",
+      "chosen": "The application stores policy_version_id at submission; scoring, decision, reason codes, MANUAL_REVIEW re-decisions and any later override all cite that pinned version",
+      "rationale": "Pinning at submission is what lets the FR-13 hot-activation test and the FR-04 reason-code test both pass: an activation mid-flight can never change an in-flight application's basis. Pinning at decision time would let two applications submitted together be judged by different rules.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D7",
+      "question": "NFR-11 (100% agent-generated, 0 hand-written production lines) is a process constraint, not runnable behavior. How does it enter the story graph?",
+      "options": [
+        "Governance constraint, no story",
+        "A provenance-check story in the Architecture Invariants epic"
+      ],
+      "proposed_default": "Governance constraint, no story",
+      "chosen": "Governance constraint traced to E16 with no implementation story; evidenced by the standard pre-commit gate set and the /gate attestation record",
+      "rationale": "Keeps the NFR-11 trace id alive downstream without inventing a product story the renderer would have to fill with harness plumbing rather than loan-platform behavior.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D8",
+      "question": "How should the first stories in each milestone be shaped — vertical tracer bullet, or layer-complete per epic?",
+      "options": [
+        "Tracer bullet per milestone, then depth",
+        "Epic-by-epic, layer-complete"
+      ],
+      "proposed_default": "Tracer bullet per milestone, then depth",
+      "chosen": "Each milestone opens with one thin end-to-end story reaching its done_when shallowly (M1: login -> catalog -> edit threshold -> new version active; M2: submit -> score -> decide; M3: approve -> disburse -> post repayment), then epics add depth behind it",
+      "rationale": "Keeps a runnable, demoable system at every story-group boundary and forces the cross-layer seams (Types through UI) to exist before any epic goes deep, rather than integrating six finished layers late.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D9",
+      "question": "Does schedule generation (E9) depend on document verification (E6)?",
+      "options": [
+        "No — only on an APPROVED decision",
+        "Yes — all documents VERIFIED first"
+      ],
+      "proposed_default": "No — only on an APPROVED decision",
+      "chosen": "No. E9 depends on E5 (a decision of AUTO_APPROVE or an approved MANUAL_REVIEW) only; the E6 -> E9 edge is defensive and is dropped.",
+      "rationale": "FR-07 triggers schedule generation on approval and names no document precondition. A real edge here would serialise all of M3 behind the M2 workbench for no requirement.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D10",
+      "question": "Does the end-of-day job (E12) depend on repayment posting (E11)?",
+      "options": [
+        "Only on the shared bucket function",
+        "On the full posting API"
+      ],
+      "proposed_default": "Only on the shared bucket function",
+      "chosen": "E12 depends on the bucket-classification function E11 introduces, not on E11's posting endpoint; E12 is built and tested against seeded loans so it can run in parallel with E11's API work",
+      "rationale": "AC-14's idempotence assertion needs only loans with due dates and a classifier. Making E12 wait on the posting endpoint is a defensive edge that removes the only parallelism available inside M3.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D11",
+      "question": "What does the portfolio dashboard (E14) depend on?",
+      "options": [
+        "E11 bucket state only",
+        "E11 and E12"
+      ],
+      "proposed_default": "E11 bucket state only",
+      "chosen": "E14 is a read model over loan bucket state and overdue installments (E11); no edge to E12",
+      "rationale": "AC-15 asserts counts, values and total overdue against stored state, which E11 establishes. The EOD job only refreshes that state on a schedule.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D12",
+      "question": "Where does the platform epic (E15) sit in the order?",
+      "options": [
+        "M1, before any other epic",
+        "Last, retrofitted"
+      ],
+      "proposed_default": "M1, before any other epic",
+      "chosen": "E15 lands first in M1: structured JSON logging, the correlation-id middleware, the log-redaction filter, /health and the Docker Compose stack precede every other epic's first log line",
+      "rationale": "NFR-06 asserts 100% of request-scoped log lines carry a correlation id and NFR-03 asserts zero PII occurrences. Both are retrofit-hostile — a later pass would have to revisit every handler written before them. This edge is real, not defensive.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D13",
+      "question": "What is the observable criterion for NFR-01 (fixed-point money)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "A property test over (principal, rate, tenure) asserts every money field on a generated schedule is a Decimal quantized to exactly 2 decimal places, and a static check reports 0 float arithmetic operations in money code paths (backend decimal.Decimal; frontend integer minor units).",
+      "rationale": "NFR-01 stated a target with no observation procedure; spec-render only checks criteria that already exist, so the criterion is authored here.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D14",
+      "question": "What is the observable criterion for NFR-02 (policy versions and schedules append-only)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "The policy_version and schedule_installment repositories expose no update or delete method (asserted by interface test), and an architecture test reports 0 UPDATE or DELETE statements and 0 ORM mutations against those two tables across src/ and migrations/.",
+      "rationale": "Turns NFR-02's zero-update-and-delete target into a check with a stated scope, bounded by the D5 immutable/mutable line.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D15",
+      "question": "What is the observable criterion for NFR-03 (no PII in logs)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "A test submits an application carrying synthetic PAN, Aadhaar and salary-document content, captures every emitted log record, and asserts 0 occurrences of each value; a second assertion confirms the redaction filter is installed on every configured logger.",
+      "rationale": "The capture-and-assert-zero form is what makes NFR-03's zero-occurrence claim observable, and the filter-installation assertion stops a new logger silently bypassing it.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D16",
+      "question": "What is the observable criterion for NFR-04 (auth enforced at the controller layer)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "For every underwriter and admin route enumerated from the OpenAPI schema, a generated test issues the request with no session (expect 401) and with a CUSTOMER session (expect 403); the test asserts it covered 100% of those routes, so a newly added unguarded route fails the suite.",
+      "rationale": "Enumerating from the schema rather than a hand-written list is what delivers NFR-04's 100%-of-routes claim and keeps it true as routes are added.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D17",
+      "question": "What is the observable criterion for NFR-05 (append-only migrations)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "A migration-lint test parses every file under migrations/ and asserts 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements; policy migrations are checked by the same parser.",
+      "rationale": "Gives NFR-05's zero-destructive-migrations target a concrete statement set to count, runnable in CI on every commit.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D18",
+      "question": "What is the observable criterion for NFR-06 (structured logs with correlation id)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "Every log line emitted while serving a request parses as JSON and carries a non-empty request_id equal to the inbound X-Request-ID header, or to a generated id when the header is absent; the assertion covers 100% of request-scoped lines in the captured buffer.",
+      "rationale": "Makes NFR-06's 100% countable against a captured buffer instead of a spot check, and fixes header propagation as part of the criterion.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D19",
+      "question": "What is the observable criterion for NFR-07 (health endpoint)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "In the deploy smoke test, after docker compose up reports the backend healthy, GET /health returns 200 with a JSON body and the measured response time is under 1 second.",
+      "rationale": "NFR-07's within-1-second-of-successful-startup needs a defined start point; anchoring it to compose readiness in the smoke test supplies one.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D20",
+      "question": "What is the observable criterion for NFR-08 (architecture rules as tests)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "An architecture test module holds at least one test per named invariant — policy-version immutability, the EMI principal/rate/tenure invariant, and the one-way dependency rule across Types, Config, Repository, Service, API, UI — and the suite fails if any registered invariant has no corresponding test.",
+      "rationale": "NFR-08 names two invariants explicitly and implies the layering rule; the registry-with-no-orphans form makes at-least-one-test-per-invariant enforceable rather than aspirational.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D21",
+      "question": "What is the observable criterion for NFR-09 (runtime SLO)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "A load run against the read-heavy endpoints (GET /products, GET /applications, GET /loans/{id}, GET /dashboard) reports p95 under 500 ms and an error rate under 1%; the measured figures are recorded in the evaluation report.",
+      "rationale": "Names the endpoints the SLO is measured on, so the runtime-SLO sensor has a fixed surface rather than whichever route is convenient.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D22",
+      "question": "What is the observable criterion for NFR-10 (WCAG 2.1 AA)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "An automated axe-core scan of the Apply, Track and Repay screens reports 0 WCAG 2.1 AA violations, and keyboard-only traversal of each screen's primary flow completes without a focus trap.",
+      "rationale": "Pairs an automated zero-violation count with the keyboard check axe cannot see, covering the three screens NFR-10 names.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D23",
+      "question": "What is the observable criterion for NFR-11 (agent-generated code)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "Governance control rather than a runtime assertion: every production commit on the branch carries agent co-authorship and passes the standard pre-commit gate set, and the /gate attestation record is the evidence for 0 hand-written production lines.",
+      "rationale": "Records the observation procedure D7 chose, so NFR-11 keeps a checkable criterion without a product story.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D24",
+      "question": "What is the observable criterion for NFR-12 (self-hosted stack and layering)?",
+      "options": [
+        "Authored in this phase"
+      ],
+      "proposed_default": "Authored in this phase",
+      "chosen": "docker compose up from a clean checkout brings up exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend, all reporting healthy; the layer-dependency architecture test reports 0 violations of the six-layer one-way rule.",
+      "rationale": "Splits NFR-12 into the two things that can actually be observed — a clean-checkout bring-up and a dependency-direction test — instead of leaving it as a stack description.",
+      "basis": "default-accepted",
+      "load_bearing": false
+    },
+    {
+      "id": "D25",
+      "question": "U1/U2 — the 12 NFRs (NFR-01..NFR-12) were in scope with no BRD acceptance postcondition, so 28 story ACs realizing them registered as net_new and blocked trace-check --layer spec-acceptance. Waive them, or ground them upstream?",
+      "options": [
+        "Record accepts_verdict for the 28 ids on D13-D24 (waiver)",
+        "Promote the observation procedures into the source PRD section 6 and re-adopt (upstream evidence)",
+        "Write brd-acceptance.json directly"
+      ],
+      "proposed_default": "Promote the observation procedures into the source PRD section 6 and re-adopt",
+      "chosen": "Promoted upstream. The 12 observation procedures from D13-D24 were transcribed into prd/truelend.md section 6 \"Acceptance / Done\" as NFR-01..NFR-12 rows, then re-extracted with prd-extract.js --tag. brd-acceptance.json went 17 -> 29 criteria; every requirement now carries an acceptance id (NFR acceptance = FRD-57..FRD-68). No accepts_verdict was recorded and no waiver was used — the gate is expected to clear on evidence. Rejected writing brd-acceptance.json directly because the next brd-adopt.js run would erase it.",
+      "rationale": "Section 4 of the source PRD already stated each NFR as a measurable postcondition (0 occurrences, p95 under 500 ms, at least 1 test per invariant, 200 within 1 second), so section 6 rows are transcription of existing source content rather than invented oracles. Editing the source keeps adoption verbatim and survives re-adoption, which a hand-written artifact does not. Verified zero drift on FRD-1..FRD-29 ids, labels and the pre-existing FR-01..FR-17 acceptance ids.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D26",
+      "question": "U3 — ownership cluster C1 holds 25 of 29 stories at 118 points against a 21-point cap and is biconnected with no bridge to split on. Accept it, or re-shape the edges that close the cycles?",
+      "options": [
+        "Accept C1 as a single-owner cluster and sequence via the 14 waves",
+        "Drop the D12 platform-first edge",
+        "Cut the E17-S1 / E15-S3 multi-target fan-in",
+        "Defer to /design"
+      ],
+      "proposed_default": "Accept C1 as a single-owner cluster and sequence via the 14 waves",
+      "chosen": "Accept C1 as a single-owner cluster. One owner takes all 25 stories; sequencing comes from the 14 scheduling waves (A-N), not from cluster-level parallelism. D8 (tracer-first) and D12 (platform-first) stand unchanged, and no recorded edge was removed to silence the warning. The oversize-cluster warning is accepted as a known, recorded condition rather than resolved.",
+      "rationale": "C1 is a direct consequence of two deliberate shaping decisions plus honest cross-epic fan-in on E16-S1, E17-S1 and E15-S3 — not a fabricated edge. Dropping D12 would let epics emit their first log lines before logging, correlation and redaction exist, which is the NFR-03/NFR-06 surface; narrowing the E17-S1/E15-S3 fan-in would weaken the very coverage those stories exist to provide. Accepting a sequential build is the cheaper honest trade. Consequence to carry forward: the 4-clusters/14-waves figure must not be presented as cluster parallelism.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D27",
+      "question": "U4 — the contract edge E11-S1 -> E12-S1 stopped being a cluster cut because E11-S1 (3 points) fell under the 5-point merge floor and was merged into C2. Does D10 intent still hold?",
+      "options": [
+        "Confirm D10 intent and accept C2 as one 8-point cluster",
+        "Re-shape so E11-S1 stays separately startable"
+      ],
+      "proposed_default": "Confirm D10 intent and accept C2 as one 8-point cluster",
+      "chosen": "Confirmed. E12-S1 consumes the published delinquency-bucket ladder and schedule data, not E11-S2 posting endpoint, so D10 intent is intact. C2 is owned as a single 8-point cluster and no parallelism is claimed for the cancelled edge.",
+      "rationale": "The cancellation is a merge artifact of the undersized-cluster floor, not a dependency error. The edge still carries the correct contract direction; only its status as a cluster cut was lost, and no schedule claim rests on it.",
+      "basis": "human",
+      "load_bearing": true
+    },
+    {
+      "id": "D28",
+      "question": "E17-S1 (WCAG) and E15-S3 (SLO) both sat in terminal wave N, fanning in from every screen and read endpoint. D12 front-loaded logging because retrofit is expensive; accessibility and latency have the same property. Move them earlier, or accept terminal verification?",
+      "options": [
+        "Move both earlier as ratchets",
+        "Move accessibility only",
+        "Accept terminal verification"
+      ],
+      "proposed_default": "Move both earlier as ratchets",
+      "chosen": "Both become early ratchets with registry-enumerated coverage. E17-S1 lands immediately after the first customer screen (E4-S3) and E15-S3 immediately after the first read endpoint (E2-S1). Their fan-in edges are reversed: instead of each depending on every screen/endpoint it measures, the later customer-screen stories (E8-S1 Track, E13-S1 Repay) take a contract edge on E17-S1's harness, and the later read-surface stories (E7-S1, E13-S1, E14-S1) take a contract edge on E15-S3's harness. Both criterion sets are restated in the registry-enumeration form already used by D16 for NFR-04: the check enumerates every registered customer-facing screen / read-heavy endpoint and asserts it covered all of them, so a screen or endpoint added later that violates the budget fails the suite at the story that introduced it.",
+      "rationale": "Terminal verification defers the two most retrofit-hostile NFRs past every story that can break them: three customer screens would be built across waves G/I/M with no accessibility signal, then one 5-point story would have to remediate all three, and a p95 miss at wave N would touch every read endpoint. Reversing the fan-in makes the failure attributable to the story that caused it, which is the same reasoning D12 applied to logging, correlation ids and redaction. The registry form keeps FRD-66 and FRD-65 fully asserted — a registry containing Apply, Track and Repay (and the four named read endpoints) satisfies the upstream postcondition and additionally fails closed on an unregistered addition — so no upstream acceptance text changes and no trace id moves. Secondary benefit: removing five fan-in edges retires the cross-epic cycles that U3 named as part of what left C1 without a bridge.",
+      "basis": "human",
+      "load_bearing": true,
+      "supersedes": [
+        "D21 scheduling",
+        "D22 scheduling"
+      ]
+    }
+  ]
+}

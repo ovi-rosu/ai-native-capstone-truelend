@@ -1,0 +1,45 @@
+{
+  "phase": "test",
+  "status": "approved",
+  "rounds": [
+    {
+      "round": 1,
+      "verdict": "approved",
+      "feedback": [
+        "Static rows: re-tag the 12 no-HTTP-surface assertions from api to unit so they leave the sprint contract and are enforced by the architecture suite instead, matching how VM-010 already treats the backend float scanner.",
+        "NFR rigor: promote VM-001, VM-003, VM-004 and VM-005 to carry api evidence on top of unit — PII-free logs, correlation id with and without an inbound header, and GET /health under 1 s are all observable over a served request.",
+        "Concurrency: accept as untested for v1 — disbursement idempotence rests on the UNIQUE constraint on loan id and repayment allocation on FIFO plus the applied_principal + applied_interest = amount CHECK constraint, both structural, so a concurrent writer corrupts nothing even unproven."
+      ],
+      "changes": [
+        "Re-tagged 12 matrix rows api -> unit (VM-020..023 policy-version immutability and migration lint, VM-031..034 invariant registry / git provenance / gate attestation, VM-050 scoring-stub collaborators, VM-081 schedule_installment scan, VM-106..107 SLO report and registry completeness) and renamed their checks CHK-*-api -> CHK-*-unit. Those 12 rows were dropped from the proposed sprint-contract checks: contract-freeze requires Observe to parse as METHOD /path → status, and they assert over source, migrations, git history or a written report rather than a served request.",
+        "Promoted VM-001, VM-003, VM-004 and VM-005 from unit-only to unit+api, adding four CHK-*-api checks and four Observe cells (POST /applications with synthetic PAN/Aadhaar/salary content and a 0-occurrence log-buffer assertion; GET /products with and without X-Request-ID; GET /health under 1 s).",
+        "Filled the review surface: 29 named Ports-and-Adapters seams with real and test-double adapters, 84 proposed evaluator checks with Observe, 14 explicitly-untested areas each with a reason, environment assumptions (injected as-of date, Decimal 2dp money, 60-min JWT, no network egress, Chromium-only) and a 7-point sprint pass/fail. Recorded the three layer decisions in the plan itself so it is self-explaining. Final layers: 50 api, 26 e2e, 22 unit, 4 api+unit, 3 e2e+accessibility, 1 api+performance, 1 unit+performance."
+      ],
+      "declined": [
+        "Did not add a concurrency acceptance criterion: that is a new AC, which waits until /test closes and then belongs to /spec, not an in-phase rewrite. Did not invent proxy endpoints for the 12 static rows, which would have fabricated a runtime check for something that is not one. Did not run the --eval artifact evaluator: it was not requested on this invocation."
+      ],
+      "questions_asked": 3,
+      "answered": 3,
+      "recordedAt": "2026-09-13T15:52:34.344Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "specs/test_artefacts/test-plan.md",
+      "sha256": "6e4d8e4519fade926340573039a6ce33443c4318db000acd28e10e76b576605c"
+    },
+    {
+      "path": "specs/test_artefacts/verification-matrix.json",
+      "sha256": "3c07d287477a63e9d48cf32a7e5802ce0cd02b5f6fe363dc57e187dc57ac814e"
+    },
+    {
+      "path": "specs/test_artefacts/test-traces.json",
+      "sha256": "95b98306c5e6b9326b071399a147f44a4f1c772b3e247c0bc4eb2954e06d4ed9"
+    }
+  ],
+  "low_engagement": false,
+  "waived_by": null,
+  "approvedAt": "2026-09-13T15:52:34.344Z",
+  "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
+  "in_session": false
+}

@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "story_id": "E4-S4",
+  "sprint": 1,
+  "title": "Minimum income threshold rejects submission with PolicyViolationException",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E4-S4-AC1",
+      "E4-S4-AC2",
+      "E4-S4-AC3"
+    ],
+    "brd_ids": [
+      "FRD-5"
+    ],
+    "br_acceptance_ids": [
+      "FRD-44"
+    ],
+    "scope_out": [
+      "must not persist a partial application row on a refused submission; must not hardcode the minimum income value outside the policy version; must not charge a fee or penalty for a refused submission"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Minimum income threshold rejects submission with PolicyViolationException",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/src/types/policy_violation.py",
+      "backend/src/service/origination/income_guard.py",
+      "backend/tests/integration/test_policy_violation_rollback.py"
+    ],
+    "layer": "Service"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-7"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-045",
+      "VM-046",
+      "VM-047"
+    ],
+    "case_ids": [
+      "VM-045",
+      "VM-046",
+      "VM-047"
+    ],
+    "layers": [
+      "api"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E4-S4.md",
+    "parents": [
+      "E4-S2"
+    ],
+    "tracker_key": null
+  }
+}

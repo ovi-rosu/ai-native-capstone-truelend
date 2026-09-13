@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "purpose": "Deterministic checks contributed to /gate. Each entry names its owning PACK, so uninstalling a pack removes its checks instead of leaving the kernel skill instructing an agent to run a script that is gone. Run by .claude/scripts/run-gate-checks.js; the kernel /gate skill invokes the runner rather than naming these scripts inline.",
+  "triggers": {
+    "always": "run every time",
+    "code-graph": "only when specs/brownfield/code-graph.json exists",
+    "exists:<path>": "only when that path exists in the project",
+    "changed:<glob>": "only when a changed file matches the glob"
+  },
+  "semantics": "blocking:true means a non-zero exit is a BLOCK. blocking:false means a non-zero exit is a WARN that appears on the quality card. A script that is absent because its pack is not installed is recorded as skipped — reported, never silently passed. lane_only:true keeps a check out of the default /gate set; it runs only when named in --only.",
+  "checks": [
+    {
+      "id": "approved-fixtures",
+      "pack": "verification",
+      "script": "approved-fixtures-gate.js",
+      "when": "changed:*.snap",
+      "blocking": true,
+      "summary": "Checksums every snapshot against the approved baseline (specs/test_artefacts/approved-snapshots.json).",
+      "remediation": "A modified approved snapshot or a new unapproved one. Review the change, then re-bless with: npm run approve-fixtures -- --all (or -- --snapshots <files>)."
+    },
+    {
+      "id": "contract-drift",
+      "pack": "verification",
+      "script": "contract-drift-gate.js",
+      "when": "changed:openapi*.{yaml,yml,json}",
+      "blocking": true,
+      "summary": "Runs oasdiff breaking between the OpenAPI spec at the git base and the working tree.",
+      "remediation": "A breaking API change. Either make the change backward-compatible, or version the endpoint. oasdiff not installed is a non-blocking note."
+    },
+    {
+      "id": "cycle-detection",
+      "pack": "brownfield",
+      "script": "cycle-gate.js",
+      "when": "code-graph",
+      "blocking": true,
+      "summary": "New import cycle vs the monotonic baseline in .claude/state/.",
+      "remediation": "Break the new cycle, or invert the dependency. Removing a cycle ratchets the baseline down."
+    },
+    {
+      "id": "coupling-ratchet",
+      "pack": "brownfield",
+      "script": "coupling-gate.js",
+      "when": "code-graph",
+      "blocking": true,
+      "summary": "New unstable hub (fan_in >= 5, instability >= 0.8) vs the monotonic baseline.",
+      "remediation": "Extract a narrower interface, or split the module's responsibilities. The gate names the specific hub with its fan-in/instability numbers."
+    },
+    {
+      "id": "duplication-ratchet",
+      "pack": "brownfield",
+      "script": "duplication-gate.js",
+      "when": "always",
+      "blocking": true,
+      "summary": "Wraps jscpd over changed source; compares clone occurrences to .claude/state/duplication-baseline.txt.",
+      "remediation": "Extract the duplicated block to a shared unit, or justify it. jscpd not installed skips loudly."
+    },
+    {
+      "id": "canvas-sync",
+      "pack": "planning",
+      "script": "canvas-sync-check.js",
+      "when": "exists:specs/design/reasons-canvas.md",
+      "blocking": true,
+      "summary": "Changed files must appear in the REASONS Canvas Governs or Operations sections.",
+      "remediation": "Update the Canvas first (fix-the-prompt-first), then rerun. A valid specs/reviews/sensor-waivers.json entry can cover a deliberate mismatch."
+    },
+    {
+      "id": "canvas-semantic",
+      "pack": "planning",
+      "script": "canvas-semantic-check.js",
+      "when": "exists:specs/design/reasons-canvas.md",
+      "blocking": false,
+      "summary": "Pairs changed governed files with the Canvas narrative claims a diff can falsify; the code-reviewer judges each claim.",
+      "remediation": "A claim the code no longer satisfies is a WARN. Fix the Canvas prose first, never silently.",
+      "accepts_files": true
+    },
+    {
+      "id": "ownership-check",
+      "pack": "planning",
+      "script": "ownership-check.js",
+      "when": "exists:specs/design/component-map.md",
+      "blocking": true,
+      "summary": "Every changed source file must be owned by a story in the component map.",
+      "remediation": "Assign the file to its owning story in component-map.md, then rerun. empty_map (the map parsed to zero entries) also blocks.",
+      "accepts_files": true
+    },
+    {
+      "id": "regression-suite-full",
+      "pack": "verification",
+      "script": "regression-gate.js",
+      "args": [
+        "--replay"
+      ],
+      "when": "exists:e2e",
+      "blocking": true,
+      "summary": "Re-runs every accumulated e2e spec and every prior group's sprint-contract api_checks under HARNESS_TEST_REPLAY=1.",
+      "remediation": "A previously-passing e2e spec or prior contract check now fails — this is a regression, not a flake (quarantined flakes are excluded). Fix the regression."
+    },
+    {
+      "id": "evidence-integrity",
+      "pack": "verification",
+      "script": "evidence-integrity-gate.js",
+      "when": "exists:sprint-contracts",
+      "blocking": true,
+      "summary": "Cross-checks the evaluator's evidence ledger against the read-only sprint contract: a claimed browser PASS must be backed by real user-path interaction against a pre-committed check (gap G39).",
+      "remediation": "Re-run the evaluation driving the app through the user path (browser_click / browser_fill_form), not browser_evaluate — that is permitted only for axe-core injection on an accessibility entry. A contracted check with no evidence entry is a silent skip: execute it, or record the honest \"untested\" verdict. Reads specs/reviews/evaluator-evidence.json, so run it after the evaluator returns."
+    },
+    {
+      "id": "observability-gate",
+      "pack": "verification",
+      "script": "observability-gate.js",
+      "when": "always",
+      "blocking": true,
+      "summary": "BLOCK-level swallowed exceptions and empty catch blocks in changed production source.",
+      "remediation": "Handle or propagate the error. A swallowed exception makes a production failure invisible.",
+      "accepts_files": true
+    },
+    {
+      "id": "perf-smell",
+      "pack": "verification",
+      "script": "perf-smell-gate.js",
+      "when": "always",
+      "blocking": true,
+      "summary": "N+1-in-loop and sync-in-async patterns in changed production source.",
+      "remediation": "Batch the query, or move the sync call off the async path. Unbounded-load findings are WARN only.",
+      "accepts_files": true
+    },
+    {
+      "id": "deep-mutation",
+      "pack": "verification",
+      "script": "deep-mutation.js",
+      "args": [
+        "--critical-only"
+      ],
+      "when": "exists:.claude/state/mutation-critical.flag",
+      "blocking": false,
+      "summary": "Stryker/mutmut over modules in project-manifest.json#quality.mutation.critical_globs.",
+      "remediation": "Surviving mutants in a critical module mean the tests do not actually constrain it. unprovisioned is a non-blocking note."
+    },
+    {
+      "id": "sensor-waivers",
+      "pack": "telemetry",
+      "script": "validate-sensor-waivers.js",
+      "when": "exists:specs/reviews/sensor-waivers.json",
+      "blocking": true,
+      "summary": "Validates waiver fields and expiry against .claude/templates/sensor-waivers.schema.json.",
+      "remediation": "Fix or remove the invalid waiver. A malformed waiver must never silently suppress a finding."
+    },
+    {
+      "id": "local-regression",
+      "pack": "verification",
+      "script": "local-regression-gate.js",
+      "when": "always",
+      "blocking": true,
+      "summary": "Impact-scoped regression (G16): deterministic TIA over code-graph.json selects only the affected prior group's e2e/contract checks. LANE-ONLY — the fast per-iteration complement to regression-suite-full, which /gate runs unabridged. Reached via --only local-regression from /change and /vibe.",
+      "remediation": "An earlier story's behaviour regressed. Fix the regression — do not narrow the scope. Run the full sweep (regression-suite-full) before merge.",
+      "lane_only": true
+    },
+    {
+      "id": "dead-path",
+      "pack": "maintainability",
+      "script": "dead-path-gate.js",
+      "when": "changed:*.{js,jsx,mjs,cjs,ts,tsx,py}",
+      "blocking": true,
+      "summary": "Blocks a change that removed a symbol’s last production caller while leaving its definition in the tree.",
+      "remediation": "Delete the orphaned function — and its tests and config lines — in this commit. If it is deliberately callerless (a CLI entry point, a public export), mark it: // harness:keep-dead <why>."
+    },
+    {
+      "id": "spec-mutation",
+      "pack": "verification",
+      "script": "spec-mutation-gate.js",
+      "when": "changed:sprint-contracts/*.json",
+      "blocking": true,
+      "summary": "Corrupts one expected value in the sprint contract and requires the verification to fail; a survivor is a criterion that verifies nothing.",
+      "remediation": "Wire the surviving check to a real assertion, or delete it. Unprovisioned until quality.spec_mutation.verify_command is set in project-manifest.json."
+    }
+  ]
+}

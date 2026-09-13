@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+
+'use strict';
+
+// Git pre-commit hook — this IS the harness's commit-time quality gate,
+// as a thin dispatcher over the gate registry (PR3). Gate implementations
+// live in .claude/hooks/lib/gates-*.js; membership is filtered by
+// project-manifest.json#quality.sensor_tier (or HARNESS_SENSOR_TIER).
+// Default tier "standard" preserves the historical pre-commit set.
+
+const fs = require('fs');
+const path = require('path');
+
+const { runPreCommit } = require(path.join(__dirname, '..', 'hooks', 'lib', 'gate-registry'));
+
+try {
+  runPreCommit(process.cwd());
+} catch (err) {
+  // A broken gate must not brick committing — but it must never fail open
+  // silently either: a disabled gate is indistinguishable from a passing one.
+  const detail = err && err.message ? err.message : String(err);
+  process.stderr.write(
+    `WARNING: pre-commit quality gates crashed and were SKIPPED — this commit is NOT gated.\n` +
+    `  ${detail}\n` +
+    `  Details recorded in .claude/state/hook-errors.log\n`
+  );
+  try {
+    fs.appendFileSync(
+      path.join(process.cwd(), '.claude', 'state', 'hook-errors.log'),
+      `${new Date().toISOString()} pre-commit: ${detail}\n`
+    );
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+process.exit(0);

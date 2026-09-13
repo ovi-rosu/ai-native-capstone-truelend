@@ -1,0 +1,120 @@
+{
+  "pass": true,
+  "slots": [
+    {
+      "slot": "functional",
+      "requirement_ids": [
+        "FRD-1",
+        "FRD-2",
+        "FRD-3",
+        "FRD-4",
+        "FRD-5",
+        "FRD-6",
+        "FRD-7",
+        "FRD-8",
+        "FRD-9",
+        "FRD-10",
+        "FRD-11",
+        "FRD-12",
+        "FRD-13",
+        "FRD-14",
+        "FRD-15",
+        "FRD-16",
+        "FRD-17",
+        "FRD-18",
+        "FRD-22",
+        "FRD-24",
+        "FRD-25",
+        "FRD-28"
+      ],
+      "na_reason": "",
+      "covered": true,
+      "excuse_offered": false
+    },
+    {
+      "slot": "data_lifecycle",
+      "requirement_ids": [
+        "FRD-19"
+      ],
+      "na_reason": "",
+      "covered": true,
+      "excuse_offered": false
+    },
+    {
+      "slot": "integration",
+      "requirement_ids": [],
+      "na_reason": "No external integration exists in v1 by decision, not by omission: the credit score (FR-03) is a deterministic in-process stub and the funding source (FR-08) is a recorded identifier. The Out of Scope deny-list forbids real credit-bureau calls, payment rails and live provider credentials, so there is no external trust boundary for a requirement to constrain. Revisit when a real bureau or disbursement rail is attached.",
+      "covered": true,
+      "excuse_offered": true
+    },
+    {
+      "slot": "performance",
+      "requirement_ids": [
+        "FRD-26"
+      ],
+      "na_reason": "",
+      "covered": true,
+      "excuse_offered": false
+    },
+    {
+      "slot": "security_authz",
+      "requirement_ids": [
+        "FRD-10",
+        "FRD-13",
+        "FRD-15",
+        "FRD-16",
+        "FRD-21"
+      ],
+      "na_reason": "",
+      "covered": true,
+      "excuse_offered": false
+    },
+    {
+      "slot": "privacy_retention",
+      "requirement_ids": [],
+      "na_reason": "No retention window is specified by decision: every identifier the system holds is synthetic test data, no real PAN or Aadhaar is ever stored, and KYC/AML verification against external registries is on the deny-list. NFR-03 already bars identifiers and salary-document content from logs, and documents are metadata-only with no binary content retained. A retention period becomes a real requirement the moment production data is in scope.",
+      "covered": true,
+      "excuse_offered": true
+    },
+    {
+      "slot": "observability",
+      "requirement_ids": [
+        "FRD-20",
+        "FRD-23"
+      ],
+      "na_reason": "",
+      "covered": true,
+      "excuse_offered": false
+    },
+    {
+      "slot": "operability_failure",
+      "requirement_ids": [],
+      "na_reason": "Covered by requirement rather than by a dedicated NFR: FR-14 requires the end-of-day recalculation to be idempotent and as-of-date parameterised, so a failed run is recoverable by re-running it, and NFR-07 gives the startup liveness signal. Partial-batch failure semantics beyond re-runnability were considered and deliberately not specified for v1, and R-2 records the append-only versus correction tension design must resolve.",
+      "covered": true,
+      "excuse_offered": true
+    },
+    {
+      "slot": "ux_accessibility",
+      "requirement_ids": [
+        "FRD-27"
+      ],
+      "na_reason": "",
+      "covered": true,
+      "excuse_offered": false
+    },
+    {
+      "slot": "constraints",
+      "requirement_ids": [
+        "FRD-29"
+      ],
+      "na_reason": "",
+      "covered": true,
+      "excuse_offered": false
+    }
+  ],
+  "uncovered": [],
+  "unjustified": [],
+  "invalid_slots": [],
+  "untagged": [],
+  "warnings": []
+}

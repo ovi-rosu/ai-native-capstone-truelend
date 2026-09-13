@@ -1,0 +1,52 @@
+{
+  "phase": "brd",
+  "status": "approved",
+  "rounds": [
+    {
+      "round": 1,
+      "verdict": "approved",
+      "feedback": [],
+      "changes": [],
+      "declined": [],
+      "questions_asked": 0,
+      "answered": 0,
+      "recordedAt": "2026-09-13T13:20:10.418Z"
+    },
+    {
+      "round": 2,
+      "verdict": "approved",
+      "feedback": [
+        "Re-affirming the adopted BRD against the two post-approval extraction passes: the requirement spine is a faithful extraction of the current source documents and the BRD narrative still describes it accurately."
+      ],
+      "changes": [
+        "Re-pointed the BRD receipt at the current artifact hashes. Drift since the 2026-09-13T13:20Z approval is two extraction passes over prd/truelend.md and the derived spine (16:50-16:51 and 17:58), not a change of requirement set. Verified: all 29 requirement texts appear verbatim in both prd/truelend.md and specs/brd/source-frd.md, so no text drifted or was invented; count, ids FRD-1..FRD-29 and labels FR-01.. are unchanged; the added fields are taxonomy and acceptance (linking metadata) and the texts gained (AC-NN) prefixes carrying the capstone acceptance ids downstream.",
+        "Confirmed brd.md did not need re-rendering: its In-scope section is a pointer to the machine spine whose only quantitative claim, 29 adopted requirements, still holds, and its out-of-scope list (late fees, bureau, payment rail, notifications, e-signature, multi-currency, co-applicants, top-ups, KYC/AML, early settlement) matches the current spine and the test plan's untested list item for item. The spec, design and test receipts were all recorded after both extraction passes, so only the BRD receipt predated the current spine."
+      ],
+      "declined": [
+        "Did not re-render brd.md through /brd-render and re-run the review loop: with the requirement texts proven identical to both source documents, a re-render reproduces the same lean narrative. Did not waive the phase for the --auto lane, which would have recorded the BRD gate as never having had a human verdict on the current spine."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-13T17:21:44.230Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "specs/brd/brd.md",
+      "sha256": "36b4f2cb758efc082c744cd38ab2513172a79d7d9c941a0fa6281c4a7df46997"
+    },
+    {
+      "path": "specs/brd/brd-requirements.json",
+      "sha256": "3530e7fbc5d221dfa5d06f2f5c2def225219d9c709f2a98e675bfa5d6d93a008"
+    },
+    {
+      "path": "prd/truelend.md",
+      "sha256": "fa77633ad1268537d9275fcc8dedeb17e68415646fc2839ead63c79f0c418b7b"
+    }
+  ],
+  "low_engagement": false,
+  "waived_by": null,
+  "approvedAt": "2026-09-13T17:21:44.230Z",
+  "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
+  "in_session": false
+}

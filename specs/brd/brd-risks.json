@@ -1,0 +1,22 @@
+[
+  {
+    "id": "FRD-72",
+    "text": "**R-1 EMI rounding residual.** Fixed-point money at 2 decimal places (NFR-01) and the requirement that per-installment principal plus interest equal total payable (FR-07) are in tension: rounded equal installments rarely sum to the unrounded total. Design must state where the residual is absorbed, or the FR-07 invariant test will be loosened to hide it.",
+    "section": "10. Risks"
+  },
+  {
+    "id": "FRD-73",
+    "text": "**R-2 Append-only versus correction.** Policy versions and schedules admit no update or delete (NFR-02, NFR-05), while an override changes a decision (FR-10) and a posted repayment changes outstanding principal and bucket (FR-09). Design must draw the boundary between the immutable artifacts and the mutable loan state explicitly, or the architecture test and the features will collide.",
+    "section": "10. Risks"
+  },
+  {
+    "id": "FRD-74",
+    "text": "**R-3 Policy activation with in-flight applications.** A new version becomes active without restart (FR-13), yet every reason code must exist in the policy version named on the application (FR-04). An application decided across an activation must keep citing its own version rather than the newly active one.",
+    "section": "10. Risks"
+  },
+  {
+    "id": "FRD-75",
+    "text": "**R-4 Undefined bucket boundaries.** The delinquency buckets are named (FR-09) but no requirement fixes the day ranges, nor where NPA begins. Left unstated, the first agent to write that code picks the thresholds by accident. Design must fix the boundaries against the capstone's intent before FR-09 or FR-14 is implemented.",
+    "section": "10. Risks"
+  }
+]

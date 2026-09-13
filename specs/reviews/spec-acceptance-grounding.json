@@ -1,0 +1,19 @@
+{
+  "layer": "spec-acceptance",
+  "pass": true,
+  "blocking": false,
+  "accepted": 0,
+  "required_total": 29,
+  "required_covered": 29,
+  "downstream_total": 107,
+  "scope": {
+    "source": "specs/decisions/spec-decisions.json",
+    "milestone": "M1-M3 — full origination-to-repayment lifecycle (all three PRD milestones in one graph)",
+    "in_scope": 29,
+    "deferred": 0,
+    "deferred_ids": [],
+    "unmatched_ids": []
+  },
+  "net_new": [],
+  "dropped": []
+}

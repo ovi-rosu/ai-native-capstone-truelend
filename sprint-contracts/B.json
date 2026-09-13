@@ -1,0 +1,60 @@
+{
+  "group": "B",
+  "stories": [
+    "E15-S2",
+    "E1-S1"
+  ],
+  "features": [
+    "F006",
+    "F007",
+    "F008",
+    "F012",
+    "F013",
+    "F014",
+    "F015"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-012",
+        "matrix_ids": [
+          "VM-012"
+        ],
+        "method": "POST",
+        "path": "/auth/login",
+        "expected_status": 200,
+        "description": "POST /auth/login → 200 — for each seeded CUSTOMER, UNDERWRITER and ADMIN; GET /auth/session then names exactly one role and that role's landing surface"
+      },
+      {
+        "id": "QA-VM-013",
+        "matrix_ids": [
+          "VM-013"
+        ],
+        "method": "GET",
+        "path": "/products",
+        "expected_status": 200,
+        "description": "GET /products → 200 — as CUSTOMER; at least one product and every entry carries a policy_version_id"
+      },
+      {
+        "id": "QA-VM-014",
+        "matrix_ids": [
+          "VM-014"
+        ],
+        "method": "POST",
+        "path": "/products/{product_code}/policy-versions",
+        "expected_status": 201,
+        "description": "POST /products/{product_code}/policy-versions → 201 — as ADMIN saving a new minimum-income threshold; the body carries a new policy_version_id"
+      },
+      {
+        "id": "QA-VM-015",
+        "matrix_ids": [
+          "VM-015"
+        ],
+        "method": "GET",
+        "path": "/products/{product_code}",
+        "expected_status": 200,
+        "description": "GET /products/{product_code} → 200 — in the same running process; cites the policy_version_id from QA-VM-014 with no restart"
+      }
+    ]
+  }
+}

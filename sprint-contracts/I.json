@@ -1,0 +1,222 @@
+{
+  "group": "I",
+  "stories": [
+    "E6-S2",
+    "E7-S1",
+    "E8-S1",
+    "E9-S2"
+  ],
+  "features": [
+    "F059",
+    "F060",
+    "F061",
+    "F062",
+    "F063",
+    "F064",
+    "F065",
+    "F066",
+    "F067",
+    "F068",
+    "F069",
+    "F074",
+    "F075",
+    "F076"
+  ],
+  "contract": {
+    "api_checks": [
+      {
+        "id": "QA-VM-074",
+        "matrix_ids": [
+          "VM-074"
+        ],
+        "method": "GET",
+        "path": "/loans/{loan_id}",
+        "expected_status": 200,
+        "description": "GET /loans/{loan_id} → 200 — an approved application's loan carries one installment row per month of the product tenure"
+      },
+      {
+        "id": "QA-VM-075",
+        "matrix_ids": [
+          "VM-075"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/disbursement",
+        "expected_status": 201,
+        "description": "POST /loans/{loan_id}/disbursement → 201 — the loan reads DISBURSED holding the released amount and a funding_source"
+      },
+      {
+        "id": "QA-VM-076",
+        "matrix_ids": [
+          "VM-076"
+        ],
+        "method": "POST",
+        "path": "/loans/{loan_id}/repayments",
+        "expected_status": 201,
+        "description": "POST /loans/{loan_id}/repayments → 201 — outstanding_principal on the refreshed loan is lower than before the posting"
+      }
+    ],
+    "playwright_checks": [
+      {
+        "id": "QA-VM-059",
+        "matrix_ids": [
+          "VM-059"
+        ],
+        "description": "Sign in as UNDERWRITER and open the workbench — the queue lists exactly the applications in SUBMITTED or MANUAL_REVIEW state",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Sign in as UNDERWRITER and open the workbench — the queue lists exactly the applications in SUBMITTED or MANUAL_REVIEW state"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-060",
+        "matrix_ids": [
+          "VM-060"
+        ],
+        "description": "Open a MANUAL_REVIEW case review screen — it shows the credit score, the decision reason codes and each checklist document's verification state",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Open a MANUAL_REVIEW case review screen — it shows the credit score, the decision reason codes and each checklist document's verification state"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-061",
+        "matrix_ids": [
+          "VM-061"
+        ],
+        "description": "Decide that case from the review screen and save — the latest decision record reflects it and the case leaves the queue",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Decide that case from the review screen and save — the latest decision record reflects it and the case leaves the queue"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-062",
+        "matrix_ids": [
+          "VM-062"
+        ],
+        "description": "As ADMIN, filter the application list to one status and one product — only the matching rows are shown",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "As ADMIN, filter the application list to one status and one product — only the matching rows are shown"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-063",
+        "matrix_ids": [
+          "VM-063"
+        ],
+        "description": "Override an AUTO_REJECT application with a comment and a reason code — a new decision record is appended and shown as the current decision",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Override an AUTO_REJECT application with a comment and a reason code — a new decision record is appended and shown as the current decision"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-064",
+        "matrix_ids": [
+          "VM-064"
+        ],
+        "description": "Open the audit trail for that override — an entry shows the comment, the reason code, the acting user id and a timestamp",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Open the audit trail for that override — an entry shows the comment, the reason code, the acting user id and a timestamp"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-065",
+        "matrix_ids": [
+          "VM-065"
+        ],
+        "description": "Submit the override with a reason code absent from the pinned version — it is refused and no decision record is appended",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Submit the override with a reason code absent from the pinned version — it is refused and no decision record is appended"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-066",
+        "matrix_ids": [
+          "VM-066"
+        ],
+        "description": "Sign in as CUSTOMER and open a submitted application's tracking view — the current status is shown",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "Sign in as CUSTOMER and open a submitted application's tracking view — the current status is shown"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-067",
+        "matrix_ids": [
+          "VM-067"
+        ],
+        "description": "On the tracking view for an application with unverified documents — every unverified required document is listed",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "On the tracking view for an application with unverified documents — every unverified required document is listed"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-068",
+        "matrix_ids": [
+          "VM-068"
+        ],
+        "description": "On the tracking view for a decided application — the decision and each of its reason codes are shown",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "On the tracking view for a decided application — the decision and each of its reason codes are shown"
+          }
+        ]
+      },
+      {
+        "id": "QA-VM-069",
+        "matrix_ids": [
+          "VM-069"
+        ],
+        "description": "On the tracking view for an undecided application — no decision section is shown and no notification was dispatched",
+        "url": "/",
+        "steps": [
+          {
+            "action": "interact",
+            "assertion": "On the tracking view for an undecided application — no decision section is shown and no notification was dispatched"
+          }
+        ]
+      }
+    ],
+    "accessibility_checks": {
+      "required": true,
+      "block_impacts": [
+        "serious",
+        "critical"
+      ]
+    }
+  }
+}

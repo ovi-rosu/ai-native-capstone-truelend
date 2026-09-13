@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-09-13T17:28:54.141Z",
+  "event": "Stop",
+  "step": null,
+  "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
+  "coverage": {
+    "subagentFiles": 1,
+    "sessions": 1
+  },
+  "grand_usd": 14.3789,
+  "rows": [
+    {
+      "command": "(freeform)",
+      "start": "2026-09-13T15:30:45.470Z",
+      "minutes": 0,
+      "model": null,
+      "by_model": {},
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_creation_tokens": 0,
+      "messages": 0,
+      "subagent_output_tokens": 0,
+      "subagent_messages": 0,
+      "cost_usd": 0,
+      "unpriced_models": []
+    },
+    {
+      "command": "test",
+      "start": "2026-09-13T15:30:50.522Z",
+      "minutes": 95,
+      "model": "claude-opus-5",
+      "by_model": {
+        "claude-opus-5": {
+          "input_tokens": 198,
+          "output_tokens": 104547,
+          "cache_read_tokens": 13772660,
+          "cache_creation_tokens": 194949,
+          "messages": 99
+        }
+      },
+      "input_tokens": 198,
+      "output_tokens": 104547,
+      "cache_read_tokens": 13772660,
+      "cache_creation_tokens": 194949,
+      "messages": 99,
+      "subagent_output_tokens": 0,
+      "subagent_messages": 0,
+      "cost_usd": 10.719426250000001,
+      "unpriced_models": []
+    },
+    {
+      "command": "auto",
+      "start": "2026-09-13T17:05:46.791Z",
+      "minutes": 23,
+      "model": "claude-opus-5",
+      "by_model": {
+        "claude-opus-5": {
+          "input_tokens": 86,
+          "output_tokens": 16107,
+          "cache_read_tokens": 5293173,
+          "cache_creation_tokens": 97567,
+          "messages": 43
+        }
+      },
+      "input_tokens": 86,
+      "output_tokens": 16107,
+      "cache_read_tokens": 5293173,
+      "cache_creation_tokens": 97567,
+      "messages": 43,
+      "subagent_output_tokens": 494,
+      "subagent_messages": 26,
+      "cost_usd": 3.6594852500000004,
+      "unpriced_models": []
+    }
+  ],
+  "totals": [
+    {
+      "command": "test",
+      "runs": 1,
+      "minutes": 95,
+      "output_tokens": 104547,
+      "cache_read_tokens": 13772660,
+      "subagent_output_tokens": 0,
+      "cost_usd": 10.719426250000001,
+      "models": [
+        "claude-opus-5"
+      ]
+    },
+    {
+      "command": "auto",
+      "runs": 1,
+      "minutes": 23,
+      "output_tokens": 16107,
+      "cache_read_tokens": 5293173,
+      "subagent_output_tokens": 494,
+      "cost_usd": 3.6594852500000004,
+      "models": [
+        "claude-opus-5"
+      ]
+    },
+    {
+      "command": "(freeform)",
+      "runs": 1,
+      "minutes": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "subagent_output_tokens": 0,
+      "cost_usd": 0,
+      "models": []
+    }
+  ]
+}

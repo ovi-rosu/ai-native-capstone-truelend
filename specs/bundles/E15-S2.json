@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "story_id": "E15-S2",
+  "sprint": 1,
+  "title": "Self-hosted Docker Compose stack and one-way layer dependency test",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E15-S2-AC1",
+      "E15-S2-AC2",
+      "E15-S2-AC3"
+    ],
+    "brd_ids": [
+      "FRD-29"
+    ],
+    "br_acceptance_ids": [
+      "FRD-68"
+    ],
+    "scope_out": [
+      "must not add a second database engine, cache or message broker; must not configure any external provider endpoint or live credential; must not relax the one-way layer rule to make an existing import pass"
+    ]
+  },
+  "entities": [
+    {
+      "name": "Self-hosted Docker Compose stack and one-way layer dependency test",
+      "status": "unknown"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [
+      "backend/tests/architecture/test_layer_dependencies.py"
+    ],
+    "layer": "Config"
+  },
+  "operations": {
+    "pending": true,
+    "files": [],
+    "text": "- pending"
+  },
+  "safeguards": {
+    "ids": [
+      "SG-2"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-006",
+      "VM-007",
+      "VM-008"
+    ],
+    "case_ids": [
+      "VM-006",
+      "VM-007",
+      "VM-008"
+    ],
+    "layers": [
+      "unit"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E15-S2.md",
+    "parents": [
+      "E15-S1"
+    ],
+    "tracker_key": null
+  }
+}
