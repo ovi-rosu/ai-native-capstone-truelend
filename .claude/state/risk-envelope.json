@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "task_id": "truelend-build",
+  "tier": "R3",
+  "reasons": [
+    "authorization",
+    "sensitive_data",
+    "authentication",
+    "payments",
+    "persistence",
+    "infrastructure",
+    "public_api",
+    "design_touching"
+  ],
+  "signals": [
+    "authorization",
+    "sensitive_data",
+    "authentication",
+    "payments",
+    "persistence",
+    "infrastructure",
+    "public_api",
+    "design_touching"
+  ],
+  "allowed_paths": [],
+  "forbidden_actions": [
+    "merge",
+    "modify_branch_protection",
+    "deploy"
+  ],
+  "required_evidence": [
+    "unit",
+    "acceptance",
+    "independent_review",
+    "integration",
+    "sast",
+    "dependency_scan",
+    "security_review",
+    "threat_model"
+  ],
+  "required_approvals": 2,
+  "classified_at": "2026-09-13T17:32:27.072Z",
+  "classifier_version": 1
+}

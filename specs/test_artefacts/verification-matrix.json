@@ -8,8 +8,7 @@
       "brd_id": "FRD-59",
       "group": "A",
       "required_layers": [
-        "unit",
-        "api"
+        "unit"
       ],
       "implementation_paths": [
         "platform-runtime"
@@ -19,11 +18,6 @@
           "id": "CHK-VM-001-unit",
           "layer": "unit",
           "description": "Verify E15-S1-AC1: the captured buffer contains 0 occurrences of each of those three values"
-        },
-        {
-          "id": "CHK-VM-001-api",
-          "layer": "api",
-          "description": "Verify over a served request — E15-S1-AC1: the captured buffer contains 0 occurrences of each of those three values"
         }
       ],
       "obligations": [

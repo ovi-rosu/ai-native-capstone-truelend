@@ -1,7 +1,7 @@
 {
   "status": "sealed",
   "waived_by": null,
-  "sealedAt": "2026-09-13T17:21:59.119Z",
+  "sealedAt": "2026-09-13T19:29:12.976Z",
   "artifacts": [
     {
       "path": "specs/brd/brd.md",
@@ -65,12 +65,12 @@
     },
     {
       "path": "specs/test_artefacts/test-plan.md",
-      "sha256": "6e4d8e4519fade926340573039a6ce33443c4318db000acd28e10e76b576605c",
+      "sha256": "7ef07fe178433464f2b095217da185ca276be65d9dc6f2721479862fe7bc21c1",
       "phase": "test"
     },
     {
       "path": "specs/test_artefacts/verification-matrix.json",
-      "sha256": "3c07d287477a63e9d48cf32a7e5802ce0cd02b5f6fe363dc57e187dc57ac814e",
+      "sha256": "a9ee97d7e7ab97ae51d851a9e2a88b09c56ed9e15e7749f2c5401f4a02c92dfa",
       "phase": "test"
     },
     {
@@ -95,12 +95,12 @@
     },
     {
       "path": "specs\\test_artefacts\\test-plan.md",
-      "sha256": "6e4d8e4519fade926340573039a6ce33443c4318db000acd28e10e76b576605c",
+      "sha256": "7ef07fe178433464f2b095217da185ca276be65d9dc6f2721479862fe7bc21c1",
       "phase": null
     },
     {
       "path": "specs\\test_artefacts\\verification-matrix.json",
-      "sha256": "3c07d287477a63e9d48cf32a7e5802ce0cd02b5f6fe363dc57e187dc57ac814e",
+      "sha256": "a9ee97d7e7ab97ae51d851a9e2a88b09c56ed9e15e7749f2c5401f4a02c92dfa",
       "phase": null
     },
     {

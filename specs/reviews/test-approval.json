@@ -21,16 +21,33 @@
       "questions_asked": 3,
       "answered": 3,
       "recordedAt": "2026-09-13T15:52:34.344Z"
+    },
+    {
+      "round": 2,
+      "verdict": "approved",
+      "feedback": [
+        "Group A's frozen contract named endpoints built in later groups, so the group could never pass. Retarget the correlation-id checks to /health and drop VM-001's api evidence, which has no available surface in its own group."
+      ],
+      "changes": [
+        "Corrected an ordering defect introduced by the earlier layer promotion. QA-VM-003 and QA-VM-004 observed GET /products, built by E1-S1 in group B, and QA-VM-001 observed POST /applications, built by E4-S1 in group E, while all three were frozen into group A (E15-S1, E9-S1, E11-S1). Retargeted QA-VM-003 and QA-VM-004 to GET /health, the only endpoint E15-S1 builds in its own group; correlation-id propagation is endpoint-agnostic so the evidence is unchanged in kind.",
+        "Reverted VM-001 (no PII in logs) to unit-only and removed its CHK-VM-001-api check and its proposed-check row: its api evidence would require an endpoint that accepts PAN, Aadhaar and salary content, and the only one is POST /applications five groups later. It is proven at the log-capture fixture E15-S1 produces, with VM-002 asserting the redaction filter is installed on 100% of loggers. Group A's contract is now GET /health x3, every check satisfiable by the story that lands it. Recorded the general rule in the plan: an evaluator check may only name an endpoint that exists by the end of the group it is frozen into."
+      ],
+      "declined": [
+        "Did not revert all four promotions, which would have left group A with no api checks and discarded the reviewed NFR rigor. Did not re-group the checks into the groups that build their endpoints: contract-freeze derives a check's group from its matrix row's story, so moving them would decouple a story's AC from the story's own group."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-13T19:28:52.806Z"
     }
   ],
   "artifacts": [
     {
       "path": "specs/test_artefacts/test-plan.md",
-      "sha256": "6e4d8e4519fade926340573039a6ce33443c4318db000acd28e10e76b576605c"
+      "sha256": "7ef07fe178433464f2b095217da185ca276be65d9dc6f2721479862fe7bc21c1"
     },
     {
       "path": "specs/test_artefacts/verification-matrix.json",
-      "sha256": "3c07d287477a63e9d48cf32a7e5802ce0cd02b5f6fe363dc57e187dc57ac814e"
+      "sha256": "a9ee97d7e7ab97ae51d851a9e2a88b09c56ed9e15e7749f2c5401f4a02c92dfa"
     },
     {
       "path": "specs/test_artefacts/test-traces.json",
@@ -39,7 +56,7 @@
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-13T15:52:34.344Z",
+  "approvedAt": "2026-09-13T19:28:52.806Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

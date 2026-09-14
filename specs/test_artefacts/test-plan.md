@@ -157,9 +157,8 @@ Evaluator QA procedure (`api` / `playwright`). Fill Observe (method/path or UI s
 
 | Group | Check id | Kind | Matrix ids | Observe |
 | --- | --- | --- | --- | --- |
-| A | QA-VM-001 | api | VM-001 | POST /applications → 201 — payload carrying synthetic PAN, Aadhaar and salary-document content; the captured log buffer contains 0 occurrences of each of those three values |
-| A | QA-VM-003 | api | VM-003 | GET /products → 200 — sent with header X-Request-ID: req-abc; 100% of the log lines emitted while serving parse as JSON and each carries request_id equal to req-abc |
-| A | QA-VM-004 | api | VM-004 | GET /products → 200 — sent with no X-Request-ID header; every request-scoped log line carries the same generated non-empty request_id and the response echoes that id |
+| A | QA-VM-003 | api | VM-003 | GET /health → 200 — sent with header X-Request-ID: req-abc; 100% of the log lines emitted while serving parse as JSON and each carries request_id equal to req-abc |
+| A | QA-VM-004 | api | VM-004 | GET /health → 200 — sent with no X-Request-ID header; every request-scoped log line carries the same generated non-empty request_id and the response echoes that id |
 | A | QA-VM-005 | api | VM-005 | GET /health → 200 — JSON body, and the measured response time is under 1 second |
 | B | QA-VM-012 | api | VM-012 | POST /auth/login → 200 — for each seeded CUSTOMER, UNDERWRITER and ADMIN; GET /auth/session then names exactly one role and that role's landing surface |
 | B | QA-VM-013 | api | VM-013 | GET /products → 200 — as CUSTOMER; at least one product and every entry carries a policy_version_id |
@@ -289,7 +288,8 @@ Any red row in 1-7 fails the sprint. The registry completeness assertions in 3, 
 ### Layer decisions taken at the test gate
 
 - **Static assertions are `unit`, not `api`.** 12 rows — the policy_version and schedule_installment immutability scans, the migration lint, the invariant-registry suite, git provenance, the `/gate` attestation, the scoring-stub collaborator check and the SLO report/registry assertions — assert over source, migrations, git history or a written report, not over a served request. They are enforced by the architecture suite and the pre-commit gate set, and are deliberately **not** sprint-contract checks. This matches VM-010, where the backend float scanner was already `unit`.
-- **Four observability/security NFR rows carry `api` evidence as well as `unit`.** VM-001 (no PII in logs), VM-003 and VM-004 (correlation id with and without an inbound header) and VM-005 (`GET /health` under 1 s) are all observable over a served request, so proving them only at the log-capture fixture would leave the real request path unexercised.
+- **Three observability NFR rows carry `api` evidence as well as `unit`.** VM-003 and VM-004 (correlation id with and without an inbound header) and VM-005 (`GET /health` under 1 s) are observable over a served request, so proving them only at the log-capture fixture would leave the real request path unexercised. All three observe `GET /health`, the only endpoint E15-S1 builds in its own group — an evaluator check may only name an endpoint that exists by the end of the group it is frozen into.
+- **VM-001 (no PII in logs) stays `unit`.** Its api evidence would need an endpoint that *accepts* PAN, Aadhaar and salary content, and the only one is `POST /applications`, which E4-S1 builds five groups later. It is proven at the log-capture fixture E15-S1 produces, and incidentally re-exercised by every later api check, since the redaction filter is asserted installed on 100% of loggers (VM-002).
 - **Concurrency stays untested for v1**, with idempotence resting on the UNIQUE constraint on loan id and repayment allocation on FIFO plus the `applied_principal + applied_interest = amount` CHECK constraint — both structural, so a concurrent writer corrupts nothing even unproven.
 
 ## Test Levels

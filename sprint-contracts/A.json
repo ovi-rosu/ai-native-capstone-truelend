@@ -22,24 +22,14 @@
   "contract": {
     "api_checks": [
       {
-        "id": "QA-VM-001",
-        "matrix_ids": [
-          "VM-001"
-        ],
-        "method": "POST",
-        "path": "/applications",
-        "expected_status": 201,
-        "description": "POST /applications → 201 — payload carrying synthetic PAN, Aadhaar and salary-document content; the captured log buffer contains 0 occurrences of each of those three values"
-      },
-      {
         "id": "QA-VM-003",
         "matrix_ids": [
           "VM-003"
         ],
         "method": "GET",
-        "path": "/products",
+        "path": "/health",
         "expected_status": 200,
-        "description": "GET /products → 200 — sent with header X-Request-ID: req-abc; 100% of the log lines emitted while serving parse as JSON and each carries request_id equal to req-abc"
+        "description": "GET /health → 200 — sent with header X-Request-ID: req-abc; 100% of the log lines emitted while serving parse as JSON and each carries request_id equal to req-abc"
       },
       {
         "id": "QA-VM-004",
@@ -47,9 +37,9 @@
           "VM-004"
         ],
         "method": "GET",
-        "path": "/products",
+        "path": "/health",
         "expected_status": 200,
-        "description": "GET /products → 200 — sent with no X-Request-ID header; every request-scoped log line carries the same generated non-empty request_id and the response echoes that id"
+        "description": "GET /health → 200 — sent with no X-Request-ID header; every request-scoped log line carries the same generated non-empty request_id and the response echoes that id"
       },
       {
         "id": "QA-VM-005",

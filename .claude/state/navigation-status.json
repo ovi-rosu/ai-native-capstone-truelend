@@ -3,11 +3,11 @@
   "mode": "placeholder",
   "graph": "placeholder",
   "wiki": "placeholder",
-  "source_files": 2,
+  "source_files": 22,
   "indexed_files": 0,
   "dirty_files": 0,
   "estimated_source_tokens": 0,
   "estimated_navigation_tokens": 9,
-  "last_refresh": "2026-09-13T13:04:00.837Z",
+  "last_refresh": "2026-09-13T20:04:55.677Z",
   "error": "Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases."
 }

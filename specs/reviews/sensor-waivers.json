@@ -17,22 +17,8 @@
     {
       "sensor_id": "ownership-check",
       "scope": "frontend/eslint.config.js — Group A (E9-S1) frontend scaffold",
-      "reason": "component-map.md has no row for frontend build/lint tooling config (it lists frontend/src and frontend/tests files only), and component-map.md is outside this task's writable paths so it cannot be amended from this dispatch. eslint.config.js is required by ESLint 9's flat-config default so `npm run lint` can enforce the frontend's no-explicit-any rule on the E9-S1-owned frontend/src/types/money.ts and frontend/src/ui/components/MoneyText.tsx; it is project tooling, not a component with business behavior. The sibling config files (vite.config.ts, package.json, tsconfig.json) were not flagged by the sensor's own allow-list; only this one file needed a waiver. No production behavior lives in this file.",
+      "reason": "component-map.md has no row for frontend build/lint tooling config (it lists frontend/src and frontend/tests files only), and component-map.md is outside this task's writable paths so it cannot be amended from this dispatch. eslint.config.js is required by ESLint 9's flat-config default so `npm run lint` can enforce the frontend's no-explicit-any rule on the E9-S1-owned frontend/src/types/money.ts and frontend/src/ui/components/MoneyText.tsx; it is project tooling, not a component with business behavior. The sibling config files (vite.config.ts, package.json, tsconfig.json) were not flagged by the sensor's own allow-list; only this one file needed a waiver. No production behavior lives in this file. RATIFIED by ovi-rosu 2026-09-14 after review: the file is ESLint 9 flat-config tooling with no business behavior, and component-map.md cannot be amended from a build dispatch without invalidating the design approval receipt.",
       "expires": "2026-10-15",
-      "approved_by": "ovi-rosu"
-    },
-    {
-      "sensor_id": "generation-contract",
-      "scope": "The 26 ready stories outside Group A (E15-S1, E9-S1, E11-S1) — every other story in specs/stories/ still has '### Operations' as '- pending'.",
-      "reason": "generation-contract --mode implementable validates ALL ready stories unconditionally once any production source is staged, not just the current group's. This dispatch's mandate was limited to Group A (E15-S1/E9-S1/E11-S1) per generator.md Rule 1.5 — filling Operations for the other 26 stories (Groups B-M) requires design/approach context this dispatch does not own and is out of scope for it. Group A's own 3 stories are filled and pass this same check in isolation (validate-generation-contract.js --mode implementable --story <id> exit 0 for all three). This waiver unblocks landing Group A's production code; it does not claim the other 26 stories are implementable yet. Flagged to the orchestrator: this gate will re-block every subsequent group's /implement run the same way until either all story Operations are filled ahead of implementation, or a future group's generator fills its own group's Operations the same way this one did. Short expiry so it must be revisited, not left standing.",
-      "expires": "2026-09-20",
-      "approved_by": "ovi-rosu"
-    },
-    {
-      "sensor_id": "story-bundle-check",
-      "scope": "The 26 ready stories outside Group A (E15-S1, E9-S1, E11-S1) — same root cause as the generation-contract waiver above: their bundles/Operations are not yet implementable.",
-      "reason": "story-bundle-check --mode implementable, like generation-contract, validates ALL ready stories unconditionally once any production source is staged. Group A's own 3 bundles pass in isolation (bundle-check.js --mode implementable --story <id> exit 0 for E15-S1/E9-S1/E11-S1). Filling the other 26 stories' Operations is out of scope for this Group-A-only dispatch (generator.md Rule 1.5). Same flag to the orchestrator as the generation-contract waiver: this will re-block every subsequent group until the backlog-wide gap is closed.",
-      "expires": "2026-09-20",
       "approved_by": "ovi-rosu"
     }
   ]

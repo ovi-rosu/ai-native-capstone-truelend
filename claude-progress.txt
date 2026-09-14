@@ -12,3 +12,49 @@ coverage: 0%
 learned_rules: 0
 blocked_stories: none
 next_action: Run /auto
+
+=== Session 1 ===
+date: 2026-09-13T18:05:00.000Z
+mode: full
+groups_completed: []
+groups_remaining: [A, B, C, D, E, F, G, H, I, J, K, L, M]
+current_group: A (platform logging + money + delinquency types)
+current_stories: [E15-S1, E9-S1, E11-S1]
+sprint_contract: sprint-contracts/A.json
+last_commit: 14e9487 "feat: scaffold harness and land approved BRD/spec/design/test planning artefacts"
+features_passing: 0 / 107
+coverage: 0%
+learned_rules: 0
+blocked_stories: none
+next_action: Dispatch generator for group A (E15-S1, E9-S1, E11-S1), then SECTION 5 ratchet
+
+=== Session 2 ===
+date: 2026-09-13T18:20:00.000Z
+mode: full
+groups_completed: []
+groups_remaining: [A, B, C, D, E, F, G, H, I, J, K, L, M]
+current_group: A (dispatched, halted before any code)
+current_stories: [E15-S1, E9-S1, E11-S1]
+sprint_contract: sprint-contracts/A.json
+last_commit: 14e9487 "feat: scaffold harness and land approved BRD/spec/design/test planning artefacts"
+features_passing: 0 / 107
+coverage: 0%
+learned_rules: 0
+blocked_stories: [E15-S1, E9-S1, E11-S1 (task-envelope allowed_paths excludes specs/stories/**)]
+next_action: BLOCKED ON HUMAN — the task envelope must be re-scoped before any group can build. `/implement` Step 0.2 has to write the Generation Contract Operations into specs/stories/{id}.md and pre-write-gate/pre-bash-gate refuse it. Add specs/stories/**, specs/design/**, docker-compose.yml, .env.example and README.md to allowed_paths (authorized `task-envelope.js amend --allow ...`, or abort+recreate the envelope), then re-run /auto --group A. Separately decide the runtime story: docker is not installed but verification.mode=docker. Details in .claude/state/failures.md.
+
+=== Session 3 ===
+date: 2026-09-13T19:05:00.000Z
+mode: full
+groups_completed: []
+groups_remaining: [A, B, C, D, E, F, G, H, I, J, K, L, M]
+current_group: none
+current_stories: []
+sprint_contract: sprint-contracts/A.json
+last_commit: 14e9487 "feat: scaffold harness and land approved BRD/spec/design/test planning artefacts"
+features_passing: 0 / 107
+coverage: 0%
+learned_rules: 0
+blocked_stories: []
+notes: Session 2 blockers resolved. Task envelope rotated to add specs/stories/**, specs/design/reasons-canvas.md, specs/design/amendments/**, docker-compose.yml, .env.example, README.md; architecture.md, api-contracts.md, data-models.md, specs/test_artefacts/** and sprint-contracts/** stay frozen. Repaired a group A contract defect: QA-VM-003/004 observed GET /products (built by E1-S1, group B) and QA-VM-001 observed POST /applications (built by E4-S1, group E) while frozen into group A, so group A could never pass. QA-VM-003/004 retargeted to GET /health; VM-001 reverted to unit-only. Group A contract is now GET /health x3. Frozen checks 84 -> 83. Test receipt re-recorded (round 2), contracts re-frozen, plan re-sealed (49 artifacts).
+next_action: Run /auto --group A. Docker Desktop install still pending and is required before group B (E15-S2 compose stack); verification.mode remains docker.
