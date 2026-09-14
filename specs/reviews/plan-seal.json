@@ -1,7 +1,7 @@
 {
   "status": "sealed",
   "waived_by": null,
-  "sealedAt": "2026-09-14T12:56:53.223Z",
+  "sealedAt": "2026-09-14T15:02:10.788Z",
   "artifacts": [
     {
       "path": "specs/brd/brd.md",
@@ -55,7 +55,7 @@
     },
     {
       "path": "specs/design/reasons-canvas.md",
-      "sha256": "1fa1fcd7830afbcf97cb0558be7134be1197a91529c46b88c3ee7d96f6d7534b",
+      "sha256": "8f0306cdb018a4059a9070c0d102a30a2d06e61a35513eb37755e15b560658bd",
       "phase": "design"
     },
     {
@@ -105,7 +105,7 @@
     },
     {
       "path": "specs\\bundles\\E1-S1.json",
-      "sha256": "101acc9b15d8a27f8c0aabbf5e0a46720e04cb6284e01c962a31680d925827fb",
+      "sha256": "9be49986b9312aee348887336b618ff8a0b3d60cc3344bf50a007ac753016ac1",
       "phase": null
     },
     {
@@ -190,7 +190,7 @@
     },
     {
       "path": "specs\\bundles\\E4-S1.json",
-      "sha256": "e07ac559a03a14fd8e36783404ec2c501fc4c396c427d227277e700c3ef4ed83",
+      "sha256": "90a28608889ff1969e0b41c2f008da938c068f0e335ea268dca011d7b9d6b271",
       "phase": null
     },
     {

@@ -74,6 +74,22 @@
       "questions_asked": 1,
       "answered": 1,
       "recordedAt": "2026-09-14T12:43:02.485Z"
+    },
+    {
+      "round": 5,
+      "verdict": "approved",
+      "feedback": [
+        "Canvas bookkeeping only: spdd-sync appended Governs and Source paths rows for E1-S1's two new Types files. No design decision changed."
+      ],
+      "changes": [
+        "specs/design/reasons-canvas.md gained entries for backend/src/types/enums.py and backend/src/types/identity.py, written by spdd-sync --write after canvas-sync-check blocked on the two unmapped paths. Rationale and the three implementation choices worth recording (seven-member ApplicationStatus per D-L, StrEnum over the deprecated (str, Enum) pair, timezone-aware occurred_at) are in specs/design/amendments/e1-s1-types-canvas-sync.md."
+      ],
+      "declined": [
+        "Did not change any design decision, contract or component ownership. Did not amend component-map.md for the new unit-test file: it passes ownership-check only because the ratified waiver is broader than its scope text, which is recorded in the amendment as something to tighten rather than depend on."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T15:02:10.669Z"
     }
   ],
   "artifacts": [
@@ -87,7 +103,7 @@
     },
     {
       "path": "specs/design/reasons-canvas.md",
-      "sha256": "1fa1fcd7830afbcf97cb0558be7134be1197a91529c46b88c3ee7d96f6d7534b"
+      "sha256": "8f0306cdb018a4059a9070c0d102a30a2d06e61a35513eb37755e15b560658bd"
     },
     {
       "path": "specs/design/component-map.md",
@@ -96,7 +112,7 @@
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-14T12:43:02.485Z",
+  "approvedAt": "2026-09-14T15:02:10.669Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

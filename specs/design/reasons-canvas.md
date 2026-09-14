@@ -325,6 +325,19 @@ Per-story file ownership is in `component-map.md`.
 - TODO(canvas-sync): document the operation that lands in `frontend/tsconfig.json`
 - TODO(canvas-sync): document the operation that lands in `frontend/vite.config.ts`
 - TODO(canvas-sync): document the operation that lands in `specs/design/amendments/group-a-implementation-sync.md`
+- TODO(canvas-sync): document the operation that lands in `.claude/state/red-phase-presnap.json`
+- TODO(canvas-sync): document the operation that lands in `backend/pyproject.toml`
+- TODO(canvas-sync): document the operation that lands in `backend/src/types/enums.py`
+- TODO(canvas-sync): document the operation that lands in `backend/src/types/identity.py`
+- TODO(canvas-sync): document the operation that lands in `backend/tests/unit/test_identity_types.py`
+- TODO(canvas-sync): document the operation that lands in `backend/uv.lock`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/local-regression-gate-verdict.json`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/sensor-checks.json`
+- TODO(canvas-sync): document the operation that lands in `specs/reviews/spdd-sync.json`
+- TODO(canvas-sync): document the operation that lands in `specs/bundles/E1-S1.json`
+- TODO(canvas-sync): document the operation that lands in `specs/bundles/E4-S1.json`
+- TODO(canvas-sync): document the operation that lands in `specs/stories/E1-S1.md`
+- TODO(canvas-sync): document the operation that lands in `specs/stories/E4-S1.md`
 
 ## Norms
 
@@ -578,3 +591,13 @@ Source paths this design creates or modifies.
 - `frontend/tsconfig.json`
 - `frontend/vite.config.ts`
 - `specs/design/amendments/group-a-implementation-sync.md`
+- `.claude/state/red-phase-presnap.json`
+- `backend/pyproject.toml`
+- `backend/uv.lock`
+- `specs/reviews/local-regression-gate-verdict.json`
+- `specs/reviews/sensor-checks.json`
+- `specs/reviews/spdd-sync.json`
+- `specs/bundles/E1-S1.json`
+- `specs/bundles/E4-S1.json`
+- `specs/stories/E1-S1.md`
+- `specs/stories/E4-S1.md`
