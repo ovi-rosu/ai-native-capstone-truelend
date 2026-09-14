@@ -9,6 +9,7 @@ this conversion — see the D-G coupling-risk note in specs/design/architecture.
 
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 from typing import Annotated, Any
 
@@ -23,12 +24,34 @@ from src.types.money import InvalidMoneyAmountError, Money
 # wire outcome D-G exists to prevent.
 _WIRE_PATTERN = r"^-?\d+\.\d{2}$"
 
+# The same rule, compiled, so the validator enforces exactly what the schema
+# advertises rather than the two drifting apart.
+_WIRE_FORM = re.compile(_WIRE_PATTERN)
+
 
 def _validate_money(value: Money | str | Decimal) -> Money:
-    """Build a `Money` from the wire value: a `Money`, a decimal string, or a `Decimal`."""
+    """Build a `Money` from the wire value: a `Money`, a decimal string, or a `Decimal`.
+
+    A **string** is held to the exact wire form, because a string is what a
+    client sends. `"12.345"` used to be accepted and stored as `12.35` — a
+    caller's amount altered without a word — while the published JSON schema
+    advertised `^-?\\d+\\.\\d{2}$` and so promised that shape was invalid. A
+    client reading the contract sends two places; anything else is a contract
+    violation and deserves a 422 rather than silent rounding.
+
+    A `Decimal` or an existing `Money` comes from inside the process, not the
+    wire, so it still goes through `Money`'s own quantization — rounding the
+    result of a calculation is exactly what that type is for.
+    """
     if isinstance(value, Money):
         return value
-    if isinstance(value, (str, Decimal)):
+    if isinstance(value, Decimal):
+        return Money(value)
+    if isinstance(value, str):
+        if not _WIRE_FORM.fullmatch(value):
+            raise InvalidMoneyAmountError(
+                f"money must be a decimal string with exactly two decimal places; got {value!r}"
+            )
         return Money(value)
     raise InvalidMoneyAmountError(f"cannot build Money from {type(value).__name__}")
 

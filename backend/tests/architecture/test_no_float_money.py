@@ -370,3 +370,50 @@ def test_openapi_schema_generates_for_a_money_bearing_route() -> None:
 
     assert spec.status_code == 200, "/openapi.json must render with a money field present"
     assert body.json() == {"product_code": "PERSONAL", "minimum_income": "25000.00"}
+
+
+@pytest.mark.parametrize("raw", ["12.345", "12.3", "12", "0.1", "-45.1"])
+def test_money_field_rejects_wire_strings_that_are_not_two_decimal_places(raw: str) -> None:
+    """CR-306: the wire boundary silently rounded excess precision.
+
+    `"12.345"` was accepted and stored as `12.35` — a caller's amount altered
+    without a word, on a lending platform. The published JSON schema already
+    advertises `^-?\d+\.\d{2}$`, so a client reading the contract sends two
+    places and anything else is a contract violation; answering it with a 422
+    is honest, silently rounding money is not.
+
+    `Money` itself still quantizes: it is the internal arithmetic type, and
+    rounding the result of a calculation is its job. This strictness belongs at
+    the wire boundary only.
+    """
+    from pydantic import BaseModel, ValidationError
+    from src.api.serializers import MoneyField
+
+    class Priced(BaseModel):
+        amount: MoneyField
+
+    with pytest.raises(ValidationError):
+        Priced(amount=raw)
+
+
+def test_money_field_accepts_the_exact_wire_form() -> None:
+    """Two decimal places, positive and negative, round-trip unchanged."""
+    from pydantic import BaseModel
+    from src.api.serializers import MoneyField
+
+    class Priced(BaseModel):
+        amount: MoneyField
+
+    assert Priced(amount="12.34").amount.amount == Decimal("12.34")
+    assert Priced(amount="-45.01").amount.amount == Decimal("-45.01")
+    assert Priced(amount="0.00").amount.amount == Decimal("0.00")
+
+
+def test_money_type_still_quantizes_for_internal_arithmetic() -> None:
+    """The strictness is the wire boundary's, not the type's.
+
+    `Money("12.345")` must keep working: quantizing the result of a
+    calculation is exactly what the type is for.
+    """
+    assert Money("12.345").amount == Decimal("12.35")
+    assert Money("1234.5").amount == Decimal("1234.50")
