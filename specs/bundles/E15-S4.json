@@ -37,7 +37,9 @@
     "amendment": null
   },
   "structure": {
-    "owned_files": [],
+    "owned_files": [
+      "backend/tests/architecture/test_observability_contract.py"
+    ],
     "layer": "Config"
   },
   "operations": {

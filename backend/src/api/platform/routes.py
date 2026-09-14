@@ -26,7 +26,11 @@ from collections.abc import Callable
 
 from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
-from src.api.middleware import request_counter_snapshot
+from src.api.middleware import (
+    duration_snapshot,
+    latency_bucket_bounds,
+    request_counter_snapshot,
+)
 from src.config.settings import Settings
 
 router = APIRouter()
@@ -79,9 +83,8 @@ def _escape_label(value: str) -> str:
     return value.translate(_LABEL_ESCAPES)
 
 
-@router.get("/metrics", response_class=PlainTextResponse)
-async def get_metrics() -> PlainTextResponse:
-    """RED request counters in Prometheus text exposition format."""
+def _counter_lines() -> list[str]:
+    """The RED request counters."""
     lines = [
         "# HELP http_requests_total Total HTTP requests served.",
         "# TYPE http_requests_total counter",
@@ -91,4 +94,36 @@ async def get_metrics() -> PlainTextResponse:
             f'http_requests_total{{method="{_escape_label(method)}",'
             f'route="{_escape_label(route)}",status="{status:d}"}} {count:d}'
         )
-    return PlainTextResponse("\n".join(lines) + "\n")
+    return lines
+
+
+def _histogram_lines() -> list[str]:
+    """The request-duration histogram, cumulative as the format requires.
+
+    Buckets have to be cumulative for a scraper to compute a quantile: p95 is
+    the first bound whose running count reaches 95% of `_count`. Without this
+    the declared 500 ms SLO stays unmeasurable -- `slo.p95_ms` was always null.
+    """
+    bounds = (*latency_bucket_bounds(), float("inf"))
+    lines = [
+        "# HELP http_request_duration_seconds Request duration in seconds.",
+        "# TYPE http_request_duration_seconds histogram",
+    ]
+    for (method, route), (counts, observations, total) in sorted(duration_snapshot().items()):
+        labels = f'method="{_escape_label(method)}",route="{_escape_label(route)}"'
+        running = 0
+        for bound, count in zip(bounds, counts, strict=True):
+            running += count
+            le = "+Inf" if bound == float("inf") else f"{bound:g}"
+            lines.append(
+                f'http_request_duration_seconds_bucket{{{labels},le="{le}"}} {running:d}'
+            )
+        lines.append(f"http_request_duration_seconds_count{{{labels}}} {observations:d}")
+        lines.append(f"http_request_duration_seconds_sum{{{labels}}} {total:.6f}")
+    return lines
+
+
+@router.get("/metrics", response_class=PlainTextResponse)
+async def get_metrics() -> PlainTextResponse:
+    """RED counters and the request-duration histogram, Prometheus text format."""
+    return PlainTextResponse("\n".join(_counter_lines() + _histogram_lines()) + "\n")

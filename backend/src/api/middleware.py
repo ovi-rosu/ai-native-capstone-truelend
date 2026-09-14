@@ -34,6 +34,7 @@ request's task context.
 from __future__ import annotations
 
 import logging
+import time
 from collections import Counter
 from uuid import uuid4
 
@@ -62,14 +63,53 @@ def route_label(scope: Scope) -> str:
     return template if isinstance(template, str) else _UNMATCHED_ROUTE
 
 
+# Latency bucket upper bounds in seconds. Fixed rather than configurable: a
+# histogram's buckets are part of its contract, and E15-S3 reads p95 off them
+# against the 500 ms budget, so 0.5 has to be one of the boundaries.
+_LATENCY_BUCKETS: tuple[float, ...] = (
+    0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
+)
+_duration_counts: dict[tuple[str, str], list[int]] = {}
+_duration_totals: dict[tuple[str, str], tuple[int, float]] = {}
+
+
+def observe_duration(method: str, route: str, seconds: float) -> None:
+    """Record one request duration against (method, route template)."""
+    key = (method, route)
+    counts = _duration_counts.setdefault(key, [0] * (len(_LATENCY_BUCKETS) + 1))
+    index = next(
+        (i for i, bound in enumerate(_LATENCY_BUCKETS) if seconds <= bound),
+        len(_LATENCY_BUCKETS),
+    )
+    counts[index] += 1
+    observations, total = _duration_totals.get(key, (0, 0.0))
+    _duration_totals[key] = (observations + 1, total + seconds)
+
+
+def duration_snapshot() -> dict[tuple[str, str], tuple[list[int], int, float]]:
+    """Per (method, route): per-bucket counts, observation count, summed seconds."""
+    snapshot = {}
+    for key, counts in _duration_counts.items():
+        observations, total = _duration_totals.get(key, (0, 0.0))
+        snapshot[key] = (list(counts), observations, total)
+    return snapshot
+
+
+def latency_bucket_bounds() -> tuple[float, ...]:
+    """The histogram's upper bounds, excluding the implicit +Inf bucket."""
+    return _LATENCY_BUCKETS
+
+
 def request_counter_snapshot() -> dict[tuple[str, str, int], int]:
     """A copy of the RED counters, for the metrics endpoint to render."""
     return dict(_request_counts)
 
 
 def reset_request_counters() -> None:
-    """Clear the counters. For tests that assert on exact counts."""
+    """Clear every counter. For tests that assert on exact counts."""
     _request_counts.clear()
+    _duration_counts.clear()
+    _duration_totals.clear()
 
 
 class CorrelationIdMiddleware:
@@ -95,11 +135,19 @@ class CorrelationIdMiddleware:
 
         return send_with_correlation_id
 
+    @staticmethod
+    def _observe(scope: Scope, started: float) -> None:
+        """Record the elapsed duration under the matched route template."""
+        observe_duration(
+            str(scope.get("method", "-")), route_label(scope), time.perf_counter() - started
+        )
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
+        started = time.perf_counter()
         inbound = Headers(scope=scope).get(_REQUEST_ID_HEADER.lower())
         request_id = inbound or uuid4().hex
         token = request_id_var.set(request_id)
@@ -108,7 +156,9 @@ class CorrelationIdMiddleware:
 
         try:
             await self.app(scope, receive, wrapped_send)
+            self._observe(scope, started)
         except BaseException:
+            self._observe(scope, started)
             # Logged here, while the redaction set and the id are still bound,
             # so the traceback is scrubbed and correlated. Relying on the
             # server's own logger left it unscrubbed and with an empty id --
