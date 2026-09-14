@@ -295,3 +295,78 @@ def test_division_exemption_does_not_silence_other_float_categories(marked: str)
     later money story inherits.
     """
     assert _count_float_usages(marked) > 0
+
+
+def test_money_field_generates_a_json_schema() -> None:
+    """`MoneyField` must be describable, or /openapi.json 500s.
+
+    `_MoneyPydanticAnnotation` supplied `__get_pydantic_core_schema__` but no
+    `__get_pydantic_json_schema__`, and `no_info_plain_validator_function`
+    gives Pydantic nothing to infer from — so the first response model
+    carrying a money amount broke schema generation with
+    `PydanticInvalidForJsonSchema`. E1-S1's product responses are that first
+    model, so this would have surfaced as a broken /docs in group B.
+    """
+    from pydantic import BaseModel
+    from src.api.serializers import MoneyField
+
+    class Priced(BaseModel):
+        amount: MoneyField
+
+    schema = Priced.model_json_schema()
+
+    field = schema["properties"]["amount"]
+    assert field["type"] == "string", f"money must be described as a string, got {field}"
+
+
+def test_money_field_schema_documents_the_two_decimal_wire_form() -> None:
+    """The schema has to say *which* string, not just `string`.
+
+    A bare `{"type": "string"}` would let a generated client send `12.3` or a
+    JSON number and still look contract-conformant, which is exactly the
+    float-on-the-wire outcome D-G exists to prevent.
+    """
+    import re
+
+    from pydantic import BaseModel
+    from src.api.serializers import MoneyField
+
+    class Priced(BaseModel):
+        amount: MoneyField
+
+    field = Priced.model_json_schema()["properties"]["amount"]
+
+    assert "pattern" in field, "the 2dp wire form must be expressed in the schema"
+    assert re.fullmatch(field["pattern"], "1234.50")
+    assert re.fullmatch(field["pattern"], "-45.01")
+    assert not re.fullmatch(field["pattern"], "1234.5"), "one decimal place must not match"
+    assert not re.fullmatch(field["pattern"], "1234"), "a bare integer must not match"
+
+
+def test_openapi_schema_generates_for_a_money_bearing_route() -> None:
+    """The end-to-end symptom: GET /openapi.json must not 500.
+
+    E1-S2-AC3 enumerates guarded routes *from* /openapi.json, so a broken
+    schema would take the authorization coverage suite down with it.
+    """
+    from fastapi.testclient import TestClient
+    from pydantic import BaseModel
+    from src.api.app import build_fastapi_app, create_app
+    from src.api.serializers import MoneyField
+
+    class Product(BaseModel):
+        product_code: str
+        minimum_income: MoneyField
+
+    inner = build_fastapi_app()
+
+    @inner.get("/_test-only-priced", response_model=Product)
+    async def _priced() -> Product:
+        return Product(product_code="PERSONAL", minimum_income=Money("25000"))
+
+    with TestClient(create_app(inner)) as client:
+        spec = client.get("/openapi.json")
+        body = client.get("/_test-only-priced")
+
+    assert spec.status_code == 200, "/openapi.json must render with a money field present"
+    assert body.json() == {"product_code": "PERSONAL", "minimum_income": "25000.00"}

@@ -12,9 +12,16 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Annotated, Any
 
-from pydantic import GetCoreSchemaHandler
+from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from src.types.money import InvalidMoneyAmountError, Money
+
+# The wire form D-G mandates: a quoted decimal string with exactly two decimal
+# places. Expressed in the schema so a generated client cannot send `12.3` or a
+# JSON number and still look contract-conformant -- which is the float-on-the-
+# wire outcome D-G exists to prevent.
+_WIRE_PATTERN = r"^-?\d+\.\d{2}$"
 
 
 def _validate_money(value: Money | str | Decimal) -> Money:
@@ -49,6 +56,31 @@ class _MoneyPydanticAnnotation:
                 return_schema=core_schema.str_schema(),
             ),
         )
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, _schema: core_schema.CoreSchema, _handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        """Describe the wire form for OpenAPI.
+
+        Without this, a plain validator function leaves Pydantic nothing to
+        infer from. The symptoms were quiet rather than loud:
+        `model_json_schema()` raised `PydanticInvalidForJsonSchema`; a response
+        model degraded to a bare `{"type": "string"}` inferred from the
+        serializer's `return_schema`; and a **request-body** model was omitted
+        from `components.schemas` entirely, so `/openapi.json` still returned
+        200 while documenting no body at all. That last one matters twice over,
+        because `E1-S2-AC3` enumerates the guarded routes *from* that document.
+        """
+        return {
+            "type": "string",
+            "pattern": _WIRE_PATTERN,
+            "examples": ["1234.50", "-45.01"],
+            "description": (
+                "Monetary amount as a quoted decimal string with exactly two "
+                "decimal places, never a JSON number (decision D-G)."
+            ),
+        }
 
 
 MoneyField = Annotated[Money, _MoneyPydanticAnnotation]
