@@ -24,6 +24,26 @@
     {
       "name": "Apply screen for product selection, applicant details and checklist display",
       "status": "unknown"
+    },
+    {
+      "name": "Apply",
+      "status": "new"
+    },
+    {
+      "name": "ChecklistList",
+      "status": "new"
+    },
+    {
+      "name": "Loan Application",
+      "status": "existing"
+    },
+    {
+      "name": "Application Document",
+      "status": "existing"
+    },
+    {
+      "name": "Money",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -41,9 +61,22 @@
     "layer": "UI"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "frontend/src/api/applications.ts",
+      "POST /applications",
+      "frontend/src/api/client.ts",
+      "frontend/src/types/api.ts",
+      "frontend/src/ui/components/ChecklistList.tsx",
+      ") as a list/table, mirroring ",
+      "frontend/src/ui/pages/Apply.tsx",
+      "frontend/src/ui/components/MoneyText.tsx",
+      "frontend/src/types/money.ts",
+      "frontend/src/ui/routes.tsx",
+      "frontend/tests/unit/Apply.test.tsx",
+      "field/label"
+    ],
+    "text": "1. Define `submitApplication(payload: ApplicationSubmission): Promise<{application, credit_score, decision, document_checklist}>` in `frontend/src/api/applications.ts` (new), calling `POST /applications` through the shared HTTP client in `frontend/src/api/client.ts` (owned by E1-S1) and typed against `frontend/src/types/api.ts` (owned by E1-S1).\n2. Define `ChecklistList` in `frontend/src/ui/components/ChecklistList.tsx` (new): a presentational component rendering `document_checklist` items (`document_type`, `label`, `status`) as a list/table, mirroring `specs/design/mockups/E4-S3.html`'s `ChecklistTable`; no business logic, no fetching.\n3. Define the `Apply` screen in `frontend/src/ui/pages/Apply.tsx` (new): a product-selection and applicant-detail form (`full_name`, `date_of_birth`, `declared_income`, `pan`, `aadhaar`, `credit_history_flags`, `requested_amount`, `requested_tenure_months`) with no co-applicant or guarantor field anywhere on the screen (AC3); on submit, call `submitApplication` from step 1 and render a confirmation showing the created application's `status` (AC1) using `MoneyText` from `frontend/src/ui/components/MoneyText.tsx` and `Money` from `frontend/src/types/money.ts` (both owned by E9-S1, already implemented) to display `requested_amount`/`declared_income`, and `ChecklistList` from step 2 to list every required-document checklist item for the chosen product (AC2). No eligibility computation runs client-side; the confirmation only reflects the server response.\n4. Append one route entry for `Apply` to the frontend route registry in `frontend/src/ui/routes.tsx` (owned by E1-S1; single-row registry append), pointing at the `Apply` screen from step 3.\n5. Add `frontend/tests/unit/Apply.test.tsx` (new): render tests covering AC1 (submitting valid details shows the confirmation with the returned application in `SUBMITTED` state), AC2 (every `document_checklist` item for the chosen product renders via `ChecklistList`), and AC3 (assert no co-applicant or guarantor field/label is present anywhere in the rendered form) — covering AC1-AC3."
   },
   "safeguards": {
     "ids": [

@@ -24,6 +24,22 @@
     {
       "name": "Underwriter workbench queue and MANUAL_REVIEW decision review screen",
       "status": "unknown"
+    },
+    {
+      "name": "Loan Application",
+      "status": "existing"
+    },
+    {
+      "name": "Application Status",
+      "status": "existing"
+    },
+    {
+      "name": "Underwriting Decision",
+      "status": "existing"
+    },
+    {
+      "name": "Application Document",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -41,9 +57,22 @@
     "layer": "UI"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "frontend/src/api/workbench.ts",
+      "GET /applications?status=SUBMITTED&status=MANUAL_REVIEW",
+      "POST /applications/{application_id}/decision",
+      "frontend/src/api/client.ts",
+      "frontend/src/api/applications.ts",
+      "frontend/src/ui/components/ReasonCodeList.tsx",
+      "frontend/src/ui/pages/Workbench.tsx",
+      "frontend/src/ui/pages/DecisionReview.tsx",
+      "/applications/:applicationId/review",
+      "frontend/src/ui/routes.tsx",
+      "frontend/src/config/roles.ts",
+      "specs/test_artefacts/test-plan.md"
+    ],
+    "text": "1. Define `listWorkbenchQueue(): Promise<LoanApplication[]>` and `saveDecision(applicationId, outcome, reasonCode, comment): Promise<UnderwritingDecision>` in `frontend/src/api/workbench.ts` (new), calling `GET /applications?status=SUBMITTED&status=MANUAL_REVIEW` and `POST /applications/{application_id}/decision` through the shared HTTP client in `frontend/src/api/client.ts` (owned by E1-S1, imported not modified), and reusing the application-detail fetch in `frontend/src/api/applications.ts` (owned by E4-S3, imported not modified) for the full record the review screen needs.\n2. Define the presentational `ReasonCodeList` component in `frontend/src/ui/components/ReasonCodeList.tsx` (new), rendering an `UnderwritingDecision.reason_codes` list of `{code, text}` pairs.\n3. Define the `Workbench` page in `frontend/src/ui/pages/Workbench.tsx` (new): on mount call `listWorkbenchQueue()` from `frontend/src/api/workbench.ts` and render exactly the applications returned — SUBMITTED or MANUAL_REVIEW state, the plain status filter per D-L (AC1) — each row linking to that application's review screen.\n4. Define the `DecisionReview` page in `frontend/src/ui/pages/DecisionReview.tsx` (new): fetch the full application via `frontend/src/api/applications.ts` (owned by E4-S3) and render `credit_score`, the decision's reason codes through `ReasonCodeList`, and each checklist item's `DocumentVerificationStatus` from `document_checklist` (AC2, using the verification state E6-S1 produces); on submit call `saveDecision()` from `frontend/src/api/workbench.ts` and, on success, return to the Workbench so the decided case no longer appears in `listWorkbenchQueue()`'s result (AC3).\n5. Append one route entry each for `/workbench` and `/applications/:applicationId/review` to the frontend route registry in `frontend/src/ui/routes.tsx` (single-row appends, owned by E1-S1), gated by the UNDERWRITER role from `frontend/src/config/roles.ts` (owned by E1-S1, imported not modified).\n6. This story owns no dedicated test file per its bundle; the Workbench-to-DecisionReview-to-save flow wired in steps 3-4 is exactly what the evaluator's Playwright checks QA-VM-059 through QA-VM-061 (`specs/test_artefacts/test-plan.md`) exercise for AC1, AC2 and AC3 respectively."
   },
   "safeguards": {
     "ids": [

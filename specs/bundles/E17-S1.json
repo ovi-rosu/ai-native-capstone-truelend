@@ -24,6 +24,14 @@
     {
       "name": "Accessibility harness and WCAG 2.1 AA ratchet over the customer-facing screen registry",
       "status": "unknown"
+    },
+    {
+      "name": "Customer-facing screen registry",
+      "status": "new"
+    },
+    {
+      "name": "Apply screen",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -40,9 +48,14 @@
     "layer": "UI"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "frontend/tests/a11y/registry.ts",
+      "frontend/src/ui/pages/Apply.tsx",
+      "frontend/tests/a11y/harness.ts",
+      "frontend/tests/a11y/screens.spec.ts"
+    ],
+    "text": "1. Define the customer-facing screen registry in `frontend/tests/a11y/registry.ts` (new): a typed list of `{ name, route, screen }` entries, seeded with one entry for the Apply screen (`frontend/src/ui/pages/Apply.tsx`, owned by E4-S3); Track (E8-S1) and Repay (E13-S1) each append one row here as they land.\n2. Define the axe-core scan and keyboard-traversal driver in `frontend/tests/a11y/harness.ts` (new): a scan function that runs axe-core against a rendered registry entry with zero rules suppressed, and a traversal function that drives that entry's primary flow using the keyboard only, asserting no focus trap and that every interactive control exposes an accessible name and a visible focus indicator.\n3. Define `frontend/tests/a11y/screens.spec.ts` (new): iterate every registry entry, run the axe scan and keyboard traversal from `harness.ts` against each, assert 0 WCAG 2.1 AA violations with no suppressed rule and 100% of registered screens covered, and add a completeness assertion that fails the suite when a route rendering a customer-facing screen is absent from the registry; run it first to surface the Apply screen's current violations.\n4. Remediate `frontend/src/ui/pages/Apply.tsx` (owned by E4-S3) for accessibility only — labeling, focus order and visible focus indicators needed to pass the scan and keyboard traversal — with no change to its endpoint or contract, per component-map's Modifies note.\n5. Re-run `frontend/tests/a11y/screens.spec.ts` to confirm it passes against the registered and remediated Apply screen, covering AC1 (0 violations, 100% of registered screens covered, no suppressed rule), AC2 (complete keyboard-only traversal with no focus trap and every control accessibly named with a visible focus indicator) and AC3 (the suite fails when a customer-facing route is left unregistered)."
   },
   "safeguards": {
     "ids": [

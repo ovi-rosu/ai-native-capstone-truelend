@@ -25,6 +25,22 @@
     {
       "name": "Application intake with product derived document checklist and submission time policy pinning",
       "status": "unknown"
+    },
+    {
+      "name": "Document Checklist",
+      "status": "new"
+    },
+    {
+      "name": "ChecklistRepository",
+      "status": "new"
+    },
+    {
+      "name": "Application Document",
+      "status": "existing"
+    },
+    {
+      "name": "Required Document",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -42,9 +58,18 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/migrations/versions/0006_checklist_item.py",
+      "specs/design/data-models.md",
+      "backend/src/repository/models.py",
+      "backend/src/repository/origination/checklist_repository.py",
+      "backend/src/service/origination/checklist.py",
+      "backend/src/service/origination/intake.py",
+      "backend/tests/integration/test_intake_pinning.py",
+      "product/policy"
+    ],
+    "text": "1. Add migration `backend/migrations/versions/0006_checklist_item.py` (new) creating the `checklist_item` table per `specs/design/data-models.md` (`id`, `application_id` FK NOT NULL, `document_type`, `label`, `status` default `PENDING`, `rejection_reason` with the `REJECTED`-requires-reason CHECK constraint, `actioned_by`, `actioned_at`) with indexes `(application_id)` and partial `(status) WHERE status = 'PENDING'`; append the `ChecklistItem` table class as one row to the SQLAlchemy table registry in `backend/src/repository/models.py` (owned by E1-S1; single-row registry append).\n2. Define `ChecklistRepository` in `backend/src/repository/origination/checklist_repository.py` (new) with `insert_many(application_id, required_documents)`, `list_for_application(application_id)`, `list_pending()` and `set_verification(document_id, status, rejection_reason, actor)`, over the `checklist_item` table from step 1.\n3. Define `generate_checklist(application_id, rules: PolicyRules) -> list[ApplicationDocument]` in `backend/src/service/origination/checklist.py` (new): map `rules.required_documents` (from the pinned `PolicyRules`, owned by E2-S1) item-for-item into checklist rows via `ChecklistRepository.insert_many`, each defaulted to `status=\"PENDING\"` and carrying its `document_type` (AC1, AC4).\n4. Modify `backend/src/service/origination/intake.py` (owned by E4-S1) to deepen `submit()`: after `ApplicationRepository.insert` pins `policy_version_id` and `status=SUBMITTED`, call `checklist.generate_checklist(application_id, rules)` from step 3 using the same `PolicyRules` already resolved once via `policy.active_policy_version` at submission — never re-resolved afterward (AC2, AC3) — and return the real `document_checklist` list in place of the `E4-S1` tracer's empty placeholder.\n5. Add `backend/tests/integration/test_intake_pinning.py` (new): integration tests submitting against a seeded product/policy version and asserting the generated checklist matches the pinned version's required-document list item for item (AC1), the read-back application is `SUBMITTED` and stores the `policy_version_id` resolved at submission (AC2), a later policy-version activation leaves that stored `policy_version_id` and checklist unchanged (AC3), and each checklist item carries its `document_type` with unverified (`PENDING`) status (AC4) — covering AC1-AC4 (and exercising E4-S1's AC1-AC3 submit→score→decide path end to end)."
   },
   "safeguards": {
     "ids": [

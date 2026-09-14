@@ -27,6 +27,14 @@
     {
       "name": "Architecture invariant test registry and agent provenance evidence",
       "status": "unknown"
+    },
+    {
+      "name": "INVARIANT_REGISTRY (invariant name → covering test module)",
+      "status": "new"
+    },
+    {
+      "name": "test_agent_provenance (commit co-authorship and attestation check)",
+      "status": "new"
     }
   ],
   "approach": {
@@ -43,9 +51,17 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/tests/architecture/invariant_registry.py",
+      "backend/tests/architecture/test_policy_version_immutability.py",
+      "principal/rate/tenure",
+      "backend/tests/unit/test_emi_residual.py",
+      "backend/tests/architecture/test_layer_dependencies.py",
+      "backend/tests/architecture/test_invariant_registry.py",
+      "backend/tests/architecture/test_agent_provenance.py"
+    ],
+    "text": "1. Define the invariant registry in `backend/tests/architecture/invariant_registry.py` (new): an ordered mapping from invariant name to the test module(s) that must cover it — policy-version immutability → `backend/tests/architecture/test_policy_version_immutability.py` (owned by E3-S1), the EMI principal/rate/tenure invariant → `backend/tests/unit/test_emi_residual.py` (owned by E9-S3), and the six-layer one-way dependency rule → `backend/tests/architecture/test_layer_dependencies.py` (owned by E15-S2).\n2. Add the completeness assertion in `backend/tests/architecture/test_invariant_registry.py` (new): for every entry in `INVARIANT_REGISTRY`, import the named test module and assert it collects at least one test function that executes — covering E16-S1-AC1.\n3. In `backend/tests/architecture/test_invariant_registry.py` add the orphan-detection test: register a synthetic invariant with no test-module mapping against a copy of the registry and assert the suite fails, naming that orphaned invariant — covering E16-S1-AC2.\n4. Define `backend/tests/architecture/test_agent_provenance.py` (new): walk every production commit on the branch via `git log`, and assert each carries the `Co-Authored-By` agent trailer and a passing record from the standard pre-commit gate set — covering E16-S1-AC3.\n5. In `backend/tests/architecture/test_agent_provenance.py` add a test reading the `/gate` attestation record for the head commit and asserting it is present and records 0 hand-written production lines as the NFR-11 evidence — covering E16-S1-AC4."
   },
   "safeguards": {
     "ids": [

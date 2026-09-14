@@ -25,6 +25,26 @@
     {
       "name": "Idempotent as-of-date end-of-day delinquency recalculation",
       "status": "unknown"
+    },
+    {
+      "name": "EndOfDayRun",
+      "status": "new"
+    },
+    {
+      "name": "DelinquencyBucket",
+      "status": "existing"
+    },
+    {
+      "name": "LadderState",
+      "status": "existing"
+    },
+    {
+      "name": "LoanAgeing",
+      "status": "existing"
+    },
+    {
+      "name": "Loan",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -41,9 +61,16 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/service/delinquency/end_of_day.py",
+      "backend/src/config/delinquency.py",
+      "POST /operations/end-of-day",
+      "backend/src/api/delinquency/end_of_day_routes.py",
+      "backend/src/api/app.py",
+      "backend/tests/integration/test_end_of_day_idempotence.py"
+    ],
+    "text": "1. Define `run_end_of_day(as_of_date: date) -> EndOfDayRun` in `backend/src/service/delinquency/end_of_day.py` (new): reads every active loan via `LoanRepository.list_active` (owned by E9-S2); for each loan calls `installment_ladder.ladder_state(loan_id, as_of_date)` (owned by E9-S3) and `classify` in `backend/src/config/delinquency.py` (owned by E11-S1) directly — deliberately never calling E11-S2's repayment-path recalculation, per D-10; writes each loan's recomputed `delinquency_bucket` via `loan_projection.set_projections` (owned by E9-S2, the single projection write path), so a same-input second run overwrites with byte-identical values; appends one `audit_event` via `audit(...)` (owned by E1-S2) recording the invocation; persists no `end_of_day_run` row of its own — `EndOfDayRun` is returned only as a derived response value object.\n2. Define `POST /operations/end-of-day` in `backend/src/api/delinquency/end_of_day_routes.py` (new): `require_roles(ADMIN)` per D-N, parses the `as_of_date` request body, calls `end_of_day.run_end_of_day`, and returns the `EndOfDayRun` summary (`as_of_date`, `loans_evaluated`, `buckets`, `completed_at`).\n3. Append one `include_router` row for the end-of-day router to the app factory router registry `backend/src/api/app.py` (owned by E15-S1).\n4. Add the idempotence integration test in `backend/tests/integration/test_end_of_day_idempotence.py` (new), covering AC1-AC4: seeded active loans with differing days past due each land in the bucket matching their days past due at the given as-of date (AC1); running the operation a second time for the same as-of date leaves every bucket and every stored row byte-identical to the first run (AC2); an as-of date earlier than a loan's first installment due date leaves that loan's bucket at `CURRENT` (AC3); comparing loan records against their pre-run state shows no fee, penal interest or collections record created (AC4)."
   },
   "safeguards": {
     "ids": [

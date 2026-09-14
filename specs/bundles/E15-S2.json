@@ -24,6 +24,14 @@
     {
       "name": "Self-hosted Docker Compose stack and one-way layer dependency test",
       "status": "unknown"
+    },
+    {
+      "name": "LayerDependencyTest (`test_layer_dependencies.py`)",
+      "status": "new"
+    },
+    {
+      "name": "Docker Compose stack (postgres, backend, frontend services)",
+      "status": "new"
     }
   ],
   "approach": {
@@ -38,9 +46,14 @@
     "layer": "Config"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src",
+      "frontend/src",
+      "backend/tests/architecture/test_layer_dependencies.py",
+      "GET /health"
+    ],
+    "text": "1. Verify and, if needed, update the `architecture` block in `project-manifest.json` (layers `types, config, repository, service, api, ui`; `layer_roots` `backend/src` and `frontend/src`; the five bounded-context roots) so it matches the layout this story builds — without this block the layer-dependency test matches no file and passes vacuously.\n2. Define the one-way layer-dependency architecture test in `backend/tests/architecture/test_layer_dependencies.py` (new): read `project-manifest.json`'s `architecture` block, walk every import under `backend/src` and `frontend/src`, and assert 0 violations of the Types → Config → Repository → Service → API → UI direction — covering E15-S2-AC2.\n3. Add `Dockerfile.backend` (new): a Python 3.12 image that runs `uv sync` for the backend and starts `uvicorn src.api.app:app`, with a `HEALTHCHECK` that polls `GET /health` (from E15-S1).\n4. Add `Dockerfile.frontend` (new): a Node build stage running `npm ci && npm run build` with `VITE_API_BASE_URL` as a build argument, then a minimal static-serve stage carrying its own `HEALTHCHECK`.\n5. Add `docker-compose.yml` (new) declaring exactly three services — one `postgres` (no second database engine, cache or message broker), `backend` (built from `Dockerfile.backend`, health-gated on `GET /health`), and `frontend` (built from `Dockerfile.frontend`) — each with a `healthcheck` and no external provider endpoint or live credential configured.\n6. Extend `init.sh` (existing bootstrap script) to: verify `docker` and `docker compose` are present, copy `.env.example` to `.env` and generate a local `JWT_SECRET` when absent, run `docker compose up -d --build`, poll `GET /health` until 200 or a bounded timeout, print the frontend URL, and exit non-zero if any of the three services never reports healthy — the exit code the E15-S2-AC1 smoke test depends on.\n7. In `backend/tests/architecture/test_layer_dependencies.py` add a static-parse test over `docker-compose.yml` asserting exactly one `postgres`, one `backend` and one `frontend` service are declared each with a `healthcheck`, and a second test asserting the compose service inventory names no second database engine, cache, message broker or external provider endpoint — together covering E15-S2-AC1 (the static half; `init.sh`'s exit code is the runtime half) and E15-S2-AC3, alongside the layer test from step 2 for AC2."
   },
   "safeguards": {
     "ids": [

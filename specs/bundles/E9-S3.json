@@ -28,6 +28,34 @@
     {
       "name": "EMI computation and append-only repayment schedule generation",
       "status": "unknown"
+    },
+    {
+      "name": "LoanTerms",
+      "status": "new"
+    },
+    {
+      "name": "LadderState",
+      "status": "new"
+    },
+    {
+      "name": "LoanAgeing",
+      "status": "new"
+    },
+    {
+      "name": "Money",
+      "status": "existing"
+    },
+    {
+      "name": "Installment",
+      "status": "existing"
+    },
+    {
+      "name": "RepaymentSchedule",
+      "status": "existing"
+    },
+    {
+      "name": "DelinquencyBucket",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -46,9 +74,18 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/types/loan_terms.py",
+      "backend/src/types/money.py",
+      "backend/src/service/servicing/emi.py",
+      "backend/src/service/servicing/installment_ladder.py",
+      "paid/unpaid",
+      "backend/src/service/servicing/schedule.py",
+      "backend/tests/unit/test_emi_residual.py",
+      "backend/tests/architecture/test_schedule_immutability.py"
+    ],
+    "text": "1. Define `LoanTerms`, `LadderState` and `LoanAgeing` value objects in `backend/src/types/loan_terms.py` (new), consuming `Money` from `backend/src/types/money.py` (owned by E9-S1).\n2. Define the single EMI and residual implementation (D-C: every installment carries the 2dp-rounded EMI except the last, which absorbs the accumulated Rounding Residual so the schedule sums exactly to Total Payable, no epsilon) as `compute_installments(terms: LoanTerms, first_due_date) -> list[Installment]` in `backend/src/service/servicing/emi.py` (new).\n3. Define `ladder_state(loan_id, as_of_date) -> LadderState` in `backend/src/service/servicing/installment_ladder.py` (new): the sole owner of the paid/unpaid Installment derivation and of Days Past Due, comparing the cumulative EMI ladder against the sum of posted `repayment_posting` amounts for the loan; published for E11-S2 and E12-S1 to read.\n4. Modify `backend/src/service/servicing/schedule.py` (owned by E9-S2): replace the tracer's equal-split placeholder in `compute_schedule` with a call into `emi.compute_installments`, deriving the schedule's `emi`, `total_payable` (defined as the sum of principal plus interest over the stored rows, never EMI times tenure) and `rounding_residual` fields.\n5. Add unit tests for the EMI and residual invariants in `backend/tests/unit/test_emi_residual.py` (new), covering AC1-AC4: the principal column sums exactly to the disbursed amount (AC1); total payable equals the sum of principal plus interest over the stored rows and the installment count equals the product tenure (AC2); the final installment's principal equals the balance remaining after all preceding rows (AC3); each period's interest is derived from that period's opening balance at the rate on the application's pinned policy version (AC4).\n6. Add the architecture immutability test in `backend/tests/architecture/test_schedule_immutability.py` (new): scan the `schedule_installment` repository together with `src/` and `migrations/` for an exposed update or delete method and for any UPDATE or DELETE statement targeting `schedule_installment`, covering AC5."
   },
   "safeguards": {
     "ids": [

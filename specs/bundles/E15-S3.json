@@ -24,6 +24,14 @@
     {
       "name": "Runtime SLO load harness and ratchet over the read-heavy endpoint registry",
       "status": "unknown"
+    },
+    {
+      "name": "READ_HEAVY_ENDPOINT_REGISTRY (method, path entries)",
+      "status": "new"
+    },
+    {
+      "name": "LoadHarness (in-process httpx + asyncio driver)",
+      "status": "new"
     }
   ],
   "approach": {
@@ -40,9 +48,17 @@
     "layer": "API"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/tests/slo/registry.py",
+      "GET /products",
+      "GET /applications",
+      "GET /loans/{id}",
+      "GET /dashboard",
+      "backend/tests/slo/harness.py",
+      "backend/tests/slo/test_read_slo.py"
+    ],
+    "text": "1. Define the read-heavy endpoint registry in `backend/tests/slo/registry.py` (new): an ordered list of `(method, path)` entries seeded with `GET /products`, the first read-heavy endpoint, from E2-S1's read surface; later stories (E7-S1, E13-S1, E14-S1) each append one row for `GET /applications`, `GET /loans/{id}` and `GET /dashboard` per `component-map.md`'s shared-registry rule.\n2. Define the in-process load driver in `backend/tests/slo/harness.py` (new): an httpx + asyncio driver that, for each entry in `READ_HEAVY_ENDPOINT_REGISTRY`, issues a bounded batch of requests against the running app (from E15-S1's `create_app()`), and measures p95 latency and error rate, returning one result record per endpoint — no external load-testing service, per Scope Out.\n3. In `backend/tests/slo/test_read_slo.py` (new) add the SLO assertion test: run `LoadHarness` over every entry in `READ_HEAVY_ENDPOINT_REGISTRY` and assert p95 latency is under `project-manifest.json`'s `observability.slo.p95_ms` (500 ms) and error rate is under `observability.slo.error_rate_pct` (1%) for all of them — covering E15-S3-AC1.\n4. In `backend/tests/slo/test_read_slo.py` add a test that runs the harness once and asserts every registered endpoint has a measured p95 and error-rate figure recorded in the run's result, in the shape the evaluation report consumes — covering E15-S3-AC2.\n5. In `backend/tests/slo/test_read_slo.py` add the completeness assertion: enumerate every `GET` route on the running `create_app()` app that matches the read-heavy heuristic, and assert each is present in `READ_HEAVY_ENDPOINT_REGISTRY`, failing and naming any route absent from it — covering E15-S3-AC3."
   },
   "safeguards": {
     "ids": [

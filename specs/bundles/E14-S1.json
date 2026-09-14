@@ -25,6 +25,18 @@
     {
       "name": "Portfolio dashboard by product, delinquency bucket and total overdue",
       "status": "unknown"
+    },
+    {
+      "name": "PortfolioSummary",
+      "status": "new"
+    },
+    {
+      "name": "Loan",
+      "status": "existing"
+    },
+    {
+      "name": "Installment",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -43,9 +55,20 @@
     "layer": "UI"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/repository/delinquency/portfolio_repository.py",
+      "backend/src/service/delinquency/portfolio.py",
+      "GET /dashboard",
+      "backend/src/api/delinquency/portfolio_routes.py",
+      "backend/src/api/app.py",
+      "backend/tests/slo/registry.py",
+      "frontend/src/api/dashboard.ts",
+      "frontend/src/api/client.ts",
+      "frontend/src/ui/pages/Portfolio.tsx",
+      "frontend/src/ui/routes.tsx"
+    ],
+    "text": "1. Define the `PortfolioSummary` value object (by-product, by-bucket loan count and value, and `total_overdue`) and `PortfolioRepository.summary() -> PortfolioSummary` in `backend/src/repository/delinquency/portfolio_repository.py` (new): aggregate loan count and value per `product_code` and `delinquency_bucket` from the stored `loan.outstanding_principal` and `loan.delinquency_bucket` projections (maintained by E11-S2), and sum the overdue installment amounts across active loans for `total_overdue` — a read-only query, with no write and no call to the end-of-day run.\n2. Define `portfolio_summary() -> PortfolioSummary` in `backend/src/service/delinquency/portfolio.py` (new): delegate to `PortfolioRepository.summary()` only; this is the single call path and it never invokes `delinquency.run_end_of_day` (owned by E12-S1), per D11.\n3. Define `GET /dashboard` in `backend/src/api/delinquency/portfolio_routes.py` (new): enforce `require_roles(ADMIN)` (owned by E1-S2) so a `CUSTOMER` session receives 403 with no portfolio figures in the body, then call `portfolio_summary()` and return the `by_product`/`by_bucket` breakdown, `total_overdue` and `as_of`.\n4. Register `portfolio_routes.router` in the app factory `backend/src/api/app.py` (owned by E15-S1) via one `include_router` call.\n5. Append one endpoint row for `GET /dashboard` to the read-heavy endpoint registry `backend/tests/slo/registry.py` (owned by E15-S3) so the dashboard read surface meets the SLO budget.\n6. Add `getPortfolio()` to `frontend/src/api/dashboard.ts` (new), calling the shared HTTP client from `frontend/src/api/client.ts` (owned by E1-S1) against `GET /dashboard`.\n7. Define the `Portfolio` screen in `frontend/src/ui/pages/Portfolio.tsx` (new): an admin-only surface that fetches via `getPortfolio`, renders the per-product, per-bucket loan count and value breakdown, and renders `total_overdue` using `MoneyText` (owned by E9-S1); render no fee, penalty or collections figure anywhere on the screen (SG-1).\n8. Add one route entry for `Portfolio` to the frontend route registry `frontend/src/ui/routes.tsx` (owned by E1-S1), gated to the `ADMIN` role via the role-to-landing-surface map (owned by E1-S1).\n9. This story's bundle owns no dedicated test file; verify AC1-AC4 against `backend/src/api/delinquency/portfolio_routes.py` and `frontend/src/ui/pages/Portfolio.tsx` through the e2e test matrix (VM-098–VM-101): per-product-and-bucket count and value (AC1), `total_overdue` reconciling to the sum of overdue installment amounts (AC2), 403 with no figures for a `CUSTOMER` session (AC3), and figures traced to stored bucket state with no end-of-day invocation (AC4)."
   },
   "safeguards": {
     "ids": [

@@ -24,6 +24,18 @@
     {
       "name": "Deterministic credit scoring stub over age, income and credit history flags",
       "status": "unknown"
+    },
+    {
+      "name": "Applicant",
+      "status": "existing"
+    },
+    {
+      "name": "Credit Score Stub",
+      "status": "new"
+    },
+    {
+      "name": "Credit Score",
+      "status": "new"
     }
   ],
   "approach": {
@@ -39,9 +51,15 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "I/O",
+      "backend/src/service/origination/scoring.py",
+      "age/income",
+      "backend/src/types/origination.py",
+      "backend/tests/unit/test_scoring_stub.py"
+    ],
+    "text": "1. Add a private, deterministic age-band and income-band bucketing helper (pure, no I/O) in `backend/src/service/origination/scoring.py` (new).\n2. Add a private deterministic adjustment over the sorted `credit_history_flags` — a stable hash, no `random` module and no wall-clock read — in `backend/src/service/origination/scoring.py`.\n3. Define the public `score(applicant: Applicant) -> int` in `backend/src/service/origination/scoring.py`, composing the age/income buckets and the credit-history adjustment into one deterministic Credit Score, importing `Applicant` from `backend/src/types/origination.py` (owned by E4-S1, existing type; no new type is added here).\n4. Add determinism (AC1), credit-history-flag-sensitivity (AC2) and no-outbound-collaborator (AC3) tests in `backend/tests/unit/test_scoring_stub.py` (new), covering AC1-AC3."
   },
   "safeguards": {
     "ids": [

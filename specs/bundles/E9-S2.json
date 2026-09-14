@@ -28,6 +28,54 @@
     {
       "name": "Tracer M3: approve, disburse and post a first repayment",
       "status": "unknown"
+    },
+    {
+      "name": "Loan",
+      "status": "new"
+    },
+    {
+      "name": "RepaymentSchedule",
+      "status": "new"
+    },
+    {
+      "name": "Installment",
+      "status": "new"
+    },
+    {
+      "name": "Disbursement",
+      "status": "new"
+    },
+    {
+      "name": "Repayment",
+      "status": "new"
+    },
+    {
+      "name": "LoanRepository",
+      "status": "new"
+    },
+    {
+      "name": "ScheduleRepository",
+      "status": "new"
+    },
+    {
+      "name": "DisbursementRepository",
+      "status": "new"
+    },
+    {
+      "name": "RepaymentRepository",
+      "status": "new"
+    },
+    {
+      "name": "Money",
+      "status": "existing"
+    },
+    {
+      "name": "LoanApplication",
+      "status": "existing"
+    },
+    {
+      "name": "UnderwritingDecision",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -50,9 +98,25 @@
     "layer": "API"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/types/servicing.py",
+      "backend/src/types/money.py",
+      "backend/src/repository/models.py",
+      "backend/migrations/versions/0008_loan_schedule_disbursement_repayment.py",
+      "backend/src/repository/servicing/loan_repository.py",
+      "backend/src/repository/servicing/schedule_repository.py",
+      "backend/src/repository/servicing/disbursement_repository.py",
+      "backend/src/repository/servicing/repayment_repository.py",
+      "backend/src/service/servicing/schedule.py",
+      "backend/src/service/servicing/loan_projection.py",
+      "GET /loans/{loan_id}",
+      "POST /loans/{loan_id}/disbursement",
+      "POST /loans/{loan_id}/repayments",
+      "backend/src/api/servicing/routes.py",
+      "backend/src/api/app.py"
+    ],
+    "text": "1. Define `Loan`, `RepaymentSchedule`, `Installment`, `Disbursement` and `Repayment` domain types with `Money`-typed fields in `backend/src/types/servicing.py` (new), consuming `Money` from `backend/src/types/money.py` (owned by E9-S1).\n2. Append the `loan`, `repayment_schedule`, `schedule_installment`, `disbursement` and `repayment_posting` SQLAlchemy table classes as single-row appends to the shared SQLAlchemy table registry `backend/src/repository/models.py` (owned by E1-S1).\n3. Add `backend/migrations/versions/0008_loan_schedule_disbursement_repayment.py` (new): create the five tables above with `UNIQUE(application_id)` on `loan`, `UNIQUE(loan_id)` on `repayment_schedule` and on `disbursement` (the structural idempotence guard E10-S1 relies on), and `UNIQUE(schedule_id, sequence)` on `schedule_installment`.\n4. Define `LoanRepository` in `backend/src/repository/servicing/loan_repository.py` (new): `insert`, `get`, `list`, `list_active`, `set_outstanding_principal`, `set_delinquency_bucket`.\n5. Define `ScheduleRepository` in `backend/src/repository/servicing/schedule_repository.py` (new): insert-only `insert(loan_id, schedule)`, `get_for_loan(loan_id)`; no update or delete method.\n6. Define `DisbursementRepository` in `backend/src/repository/servicing/disbursement_repository.py` (new): insert-only `insert(loan_id, released_amount, funding_source)` (also transitioning the loan row to `DISBURSED` with `disbursed_at` in the same transaction), `get_for_loan(loan_id)`.\n7. Define `RepaymentRepository` in `backend/src/repository/servicing/repayment_repository.py` (new): insert-only `insert(repayment)`, `list_for_loan(loan_id)`.\n8. Define `compute_schedule(terms, first_due_date)` (shallow tracer version: one installment row per tenure month with an equal principal split, no D-C rounding-residual rule yet — deepened by E9-S3) and `on_approved(application_id) -> Loan` (creates the `Loan` and its schedule via `LoanRepository.insert` and `ScheduleRepository.insert`) in `backend/src/service/servicing/schedule.py` (new); consumed by E5-S2's `decision.evaluate` on an approving outcome.\n9. Define `set_projections(loan_id, outstanding_principal, delinquency_bucket) -> None` in `backend/src/service/servicing/loan_projection.py` (new) as the single projection write path onto `LoanRepository.set_outstanding_principal` and `LoanRepository.set_delinquency_bucket`; this is the one write path later reused by E11-S2's repayment posting and E12-S1's end-of-day run.\n10. Define `GET /loans/{loan_id}`, `POST /loans/{loan_id}/disbursement` (thin: writes the released amount and a stub funding-source identifier read from `Settings.funding_source_id`, owned by E15-S1, via `DisbursementRepository.insert`) and `POST /loans/{loan_id}/repayments` (thin: `RepaymentRepository.insert` followed by `loan_projection.set_projections` to lower outstanding principal by the payment amount) in `backend/src/api/servicing/routes.py` (new); `require_roles(ADMIN)` on disbursement per D-N, `require_roles(CUSTOMER)` on repayments.\n11. Append one `include_router` row for the servicing router to the app factory router registry `backend/src/api/app.py` (owned by E15-S1).\n12. This tracer owns no dedicated pytest file: AC1-AC3 are verified by the API-level checks VM-074, VM-075 and VM-076 (already defined in the test plan) exercising `backend/src/api/servicing/routes.py` as wired in steps 10-11, covering AC1-AC3."
   },
   "safeguards": {
     "ids": [

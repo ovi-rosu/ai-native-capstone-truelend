@@ -24,6 +24,26 @@
     {
       "name": "Loan product catalog with three products bound to distinct versioned rule sets",
       "status": "unknown"
+    },
+    {
+      "name": "PolicyRules",
+      "status": "new"
+    },
+    {
+      "name": "ReasonCode",
+      "status": "new"
+    },
+    {
+      "name": "RequiredDocument",
+      "status": "new"
+    },
+    {
+      "name": "Threshold",
+      "status": "new"
+    },
+    {
+      "name": "LoanProduct",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -42,9 +62,17 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/types/policy.py",
+      "backend/src/types/money.py",
+      "backend/src/service/policy/policy_accessor.py",
+      "backend/src/service/policy/catalog.py",
+      " and the active version's rate/tenure band, with no threshold value hardcoded in this file.\n4. Add migration ",
+      "backend/tests/integration/test_catalog_binding.py",
+      "GET /products"
+    ],
+    "text": "1. Define `PolicyRules`, `ReasonCode`, `RequiredDocument` and `Threshold` as Pydantic models in `backend/src/types/policy.py` (new), per D-A: `PolicyRules` validates `min_income: Money` (imported from `backend/src/types/money.py`, owned by E9-S1), `min_age`, `max_age`, `min_credit_score`, `min_tenure_months`, `max_tenure_months`, `annual_rate_pct: Decimal`, `reason_codes: list[ReasonCode]`, and `required_documents: list[RequiredDocument]`.\n2. Define `rules_for_version(policy_version_id) -> PolicyRules`, `reason_codes_for_version(policy_version_id) -> list[ReasonCode]`, and `active_policy_version(product_code) -> PolicyVersion` in `backend/src/service/policy/policy_accessor.py` (new) — the pinned-version accessor that is the only published way to read Policy Rules (D-D) — each reading via `PolicyVersionRepository.get`/`get_active` (owned by E3-S1) and parsing the stored JSONB through `PolicyRules.model_validate`.\n3. Define `list_catalog() -> list[LoanProduct]` and `get_product(product_code) -> LoanProduct` in `backend/src/service/policy/catalog.py` (new), joining `ProductRepository` rows (owned by E1-S1) with `policy_accessor.rules_for_version` so each returned product carries its own `active_policy_version_id` and the active version's rate/tenure band, with no threshold value hardcoded in this file.\n4. Add migration `backend/migrations/versions/0004_seed_catalog.py` (new): for PERSONAL, VEHICLE and EDUCATION, insert one `policy_version` row per product with distinct `PolicyRules`-shaped thresholds (differing `min_income`, `min_age`/`max_age`, `min_credit_score`, tenure band, and `annual_rate_pct`) through the append-only `policy_version` table (owned by E3-S1), inserting any product row the E1-S1 tracer migration did not already create; then update each product's mutable `active_policy_version_id` projection (D-E) to point at its own newly inserted version, so `UNIQUE(active_policy_version_id)` holds and no two products reference the same version (AC2).\n5. Add `backend/tests/integration/test_catalog_binding.py` (new): assert `GET /products` (the route owned by E1-S1, backed by `catalog.list_catalog`) returns at least 3 products including PERSONAL, VEHICLE and EDUCATION (AC1); assert each entry's `active_policy_version_id` is distinct across the list (AC2); and assert the three referenced policy versions' `min_income`, `min_age`, `min_credit_score`, tenure and `annual_rate_pct` values are pairwise different (AC3) — covering AC1-AC3."
   },
   "safeguards": {
     "ids": [

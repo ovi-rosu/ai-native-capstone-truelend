@@ -25,6 +25,22 @@
     {
       "name": "Repayment posting reduces outstanding principal and recalculates the delinquency bucket",
       "status": "unknown"
+    },
+    {
+      "name": "Repayment",
+      "status": "existing"
+    },
+    {
+      "name": "DelinquencyBucket",
+      "status": "existing"
+    },
+    {
+      "name": "Installment",
+      "status": "existing"
+    },
+    {
+      "name": "LadderState",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -41,9 +57,17 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/service/servicing/repayment.py",
+      " (owned by E9-S3) to derive the oldest unpaid Installment and cumulative due/paid; allocates FIFO across whole Installments and, within the oldest unpaid Installment, applies interest before principal per D-K, so ",
+      "backend/src/service/delinquency/recalculation.py",
+      "backend/src/config/delinquency.py",
+      "backend/src/api/servicing/routes.py",
+      "POST /loans/{loan_id}/repayments",
+      "backend/tests/integration/test_repayment_posting.py"
+    ],
+    "text": "1. Define `post_repayment(loan_id, amount: Money, actor) -> Repayment` in `backend/src/service/servicing/repayment.py` (new): calls `installment_ladder.ladder_state(loan_id, as_of_date)` (owned by E9-S3) to derive the oldest unpaid Installment and cumulative due/paid; allocates FIFO across whole Installments and, within the oldest unpaid Installment, applies interest before principal per D-K, so `applied_principal + applied_interest = amount`; calls `RepaymentRepository.insert` (owned by E9-S2) to append the immutable `repayment_posting` row.\n2. Define `recalculate_after_repayment(loan_id, as_of_date) -> DelinquencyBucket` in `backend/src/service/delinquency/recalculation.py` (new): re-derives the oldest unpaid Installment via `installment_ladder.ladder_state` (owned by E9-S3) and classifies it through `classify` in `backend/src/config/delinquency.py` (owned by E11-S1) — never re-deriving bucket boundaries locally.\n3. Extend `post_repayment` in `backend/src/service/servicing/repayment.py` (new) to call `loan_projection.set_projections(loan_id, outstanding_principal, delinquency_bucket)` (owned by E9-S2) in the same transaction as the `repayment_posting` insert: `outstanding_principal` falls by exactly the applied principal portion, and `delinquency_bucket` is set to the value returned by `recalculation.recalculate_after_repayment`.\n4. Modify `backend/src/api/servicing/routes.py` (owned by E9-S2) so `POST /loans/{loan_id}/repayments` calls `repayment.post_repayment` in place of the tracer's inline insert.\n5. Add the repayment-posting integration test in `backend/tests/integration/test_repayment_posting.py` (new), covering AC1-AC4: outstanding principal falls by exactly the applied principal portion of the payment (AC1); a new immutable `repayment_posting` row is appended with no pre-existing row updated (AC2); a loan whose oldest unpaid installment is 35 days past due recalculates to `DPD-30` after posting (AC3); a posting that clears every overdue installment recalculates to `CURRENT` with no late fee or penal interest charged (AC4)."
   },
   "safeguards": {
     "ids": [

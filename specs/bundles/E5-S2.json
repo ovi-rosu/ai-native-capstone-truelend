@@ -25,6 +25,26 @@
     {
       "name": "Underwriting decision with reason codes from the pinned policy version",
       "status": "unknown"
+    },
+    {
+      "name": "Underwriting Decision",
+      "status": "new"
+    },
+    {
+      "name": "Decision Outcome",
+      "status": "existing"
+    },
+    {
+      "name": "Reason Code",
+      "status": "existing"
+    },
+    {
+      "name": "Policy Version",
+      "status": "existing"
+    },
+    {
+      "name": "Loan Application",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -42,9 +62,19 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/migrations/versions/0007_decision_record.py",
+      "backend/src/repository/models.py",
+      "backend/src/repository/origination/decision_repository.py",
+      " (append-only; no update/delete method on the class) and ",
+      "backend/src/service/origination/decision.py",
+      "backend/src/service/policy/policy_accessor.py",
+      "backend/src/service/origination/scoring.py",
+      "backend/tests/unit/test_decision_reason_codes.py",
+      "append-only/latest-record-wins"
+    ],
+    "text": "1. Add the Alembic migration `backend/migrations/versions/0007_decision_record.py` (new): create the insert-only `decision_record` table (`id`, `application_id` FK, `policy_version_id` FK, `outcome`, `reason_codes` JSONB NOT NULL with at least 1 item, `comment`, `supersedes_id` FK to itself NULL, `decided_by` FK NULL, `decided_at` NOT NULL) with index `(application_id, decided_at DESC)`; no update or delete path, per D-E and SG-2.\n2. Append the `DecisionRecord` table class to the SQLAlchemy table registry in `backend/src/repository/models.py` (single-row append, owned by E1-S1), mapping to the `decision_record` table added in step 1.\n3. Define `DecisionRepository` in `backend/src/repository/origination/decision_repository.py` (new) with `insert(decision) -> UnderwritingDecision` (append-only; no update/delete method on the class) and `latest_for_application(application_id) -> UnderwritingDecision | None` ordered by `decided_at DESC`, giving AC3 its latest-record-wins read.\n4. Define `evaluate(application_id, actor) -> UnderwritingDecision` in `backend/src/service/origination/decision.py` (new): reads the application's pinned `policy_version_id`, resolves rules and reason codes through `rules_for_version`/`reason_codes_for_version` in `backend/src/service/policy/policy_accessor.py` (owned by E2-S1) — never `active_policy_version` — combines them with the Credit Score from `score()` in `backend/src/service/origination/scoring.py` (owned by E5-S1) to produce `AUTO_APPROVE`, `AUTO_REJECT` or `MANUAL_REVIEW` plus at least one declared reason code (AC1, AC2), and appends the result via `DecisionRepository.insert`.\n5. Define `record_manual_decision(application_id, outcome, reason_code, comment, actor) -> UnderwritingDecision` in `backend/src/service/origination/decision.py`: validates the supplied reason code against the reason codes declared by the application's pinned `policy_version_id` (read from stored data, never re-resolved as the active version), so a MANUAL_REVIEW case re-decided after a newer version activates still cites the version pinned at submission (AC4), and appends a new `decision_record` via `DecisionRepository.insert`.\n6. Add tests for AC1-AC4 in `backend/tests/unit/test_decision_reason_codes.py` (new): the decision-plus-reason-code response shape, reason-code membership in the pinned policy version, append-only/latest-record-wins behaviour across repeated decisions, and the MANUAL_REVIEW re-decision-after-reactivation scenario."
   },
   "safeguards": {
     "ids": [

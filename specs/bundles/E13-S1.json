@@ -25,6 +25,34 @@
     {
       "name": "Customer loan view with schedule, outstanding principal, bucket and repayment posting",
       "status": "unknown"
+    },
+    {
+      "name": "Loan",
+      "status": "existing"
+    },
+    {
+      "name": "RepaymentSchedule",
+      "status": "existing"
+    },
+    {
+      "name": "Installment",
+      "status": "existing"
+    },
+    {
+      "name": "Repayment",
+      "status": "existing"
+    },
+    {
+      "name": "Money",
+      "status": "existing"
+    },
+    {
+      "name": "MoneyText",
+      "status": "existing"
+    },
+    {
+      "name": "BucketBadge",
+      "status": "new"
     }
   ],
   "approach": {
@@ -42,9 +70,22 @@
     "layer": "UI"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "frontend/src/api/loans.ts",
+      "frontend/src/api/client.ts",
+      "GET /loans/{loan_id}",
+      "POST /loans/{loan_id}/repayments",
+      "frontend/src/ui/components/BucketBadge.tsx",
+      "frontend/src/ui/pages/Repay.tsx",
+      "frontend/src/ui/components/MoneyText.tsx",
+      "frontend/src/types/money.ts",
+      "frontend/src/ui/routes.tsx",
+      "frontend/tests/a11y/registry.ts",
+      "backend/tests/slo/registry.py",
+      "frontend/tests/unit/Repay.test.tsx"
+    ],
+    "text": "1. Add `getLoan(loanId)` and `postRepayment(loanId, amount)` functions to `frontend/src/api/loans.ts` (new), calling the shared HTTP client from `frontend/src/api/client.ts` (owned by E1-S1) against `GET /loans/{loan_id}` and `POST /loans/{loan_id}/repayments` (served by the repayment service owned by E11-S2), sending and receiving amounts only as the quoted 2dp wire string — never converting to a JS number.\n2. Define `BucketBadge` in `frontend/src/ui/components/BucketBadge.tsx` (new): a presentational component rendering the loan's `delinquency_bucket` wire value as a labeled badge, with no business logic and no client-side classification.\n3. Define the `Repay` screen in `frontend/src/ui/pages/Repay.tsx` (new): fetch the signed-in customer's loan via `getLoan`, render every `Installment` row with its due date and amount using `MoneyText` (owned by E9-S1, `frontend/src/ui/components/MoneyText.tsx`) over `Money.fromWire` (owned by E9-S1, `frontend/src/types/money.ts`), render the current `outstanding_principal` via `MoneyText` and the current bucket via `BucketBadge` — both taken verbatim from the server response and never recomputed client-side — and expose a repayment posting action that calls `postRepayment` and reloads the loan view afterward so the displayed outstanding principal reflects the post; render no early settlement, foreclosure or prepayment quote affordance anywhere on the screen (SG-10).\n4. Add one route entry for `Repay` to the frontend route registry `frontend/src/ui/routes.tsx` (owned by E1-S1).\n5. Append one screen row for `Repay` to the customer-facing screen registry `frontend/tests/a11y/registry.ts` (owned by E17-S1) so the screen is covered by the accessibility harness before it lands.\n6. Append one endpoint row for `GET /loans/{loan_id}` to the read-heavy endpoint registry `backend/tests/slo/registry.py` (owned by E15-S3) so the loan read surface meets the SLO budget.\n7. Add unit tests in `frontend/tests/unit/Repay.test.tsx` (new) covering AC1-AC4: every installment lists its due date and amount (AC1), outstanding principal and bucket both render (AC2), a posted repayment's effect is visible after reload (AC3), and no early-settlement, foreclosure or prepayment-quote affordance is offered (AC4)."
   },
   "safeguards": {
     "ids": [

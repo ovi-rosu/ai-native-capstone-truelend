@@ -24,6 +24,18 @@
     {
       "name": "Minimum income threshold rejects submission with PolicyViolationException",
       "status": "unknown"
+    },
+    {
+      "name": "Policy Violation",
+      "status": "new"
+    },
+    {
+      "name": "Policy Rules",
+      "status": "existing"
+    },
+    {
+      "name": "Money",
+      "status": "existing"
     }
   ],
   "approach": {
@@ -40,9 +52,16 @@
     "layer": "Service"
   },
   "operations": {
-    "pending": true,
-    "files": [],
-    "text": "- pending"
+    "pending": false,
+    "files": [
+      "backend/src/types/policy_violation.py",
+      "backend/src/types/errors.py",
+      "specs/design/api-contracts.md",
+      "backend/src/service/origination/income_guard.py",
+      " (owned by E2-S1) — never a hardcoded threshold, no I/O.\n3. Modify ",
+      "backend/tests/integration/test_policy_violation_rollback.py"
+    ],
+    "text": "1. Define `PolicyViolationException` in `backend/src/types/policy_violation.py` (new), subclassing `AppError` from `backend/src/types/errors.py` (owned by E15-S1, consumed not modified) with `threshold_kind: str`, `configured_value: str`, `submitted_value: str` and `status_code=422`; compose its message so the error response identifies `PolicyViolationException` (AC1) and names the breached threshold and the configured value it was checked against (AC2), matching the `PolicyViolation` shape in `specs/design/api-contracts.md`.\n2. Define `guard_minimum_income(declared_income: Money, rules: PolicyRules, policy_version_id) -> None` in `backend/src/service/origination/income_guard.py` (new): raises `PolicyViolationException(threshold_kind=\"min_income\", configured_value=str(rules.min_income), submitted_value=str(declared_income))` when `declared_income < rules.min_income`; pure comparison against the pinned `PolicyRules` (owned by E2-S1) — never a hardcoded threshold, no I/O.\n3. Modify `backend/src/service/origination/intake.py` (owned by E4-S1, deepened by E4-S2) to call `income_guard.guard_minimum_income(applicant.declared_income, rules, policy_version_id)` immediately after resolving `rules` via `policy.active_policy_version` and before `ApplicationRepository.insert`, inside the same database transaction, so a raised `PolicyViolationException` propagates before any row is written and the transaction rolls back leaving no application (or checklist) row behind (AC3).\n4. Add `backend/tests/integration/test_policy_violation_rollback.py` (new): integration tests submitting with `declared_income` below the selected product's pinned minimum-income threshold, asserting the error response identifies `PolicyViolationException` (AC1), the error body names `threshold_kind=\"min_income\"` and the configured minimum value (AC2), and a subsequent query of the `application` table for that attempted submission returns no row (AC3) — covering AC1-AC3."
   },
   "safeguards": {
     "ids": [
