@@ -43,6 +43,22 @@
       "questions_asked": 1,
       "answered": 1,
       "recordedAt": "2026-09-13T15:40:10.445Z"
+    },
+    {
+      "round": 4,
+      "verdict": "approved",
+      "feedback": [
+        "Re-affirming the approved decomposition: the drift in stories.json is byte-level serialization churn, not a change of content."
+      ],
+      "changes": [
+        "Re-pointed the spec receipt at the current hash. Verified substantively identical to the d0b5c94 approved state on story id, acceptance-criterion ids, group and depends_on for all 29 stories; E15-S1 still carries exactly 5 acceptance criteria. The churn came from re-running test-plan-write.js --force while investigating whether two new acceptance criteria could be added, which re-serialises the story graph."
+      ],
+      "declined": [
+        "Did not re-run the spec review loop: no story, dependency edge, cluster or acceptance criterion changed, so there is nothing new to review."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T12:36:35.794Z"
     }
   ],
   "artifacts": [
@@ -56,7 +72,7 @@
     },
     {
       "path": "specs/stories/stories.json",
-      "sha256": "5b28a5a8ada4d549052ab74389bf2b1fed9fefba7be1cd1a09925219617881f0"
+      "sha256": "40756a8801316b5a76ca00e960d48ee05f637b951a7e2c5e2089155bf8d0f10b"
     },
     {
       "path": "features.json",
@@ -69,7 +85,7 @@
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-13T15:40:10.445Z",
+  "approvedAt": "2026-09-14T12:36:35.794Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

@@ -1,7 +1,7 @@
 {
   "status": "sealed",
   "waived_by": null,
-  "sealedAt": "2026-09-14T11:15:44.865Z",
+  "sealedAt": "2026-09-14T12:36:35.945Z",
   "artifacts": [
     {
       "path": "specs/brd/brd.md",
@@ -30,7 +30,7 @@
     },
     {
       "path": "specs/stories/stories.json",
-      "sha256": "5b28a5a8ada4d549052ab74389bf2b1fed9fefba7be1cd1a09925219617881f0",
+      "sha256": "40756a8801316b5a76ca00e960d48ee05f637b951a7e2c5e2089155bf8d0f10b",
       "phase": "spec"
     },
     {
@@ -70,12 +70,12 @@
     },
     {
       "path": "specs/test_artefacts/verification-matrix.json",
-      "sha256": "a9ee97d7e7ab97ae51d851a9e2a88b09c56ed9e15e7749f2c5401f4a02c92dfa",
+      "sha256": "2201d5eb6e1ab1a52a1aab2c0a66b2e618b43e921975d2319a476ddaeadc62b6",
       "phase": "test"
     },
     {
       "path": "specs/test_artefacts/test-traces.json",
-      "sha256": "95b98306c5e6b9326b071399a147f44a4f1c772b3e247c0bc4eb2954e06d4ed9",
+      "sha256": "26986b783e36fd1c36b59e997880fe5bd6ebeca491565a36c5dc9499544f8259",
       "phase": "test"
     },
     {
@@ -100,12 +100,12 @@
     },
     {
       "path": "specs\\test_artefacts\\verification-matrix.json",
-      "sha256": "a9ee97d7e7ab97ae51d851a9e2a88b09c56ed9e15e7749f2c5401f4a02c92dfa",
+      "sha256": "2201d5eb6e1ab1a52a1aab2c0a66b2e618b43e921975d2319a476ddaeadc62b6",
       "phase": null
     },
     {
       "path": "specs\\bundles\\E1-S1.json",
-      "sha256": "f942a6acf4faf3686c2ae41602579c3401dc22a61d1029d5f9a6319321c83959",
+      "sha256": "6f07b93f21f0a8031e36100c171fd71b2db36c1daa42c5c656c2e41e90d56fe7",
       "phase": null
     },
     {
@@ -145,7 +145,7 @@
     },
     {
       "path": "specs\\bundles\\E15-S1.json",
-      "sha256": "a84fda48181229b047f0aebbb59f90e7059bd623e56b60cc4a7ac8911b125b47",
+      "sha256": "017286ac80da008fcc33caf1364b747705174c0c86b291951f589c68f108102b",
       "phase": null
     },
     {

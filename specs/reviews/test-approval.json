@@ -38,6 +38,22 @@
       "questions_asked": 1,
       "answered": 1,
       "recordedAt": "2026-09-13T19:28:52.806Z"
+    },
+    {
+      "round": 3,
+      "verdict": "approved",
+      "feedback": [
+        "Re-affirming the approved test plan: the matrix and trace drift is serialization churn from test-plan-write --force, with identical content."
+      ],
+      "changes": [
+        "Re-pointed the test receipt at the current hashes. Verified the matrix is substantively identical across d0b5c94, 9112495 and f1367f5 and now: 107 rows, same row ids, same ac_ids and the same required_layers including the reviewed merges (E15-S1-AC3 unit+api, E15-S1-AC1 unit-only). test-plan.md's hash still matches the approval exactly."
+      ],
+      "declined": [
+        "Did not re-run the test review loop: no row, layer, obligation or evaluator check changed. Did not add the two approved acceptance criteria in this pass — see the note recorded in claude-progress.txt on why that needs a decision first."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T12:36:35.842Z"
     }
   ],
   "artifacts": [
@@ -47,16 +63,16 @@
     },
     {
       "path": "specs/test_artefacts/verification-matrix.json",
-      "sha256": "a9ee97d7e7ab97ae51d851a9e2a88b09c56ed9e15e7749f2c5401f4a02c92dfa"
+      "sha256": "2201d5eb6e1ab1a52a1aab2c0a66b2e618b43e921975d2319a476ddaeadc62b6"
     },
     {
       "path": "specs/test_artefacts/test-traces.json",
-      "sha256": "95b98306c5e6b9326b071399a147f44a4f1c772b3e247c0bc4eb2954e06d4ed9"
+      "sha256": "26986b783e36fd1c36b59e997880fe5bd6ebeca491565a36c5dc9499544f8259"
     }
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-13T19:28:52.806Z",
+  "approvedAt": "2026-09-14T12:36:35.842Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }
