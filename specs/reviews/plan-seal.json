@@ -1,7 +1,7 @@
 {
   "status": "sealed",
   "waived_by": null,
-  "sealedAt": "2026-09-14T12:43:20.656Z",
+  "sealedAt": "2026-09-14T12:56:53.223Z",
   "artifacts": [
     {
       "path": "specs/brd/brd.md",
@@ -105,7 +105,7 @@
     },
     {
       "path": "specs\\bundles\\E1-S1.json",
-      "sha256": "6f07b93f21f0a8031e36100c171fd71b2db36c1daa42c5c656c2e41e90d56fe7",
+      "sha256": "101acc9b15d8a27f8c0aabbf5e0a46720e04cb6284e01c962a31680d925827fb",
       "phase": null
     },
     {
@@ -160,7 +160,7 @@
     },
     {
       "path": "specs\\bundles\\E15-S4.json",
-      "sha256": "980acce1b262d52bf80c2b715563d8b0eeb0c32761e8aab8d56c4dfb0ed3c3f9",
+      "sha256": "4bb1924537bd6439b0912c3b126218f41e615f8bea5a1964044c808ea67a143a",
       "phase": null
     },
     {
@@ -190,7 +190,7 @@
     },
     {
       "path": "specs\\bundles\\E4-S1.json",
-      "sha256": "399c2b3b3a0740794e68aa9a9fc2e13c49e6eb0af1728068aa35a272d9eeb501",
+      "sha256": "e07ac559a03a14fd8e36783404ec2c501fc4c396c427d227277e700c3ef4ed83",
       "phase": null
     },
     {
