@@ -129,6 +129,8 @@ def test_redaction_is_case_and_separator_insensitive(registered: str, logged: st
 
     assert logged not in rendered, f"{logged!r} leaked despite {registered!r} being registered"
 _PII_FIELD_NAMES = ("pan", "aadhaar", "salary_doc")
+# Any module naming a PII field must reach redaction through one of these.
+_REDACTION_ENTRYPOINTS = ("redact_values", "register_sensitive", "scrub_text")
 def _modules_referencing_pii() -> list[Path]:
     """Production modules that mention an applicant PII field by name."""
     src_root = Path(__file__).resolve().parents[2] / "src"
@@ -162,7 +164,7 @@ def test_modules_handling_applicant_pii_enter_a_redaction_scope() -> None:
         for module in _modules_referencing_pii()
         if not any(
             entrypoint in module.read_text(encoding="utf-8")
-            for entrypoint in ("redact_values", "register_sensitive")
+            for entrypoint in _REDACTION_ENTRYPOINTS
         )
     ]
     assert not offenders, (
@@ -174,7 +176,7 @@ def test_pii_redaction_control_is_not_vacuous(tmp_path: Path) -> None:
 
     def offends(source: str) -> bool:
         return any(field in source.lower() for field in _PII_FIELD_NAMES) and not any(
-            entrypoint in source for entrypoint in ("redact_values", "register_sensitive")
+            entrypoint in source for entrypoint in _REDACTION_ENTRYPOINTS
         )
 
     assert offends('def submit(pan: str) -> None:\n    logger.info("pan=%s", pan)\n')

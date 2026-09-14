@@ -22,3 +22,5 @@ class Settings(BaseSettings):
 
     service_name: str = "truelend-backend"
     log_level: str = "INFO"
+    # Reported by `GET /health` per the frozen api-contracts.md shape.
+    version: str = "0.1.0"

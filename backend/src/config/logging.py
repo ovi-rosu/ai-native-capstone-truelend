@@ -129,6 +129,19 @@ def _scrub(text: str, sensitive_values: Collection[str]) -> str:
     return text
 
 
+def scrub_text(text: str) -> str:
+    """Scrub the current scope's sensitive values from arbitrary text.
+
+    The log filter is not the only boundary PII can cross: an error envelope's
+    `context` mapping goes out over the wire. Same registered values, same
+    scrubbing, one implementation.
+    """
+    sensitive_values = _sensitive_values.get()
+    if not sensitive_values:
+        return text
+    return _scrub(text, sensitive_values)
+
+
 class RedactionFilter(logging.Filter):
     """Scrubs every currently-registered sensitive value from a log record.
 

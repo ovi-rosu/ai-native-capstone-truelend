@@ -67,9 +67,6 @@ def _count_float_usages(source: str) -> int:
             count += 1
             continue
 
-        if getattr(node, "lineno", None) in exempt:
-            continue
-
         is_float_call = (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
@@ -84,6 +81,12 @@ def _count_float_usages(source: str) -> int:
         is_division = isinstance(node, ast.BinOp) and isinstance(
             node.op, (ast.Div, ast.FloorDiv)
         )
+        # The marker names one category, so it exempts one category. It used
+        # to `continue` before any check ran, muting the whole line: a real
+        # `float(...)` call or float literal sharing a line with a justified
+        # Decimal division went unreported.
+        if is_division and getattr(node, "lineno", None) in exempt:
+            continue
         if is_float_call or is_math_attr or is_float_literal or is_division:
             count += 1
     return count
@@ -263,3 +266,32 @@ def test_random_principal_rate_tenure_triples_always_quantize_to_two_places() ->
         ):
             assert isinstance(money_field.amount, Decimal)
             assert _is_two_decimal_quantized(money_field.amount)
+
+
+@pytest.mark.parametrize(
+    "marked",
+    [
+        pytest.param(
+            "value = float(principal) / months  # money-guard: decimal-division",
+            id="float-call-on-marked-line",
+        ),
+        pytest.param(
+            "value = principal / months + 0.5  # money-guard: decimal-division",
+            id="float-literal-on-marked-line",
+        ),
+        pytest.param(
+            "import math  # money-guard: decimal-division",
+            id="math-import-on-marked-line",
+        ),
+    ],
+)
+def test_division_exemption_does_not_silence_other_float_categories(marked: str) -> None:
+    """CR-003: the exemption was a whole-line mute, not a division exemption.
+
+    `# money-guard: decimal-division` skipped the line for *every* category,
+    so a genuine `float(...)` call or float literal sharing the line with a
+    justified Decimal division went unreported. The marker names one category
+    and must exempt only that one -- this sits in the D-G/D-J oracle every
+    later money story inherits.
+    """
+    assert _count_float_usages(marked) > 0

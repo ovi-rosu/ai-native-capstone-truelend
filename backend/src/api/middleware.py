@@ -34,6 +34,7 @@ request's task context.
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from uuid import uuid4
 
 from src.config.logging import begin_redaction_scope, end_redaction_scope, request_id_var
@@ -42,6 +43,20 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 _REQUEST_ID_HEADER = "X-Request-ID"
 _access_logger = logging.getLogger("truelend.access")
+
+# RED counters, keyed (method, route, status). Kept here because this
+# middleware is the only writer; `GET /metrics` renders a snapshot.
+_request_counts: Counter[tuple[str, str, int]] = Counter()
+
+
+def request_counter_snapshot() -> dict[tuple[str, str, int], int]:
+    """A copy of the RED counters, for the metrics endpoint to render."""
+    return dict(_request_counts)
+
+
+def reset_request_counters() -> None:
+    """Clear the counters. For tests that assert on exact counts."""
+    _request_counts.clear()
 
 
 class CorrelationIdMiddleware:
@@ -57,6 +72,7 @@ class CorrelationIdMiddleware:
         async def send_with_correlation_id(message: Message) -> None:
             if message["type"] == "http.response.start":
                 MutableHeaders(scope=message)[_REQUEST_ID_HEADER] = request_id
+                _request_counts[method, path, int(message["status"])] += 1
                 _access_logger.info("%s %s -> %s", method, path, message["status"])
             await send(message)
 

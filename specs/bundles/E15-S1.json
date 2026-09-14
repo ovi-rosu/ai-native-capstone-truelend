@@ -67,7 +67,10 @@
       "backend/src/api/errors.py",
       "backend/src/api/platform/routes.py",
       "backend/tests/conftest.py",
-      "backend/tests/unit/test_log_redaction.py"
+      "backend/tests/unit/test_log_redaction.py",
+      "backend/tests/unit/test_correlation_id.py",
+      "backend/tests/unit/test_error_envelope.py",
+      "backend/tests/unit/test_health_probe.py"
     ],
     "layer": "Config"
   },
