@@ -1,32 +1,60 @@
 {
   "gate": "pr-walkthrough",
-  "generated_at": "2026-09-14T06:56:16.378Z",
+  "generated_at": "2026-09-14T11:05:15.107Z",
   "base": "14e9487",
-  "file_count": 61,
+  "file_count": 153,
   "slices": [
     {
       "story": "E15-S1",
       "files": [
         {
           "path": "backend/src/api/app.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-022",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/src/api/errors.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-001",
+              "level": "BLOCK",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR-003",
-              "level": "BLOCK",
+              "id": "CR-010",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
+        },
+        {
+          "path": "backend/src/api/platform/routes.py",
+          "findings": [
+            {
+              "id": "CR-004",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-011",
+              "id": "CR-005",
               "level": "WARN",
               "confidence": "medium",
               "axis": "spec",
@@ -35,43 +63,46 @@
           ]
         },
         {
-          "path": "backend/src/api/platform/routes.py",
-          "findings": []
-        },
-        {
           "path": "backend/src/config/logging.py",
           "findings": [
             {
-              "id": "CR-004",
+              "id": "CR-002",
               "level": "BLOCK",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-005",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-006",
+              "id": "CR-008",
               "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-007",
+              "id": "CR-009",
               "level": "WARN",
               "confidence": "medium",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-016",
+              "id": "CR-011",
               "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-012",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-024",
+              "level": "INFO",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
@@ -80,7 +111,15 @@
         },
         {
           "path": "backend/src/config/settings.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-007",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/src/types/errors.py",
@@ -96,8 +135,43 @@
             {
               "id": "CR-017",
               "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-018",
+              "level": "WARN",
               "confidence": "medium",
               "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-019",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-020",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-023",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-031",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -123,44 +197,45 @@
       "files": [
         {
           "path": "backend/src/api/serializers.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-027",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/src/types/money.py",
           "findings": [
             {
-              "id": "CR-001",
-              "level": "BLOCK",
+              "id": "CR-006",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-012",
+              "id": "CR-016",
               "level": "WARN",
               "confidence": "medium",
-              "axis": "spec",
+              "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-013",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-014",
+              "id": "CR-025",
               "level": "INFO",
-              "confidence": "medium",
-              "axis": "spec",
+              "confidence": "high",
+              "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-015",
+              "id": "CR-026",
               "level": "INFO",
-              "confidence": "low",
-              "axis": "spec",
+              "confidence": "high",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -169,16 +244,9 @@
           "path": "backend/tests/architecture/test_no_float_money.py",
           "findings": [
             {
-              "id": "CR-002",
+              "id": "CR-003",
               "level": "BLOCK",
               "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-018",
-              "level": "WARN",
-              "confidence": "medium",
               "axis": "standards",
               "summary": ""
             }
@@ -188,16 +256,9 @@
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR-020",
+              "id": "CR-015",
               "level": "WARN",
               "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-022",
-              "level": "INFO",
-              "confidence": "low",
               "axis": "standards",
               "summary": ""
             }
@@ -209,7 +270,15 @@
         },
         {
           "path": "frontend/tests/unit/money.test.ts",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-014",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         }
       ],
       "program_design": [
@@ -226,16 +295,16 @@
           "path": "backend/src/config/delinquency.py",
           "findings": [
             {
-              "id": "CR-009",
+              "id": "CR-013",
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-019",
+              "id": "CR-028",
               "level": "INFO",
-              "confidence": "medium",
+              "confidence": "high",
               "axis": "standards",
               "summary": ""
             }
@@ -258,6 +327,33 @@
       ]
     },
     {
+      "story": "E15-S2",
+      "files": [
+        {
+          "path": "project-manifest.json",
+          "findings": []
+        }
+      ],
+      "program_design": [
+        {
+          "title": "Types",
+          "excerpt": "```\n# backend/src/types/money.py\nMoney                      = Decimal            # always quantized to 2dp when stored or serialized\nMONEY_SCALE                = 2\n\n# backend/src/types/loan_terms.py  (argument-clump value objects)\nLoanTerms       { principal: Money, annual_rate_pct: Decimal, tenure_months: int }\nLadderState     { loan_id: UUID, as_of_date: date, oldest_unpaid_due_date: date | None,\n                  cumulative_due: Money, cumulative_paid: Money, days_past_due: int }\nLoanAgeing      { loan_id: UUID, as_of_date: date, days_past_due: int, bucket: DelinquencyBucket }\n\n# backend/src/types/enums.py\nRole                       = CUSTOMER | UNDERWRITER | ADMIN\nApplicationStatus          = SUBMITTED | AWAITING_DOCUMENTS | UNDER_REVIEW | MANUAL_REVIEW | APPROVED | REJECTED | DISBURSE"
+        },
+        {
+          "title": "Signatures",
+          "excerpt": "```\n# ---------- Config (layer 2) -------------------------------------------------\n# backend/src/config/delinquency.py            (D-B, single owner of the mapping)\nDPD_BUCKET_FLOORS: tuple[tuple[int, DelinquencyBucket], ...]   # 0, 30, 60, 90, 180\nclassify(days_past_due: int) -> DelinquencyBucket\n# backend/src/config/settings.py\nSettings { database_url, jwt_secret, jwt_ttl_seconds = 3600, log_level, funding_source_id }   # TTL per D-M\n\n# ---------- Repository (layer 3, insert-only where D-E says so) --------------\n# policy\nPolicyVersionRepository.insert(product_code, rules: PolicyRules, created_by) -> PolicyVersion\nPolicyVersionRepository.get(policy_version_id) -> PolicyVersion\nPolicyVersionRepository.get_active(product_code) -> PolicyVersion\nPolicyVersionRepository.activate(policy_versi"
+        },
+        {
+          "title": "Call stack",
+          "excerpt": "```\n+ POST /applications                               [CUSTOMER]\n+   require_roles(CUSTOMER)\n+   origination.submit\n+     policy.active_policy_version                 # only call site permitted by D-D\n+     guard_minimum_income                         # raises PolicyViolation -> 422, rollback\n+     ApplicationRepository.insert                 # pins policy_version_id\n+     origination.generate_checklist\n+       ChecklistRepository.insert_many\n+     origination.score                            # deterministic stub\n+       ApplicationRepository.set_credit_score\n+     origination.evaluate\n+       policy.rules_for_version(pinned)\n+       policy.reason_codes_for_version(pinned)\n+       DecisionRepository.insert\n+       servicing.on_approved                       # only when the outcome approve"
+        },
+        {
+          "title": "File tree",
+          "excerpt": "```\n+ backend/\n+   src/\n+     types/        money.py loan_terms.py enums.py policy.py origination.py servicing.py\n+                   identity.py delinquency.py errors.py\n+     config/       settings.py delinquency.py logging.py database.py\n+     repository/\n+       policy/         product_repository.py policy_version_repository.py\n+       origination/    application_repository.py checklist_repository.py decision_repository.py\n+       servicing/      loan_repository.py schedule_repository.py disbursement_repository.py\n+                       repayment_repository.py\n+       delinquency/    portfolio_repository.py\n+       identity/       user_repository.py audit_repository.py\n+       models.py       # SQLAlchemy tables (Repository layer only)\n+     service/\n+       policy/         catalog.py"
+        }
+      ]
+    },
+    {
       "story": "unmapped",
       "files": [
         {
@@ -274,6 +370,10 @@
         },
         {
           "path": ".claude/state/failures.md",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/gate-receipt.json",
           "findings": []
         },
         {
@@ -301,6 +401,18 @@
           "findings": []
         },
         {
+          "path": ".claude/state/task-completion-receipt.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/267760e13e6cda739f0835ffdff9140b7b2ddd3eb3bf1ce64c0dd7adeecbf13d.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/4034d3db61bdff6b223fd631480932d03510d6d52a32870b4bf0c2ee702e05da.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/task-envelope-history/8914ad672f478b7a255bfa5bae84a4f42f262d43034b9944be6525ac67b9e330.json",
           "findings": []
         },
@@ -314,15 +426,7 @@
         },
         {
           "path": ".claude/state/task-envelope.json",
-          "findings": [
-            {
-              "id": "CR-025",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": ".claude/state/work-claims/group__A.json",
@@ -330,7 +434,15 @@
         },
         {
           "path": "backend/src/__init__.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-021",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/tests/__init__.py",
@@ -341,16 +453,16 @@
           "findings": []
         },
         {
+          "path": "docs/CODEBASE.md",
+          "findings": []
+        },
+        {
+          "path": "features.json",
+          "findings": []
+        },
+        {
           "path": "frontend/eslint.config.js",
-          "findings": [
-            {
-              "id": "CR-023",
-              "level": "INFO",
-              "confidence": "low",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "frontend/package.json",
@@ -360,10 +472,10 @@
           "path": "frontend/tsconfig.json",
           "findings": [
             {
-              "id": "CR-021",
+              "id": "CR-030",
               "level": "INFO",
-              "confidence": "low",
-              "axis": "standards",
+              "confidence": "high",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -381,7 +493,35 @@
           "findings": []
         },
         {
+          "path": "specs/bundles/E1-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E1-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E10-S1.json",
+          "findings": []
+        },
+        {
           "path": "specs/bundles/E11-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E11-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E12-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E13-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E14-S1.json",
           "findings": []
         },
         {
@@ -389,23 +529,111 @@
           "findings": []
         },
         {
+          "path": "specs/bundles/E15-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E15-S3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E16-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E17-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E2-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E3-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E3-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S4.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E5-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E5-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E6-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E6-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E7-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E8-S1.json",
+          "findings": []
+        },
+        {
           "path": "specs/bundles/E9-S1.json",
           "findings": []
         },
         {
+          "path": "specs/bundles/E9-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E9-S3.json",
+          "findings": []
+        },
+        {
           "path": "specs/design/amendments/group-a-implementation-sync.md",
-          "findings": [
-            {
-              "id": "CR-027",
-              "level": "INFO",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "specs/design/reasons-canvas.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/canvas-semantic-review.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/canvas-sync-check.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/code-review-groupA.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/code-review-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/code-review.md",
           "findings": []
         },
         {
@@ -413,11 +641,111 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/eval-failures-001.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-evidence-instance2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-evidence-instance3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-evidence.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-report-instance2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-report-instance3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-report.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evidence-integrity-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/gate-checks.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/observability-gate.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/observability-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/ownership-check.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/perf-smell-gate.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/perf-smell-verdict.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/plan-seal.json",
           "findings": []
         },
         {
+          "path": "specs/reviews/quality-card.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/quality-card.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/regression-gate-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/reverify-votes.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/review-context-pack.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-review-instance2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-review-instance3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-review.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-scan.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-verdict-instance2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-verdict-instance3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-verdict.json",
           "findings": []
         },
         {
@@ -433,6 +761,10 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/slo-verdict.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/spdd-sync.json",
           "findings": []
         },
@@ -441,17 +773,122 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/walkthrough.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/walkthrough.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E1-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E1-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E10-S1.md",
+          "findings": []
+        },
+        {
           "path": "specs/stories/E11-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E11-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E12-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E13-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E14-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E16-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E17-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E2-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E3-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E3-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S4.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E5-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E5-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E6-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E6-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E7-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E8-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E9-S1.md",
           "findings": [
             {
-              "id": "CR-008",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-010",
+              "id": "CR-029",
               "level": "INFO",
               "confidence": "high",
               "axis": "spec",
@@ -460,11 +897,11 @@
           ]
         },
         {
-          "path": "specs/stories/E15-S1.md",
+          "path": "specs/stories/E9-S2.md",
           "findings": []
         },
         {
-          "path": "specs/stories/E9-S1.md",
+          "path": "specs/stories/E9-S3.md",
           "findings": []
         },
         {
@@ -507,24 +944,52 @@
       "files": [
         {
           "path": "backend/src/api/app.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-022",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/src/api/errors.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-001",
+              "level": "BLOCK",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR-003",
-              "level": "BLOCK",
+              "id": "CR-010",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
+        },
+        {
+          "path": "backend/src/api/platform/routes.py",
+          "findings": [
+            {
+              "id": "CR-004",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-011",
+              "id": "CR-005",
               "level": "WARN",
               "confidence": "medium",
               "axis": "spec",
@@ -533,12 +998,16 @@
           ]
         },
         {
-          "path": "backend/src/api/platform/routes.py",
-          "findings": []
-        },
-        {
           "path": "backend/src/api/serializers.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-027",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         }
       ]
     },
@@ -550,16 +1019,16 @@
           "path": "backend/src/config/delinquency.py",
           "findings": [
             {
-              "id": "CR-009",
+              "id": "CR-013",
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-019",
+              "id": "CR-028",
               "level": "INFO",
-              "confidence": "medium",
+              "confidence": "high",
               "axis": "standards",
               "summary": ""
             }
@@ -569,36 +1038,43 @@
           "path": "backend/src/config/logging.py",
           "findings": [
             {
-              "id": "CR-004",
+              "id": "CR-002",
               "level": "BLOCK",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-005",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-006",
+              "id": "CR-008",
               "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-007",
+              "id": "CR-009",
               "level": "WARN",
               "confidence": "medium",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-016",
+              "id": "CR-011",
               "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-012",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-024",
+              "level": "INFO",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
@@ -607,19 +1083,19 @@
         },
         {
           "path": "backend/src/config/settings.py",
-          "findings": []
-        },
-        {
-          "path": "frontend/eslint.config.js",
           "findings": [
             {
-              "id": "CR-023",
-              "level": "INFO",
-              "confidence": "low",
+              "id": "CR-007",
+              "level": "WARN",
+              "confidence": "high",
               "axis": "standards",
               "summary": ""
             }
           ]
+        },
+        {
+          "path": "frontend/eslint.config.js",
+          "findings": []
         },
         {
           "path": "frontend/package.json",
@@ -629,10 +1105,10 @@
           "path": "frontend/tsconfig.json",
           "findings": [
             {
-              "id": "CR-021",
+              "id": "CR-030",
               "level": "INFO",
-              "confidence": "low",
-              "axis": "standards",
+              "confidence": "high",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -649,7 +1125,15 @@
       "files": [
         {
           "path": "frontend/tests/unit/money.test.ts",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-014",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         }
       ]
     },
@@ -666,6 +1150,10 @@
           "findings": []
         },
         {
+          "path": "docs/CODEBASE.md",
+          "findings": []
+        },
+        {
           "path": "specs/brownfield/code-graph.json",
           "findings": []
         },
@@ -674,7 +1162,35 @@
           "findings": []
         },
         {
+          "path": "specs/bundles/E1-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E1-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E10-S1.json",
+          "findings": []
+        },
+        {
           "path": "specs/bundles/E11-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E11-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E12-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E13-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E14-S1.json",
           "findings": []
         },
         {
@@ -682,23 +1198,111 @@
           "findings": []
         },
         {
+          "path": "specs/bundles/E15-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E15-S3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E16-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E17-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E2-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E3-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E3-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E4-S4.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E5-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E5-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E6-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E6-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E7-S1.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E8-S1.json",
+          "findings": []
+        },
+        {
           "path": "specs/bundles/E9-S1.json",
           "findings": []
         },
         {
+          "path": "specs/bundles/E9-S2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E9-S3.json",
+          "findings": []
+        },
+        {
           "path": "specs/design/amendments/group-a-implementation-sync.md",
-          "findings": [
-            {
-              "id": "CR-027",
-              "level": "INFO",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "specs/design/reasons-canvas.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/canvas-semantic-review.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/canvas-sync-check.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/code-review-groupA.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/code-review-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/code-review.md",
           "findings": []
         },
         {
@@ -706,11 +1310,111 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/eval-failures-001.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-evidence-instance2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-evidence-instance3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-evidence.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-report-instance2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-report-instance3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evaluator-report.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/evidence-integrity-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/gate-checks.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/observability-gate.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/observability-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/ownership-check.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/perf-smell-gate.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/perf-smell-verdict.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/plan-seal.json",
           "findings": []
         },
         {
+          "path": "specs/reviews/quality-card.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/quality-card.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/regression-gate-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/reverify-votes.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/review-context-pack.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-review-instance2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-review-instance3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-review.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-scan.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-verdict-instance2.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-verdict-instance3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/security-verdict.json",
           "findings": []
         },
         {
@@ -726,6 +1430,10 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/slo-verdict.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/spdd-sync.json",
           "findings": []
         },
@@ -734,17 +1442,122 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/walkthrough.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/walkthrough.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E1-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E1-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E10-S1.md",
+          "findings": []
+        },
+        {
           "path": "specs/stories/E11-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E11-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E12-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E13-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E14-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E16-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E17-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E2-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E3-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E3-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E4-S4.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E5-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E5-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E6-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E6-S2.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E7-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E8-S1.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E9-S1.md",
           "findings": [
             {
-              "id": "CR-008",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-010",
+              "id": "CR-029",
               "level": "INFO",
               "confidence": "high",
               "axis": "spec",
@@ -753,11 +1566,11 @@
           ]
         },
         {
-          "path": "specs/stories/E15-S1.md",
+          "path": "specs/stories/E9-S2.md",
           "findings": []
         },
         {
-          "path": "specs/stories/E9-S1.md",
+          "path": "specs/stories/E9-S3.md",
           "findings": []
         },
         {
@@ -787,6 +1600,10 @@
           "findings": []
         },
         {
+          "path": ".claude/state/gate-receipt.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/navigation-status.json",
           "findings": []
         },
@@ -807,6 +1624,18 @@
           "findings": []
         },
         {
+          "path": ".claude/state/task-completion-receipt.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/267760e13e6cda739f0835ffdff9140b7b2ddd3eb3bf1ce64c0dd7adeecbf13d.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/4034d3db61bdff6b223fd631480932d03510d6d52a32870b4bf0c2ee702e05da.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/task-envelope-history/8914ad672f478b7a255bfa5bae84a4f42f262d43034b9944be6525ac67b9e330.json",
           "findings": []
         },
@@ -820,15 +1649,7 @@
         },
         {
           "path": ".claude/state/task-envelope.json",
-          "findings": [
-            {
-              "id": "CR-025",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": ".claude/state/work-claims/group__A.json",
@@ -836,7 +1657,15 @@
         },
         {
           "path": "backend/src/__init__.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-021",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/src/types/delinquency.py",
@@ -850,38 +1679,31 @@
           "path": "backend/src/types/money.py",
           "findings": [
             {
-              "id": "CR-001",
-              "level": "BLOCK",
+              "id": "CR-006",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-012",
+              "id": "CR-016",
               "level": "WARN",
               "confidence": "medium",
-              "axis": "spec",
+              "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-013",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-014",
+              "id": "CR-025",
               "level": "INFO",
-              "confidence": "medium",
-              "axis": "spec",
+              "confidence": "high",
+              "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-015",
+              "id": "CR-026",
               "level": "INFO",
-              "confidence": "low",
-              "axis": "spec",
+              "confidence": "high",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -894,16 +1716,9 @@
           "path": "backend/tests/architecture/test_no_float_money.py",
           "findings": [
             {
-              "id": "CR-002",
+              "id": "CR-003",
               "level": "BLOCK",
               "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-018",
-              "level": "WARN",
-              "confidence": "medium",
               "axis": "standards",
               "summary": ""
             }
@@ -923,8 +1738,43 @@
             {
               "id": "CR-017",
               "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-018",
+              "level": "WARN",
               "confidence": "medium",
               "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-019",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-020",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-023",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-031",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -934,19 +1784,16 @@
           "findings": []
         },
         {
+          "path": "features.json",
+          "findings": []
+        },
+        {
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR-020",
+              "id": "CR-015",
               "level": "WARN",
               "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-022",
-              "level": "INFO",
-              "confidence": "low",
               "axis": "standards",
               "summary": ""
             }
@@ -957,6 +1804,10 @@
           "findings": []
         },
         {
+          "path": "project-manifest.json",
+          "findings": []
+        },
+        {
           "path": "sprint-contracts/A.json",
           "findings": []
         }
@@ -964,9 +1815,9 @@
     }
   ],
   "review_summary": {
-    "block": 4,
-    "warn": 14,
-    "info": 9
+    "block": 3,
+    "warn": 20,
+    "info": 8
   },
   "review_pass": false,
   "blast_radius": {
@@ -979,103 +1830,124 @@
     "E11-S1",
     "E15-S2"
   ],
-  "intent": "# Review Context Pack — /auto group A Commit under review: `e147f7e` on `feat/harness-scaffold-and-planning` Base: `14e9487` Range: `14e9487..e147f7e` (36 files, +1910/-12) ## Stories delivered | Story | Title | Layer | ACs | |---|---|---|---| | E15-S1 | Structured JSON logging, correlation id propagation, PII redaction, health endpoint | Config | E15-S1-AC1..AC5 | | E9-S1 | Money value type with ",
+  "intent": "# Review Context Pack — /gate --group A (fresh re-run) **This pack supersedes the 2026-09-14T09:37 pack.** That pack described commit `e147f7e`. Every BLOCK it produced has since been fixed in three commits, and the stored verdicts (`code-review-verdict.json`, `security-verdict.json`, `evaluator-report.md`, `quality-card.json`, `.claude/state/gate-receipt.json`) all predate those fixes and read `p",
   "high_signal": [
     {
       "id": "CR-001",
       "level": "BLOCK",
       "confidence": "high",
-      "file": "backend/src/types/money.py",
+      "file": "backend/src/api/errors.py",
       "summary": ""
     },
     {
       "id": "CR-002",
       "level": "BLOCK",
       "confidence": "high",
-      "file": "backend/tests/architecture/test_no_float_money.py",
+      "file": "backend/src/config/logging.py",
       "summary": ""
     },
     {
       "id": "CR-003",
       "level": "BLOCK",
       "confidence": "high",
-      "file": "backend/src/api/middleware.py",
+      "file": "backend/tests/architecture/test_no_float_money.py",
       "summary": ""
     },
     {
       "id": "CR-004",
-      "level": "BLOCK",
+      "level": "WARN",
       "confidence": "high",
-      "file": "backend/src/config/logging.py",
+      "file": "backend/src/api/platform/routes.py",
       "summary": ""
     },
     {
       "id": "CR-005",
       "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/config/logging.py",
+      "confidence": "medium",
+      "file": "backend/src/api/platform/routes.py",
       "summary": ""
     },
     {
       "id": "CR-006",
       "level": "WARN",
       "confidence": "high",
-      "file": "backend/src/config/logging.py",
+      "file": "backend/src/types/money.py",
       "summary": ""
     },
     {
       "id": "CR-007",
       "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/config/logging.py",
+      "confidence": "high",
+      "file": "backend/src/config/settings.py",
       "summary": ""
     },
     {
       "id": "CR-008",
       "level": "WARN",
       "confidence": "high",
-      "file": "specs/stories/E11-S1.md",
+      "file": "backend/src/config/logging.py",
       "summary": ""
     },
     {
       "id": "CR-009",
       "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/config/delinquency.py",
+      "confidence": "medium",
+      "file": "backend/src/config/logging.py",
       "summary": ""
     },
     {
-      "id": "CR-011",
+      "id": "CR-010",
       "level": "WARN",
       "confidence": "medium",
       "file": "backend/src/api/middleware.py",
       "summary": ""
     },
     {
+      "id": "CR-011",
+      "level": "WARN",
+      "confidence": "medium",
+      "file": "backend/src/config/logging.py",
+      "summary": ""
+    },
+    {
       "id": "CR-012",
       "level": "WARN",
       "confidence": "medium",
-      "file": "backend/src/types/money.py",
+      "file": "backend/src/config/logging.py",
       "summary": ""
     },
     {
       "id": "CR-013",
       "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/config/delinquency.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-014",
+      "level": "WARN",
       "confidence": "medium",
-      "file": "backend/src/types/money.py",
+      "file": "frontend/tests/unit/money.test.ts",
+      "summary": ""
+    },
+    {
+      "id": "CR-015",
+      "level": "WARN",
+      "confidence": "medium",
+      "file": "frontend/src/types/money.ts",
       "summary": ""
     },
     {
       "id": "CR-016",
       "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/config/logging.py",
+      "confidence": "medium",
+      "file": "backend/src/types/money.py",
       "summary": ""
     },
     {
       "id": "CR-017",
       "level": "WARN",
-      "confidence": "medium",
+      "confidence": "high",
       "file": "backend/tests/unit/test_log_redaction.py",
       "summary": ""
     },
@@ -1083,28 +1955,42 @@
       "id": "CR-018",
       "level": "WARN",
       "confidence": "medium",
-      "file": "backend/tests/architecture/test_no_float_money.py",
+      "file": "backend/tests/unit/test_log_redaction.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-019",
+      "level": "WARN",
+      "confidence": "medium",
+      "file": "backend/tests/unit/test_log_redaction.py",
       "summary": ""
     },
     {
       "id": "CR-020",
       "level": "WARN",
+      "confidence": "high",
+      "file": "backend/tests/unit/test_log_redaction.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-021",
+      "level": "WARN",
       "confidence": "medium",
-      "file": "frontend/src/types/money.ts",
+      "file": "backend/src/__init__.py",
       "summary": ""
     },
     {
-      "id": "CR-024",
+      "id": "CR-022",
       "level": "WARN",
-      "confidence": "high",
-      "file": "project-manifest.json",
+      "confidence": "medium",
+      "file": "backend/src/api/app.py",
       "summary": ""
     },
     {
-      "id": "CR-025",
+      "id": "CR-023",
       "level": "WARN",
       "confidence": "high",
-      "file": ".claude/state/task-envelope.json",
+      "file": "backend/tests/unit/test_log_redaction.py",
       "summary": ""
     }
   ]

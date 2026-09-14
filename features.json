@@ -14,7 +14,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -33,10 +33,10 @@
       "Assert a logger registered without it fails the assertion"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": "2026-09-14T06:47:00Z",
-    "failure_reason": "E15-S1-AC2: in the running server 2 of 17 loggers (uvicorn, uvicorn.access) carry no RedactionFilter on logger or handler and have propagate=False, so redaction is bypassed. Proven by leak: GET /health?pan=ABCDE1234F was logged verbatim while the PAN was marked sensitive via redact_values(). The unit test passes only because pytest never applies uvicorn dictConfig.",
-    "failure_layer": "api"
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
   },
   {
     "id": "F003",
@@ -53,10 +53,10 @@
       "Assert each carries request_id equal to req-abc"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": "2026-09-14T06:47:00Z",
-    "failure_reason": "E15-S1-AC3 / QA-VM-003: only 50% (2 of 4) of the log lines emitted while serving parse as JSON. The request-scoped uvicorn.access line is plain text and carries no request_id. uvicorn loggers never reach root JSONLogFormatter (propagate=False), and request_id_var is already reset to \"\" when uvicorn writes its access line.",
-    "failure_layer": "api"
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
   },
   {
     "id": "F004",
@@ -74,7 +74,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -94,7 +94,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -174,7 +174,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -193,7 +193,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -213,7 +213,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1368,7 +1368,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1388,7 +1388,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1407,7 +1407,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1426,7 +1426,7 @@
     ],
     "verification": "default",
     "passes": true,
-    "last_evaluated": "2026-09-14T06:47:00Z",
+    "last_evaluated": "2026-09-14T10:43:47Z",
     "failure_reason": null,
     "failure_layer": null
   },

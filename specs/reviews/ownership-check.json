@@ -1,8 +1,11 @@
 {
   "pass": false,
   "map_entries": 138,
-  "checked": 2,
+  "checked": 22,
   "unowned": [
-    "backend/src/__init__.py"
+    "backend/src/__init__.py",
+    "backend/tests/__init__.py",
+    "frontend/eslint.config.js",
+    "frontend/vite.config.ts"
   ]
 }

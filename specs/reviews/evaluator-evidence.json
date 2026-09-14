@@ -1,319 +1,376 @@
 {
+  "evaluator_instance": 1,
   "group": "A",
-  "evaluator_instance": "1 of 3 (canonical)",
-  "timestamp": "2026-09-14T06:47:00Z",
+  "commit": "f4abd41",
+  "branch": "feat/harness-scaffold-and-planning",
   "verification_mode": "local",
-  "runtime_target": "http://127.0.0.1:8000 (official, uvicorn PID 60768, verified up, not restarted)",
-  "isolation_target": "http://127.0.0.1:8010 (same command; log .claude/state/evaluator1-uvicorn.log; shut down after run)",
-  "contract": "sprint-contracts/A.json",
-  "contract_declares": {
-    "api_checks": 3,
-    "playwright_checks": 0,
-    "design_checks": 0,
-    "accessibility_checks": 0
+  "api_base_url": "http://localhost:8000",
+  "runtime": {
+    "launch_command": "cd backend && uv run uvicorn src.api.app:app --port 8000",
+    "log_capture": ".claude/state/ev1-uvicorn.log",
+    "health_check": "GET /health -> 200 on retry attempt 1",
+    "docker": "not used - Docker is not installed on this machine; verification.mode is local",
+    "process_killed_before_finish": true
   },
-  "browser_layer_note": "Contract A declares no playwright_checks, design_checks or accessibility_checks. No browser was driven and no browser layer is claimed. evidence-integrity therefore classifies as applicable:false / pass:true. The three entries below are recorded with layer 'api' because that is what was executed; labelling them 'playwright' with no interactions would be a false claim.",
-  "log_evidence_note": ".claude/state/uvicorn.log was not used for the log-window checks: it contains 16514 NUL bytes from two concurrent writers, lines 1-6 belong to a failed second start (Errno 10048 bind), and evaluator instances 2 and 3 are driving the same server concurrently. Byte-offset log windows were measured against the isolation instance; the same defect was then confirmed on the official target (report section 4).",
+  "evaluated_at": "2026-09-14T10:43:47Z",
+  "verdict": "PASS",
+  "prior_verdicts_reused": "none - all stored verdicts under specs/reviews/ predate f4abd41 and were deliberately not read as evidence",
+  "browser_checks": {
+    "contracted": 0,
+    "executed": 0,
+    "note": "No sprint contract in this repo declares playwright_checks, design_checks or accessibility_checks, and e2e/ does not exist. No browser evidence was produced and none is claimed."
+  },
   "checks": [
     {
       "id": "QA-VM-003",
       "layer": "api",
-      "verdict": "fail",
-      "matrix_ids": [
-        "VM-003"
-      ],
+      "matrix_ids": ["VM-003"],
+      "maps_to": ["E15-S1-AC3", "F003"],
+      "verdict": "pass",
       "interactions": [
-        "curl GET /health with header X-Request-ID: req-abc",
-        "stat -c %s log byte-offset window before/after",
-        "json parse of each line in window",
-        "runtime logger-tree enumeration in a live uvicorn server",
-        "probe handler on uvicorn.access reading request_id_var at emit time"
+        "curl -s -D - -H 'X-Request-ID: req-abc' http://localhost:8000/health",
+        "tail -n +<mark> .claude/state/ev1-uvicorn.log",
+        "python json.loads over every captured log line"
       ],
-      "expected": "200; 100% of log lines emitted while serving parse as JSON and each carries request_id == req-abc",
       "observed": {
         "status": 200,
-        "response_header_x_request_id": "req-abc",
+        "response_headers": {
+          "content-type": "application/json",
+          "x-request-id": "req-abc"
+        },
         "body": "{\"status\":\"ok\"}",
-        "log_window_lines_total": 4,
-        "log_window_lines_parsing_as_json": 2,
-        "json_parse_rate_pct": 50,
-        "non_json_lines": [
-          "INFO:     127.0.0.1:51975 - \"GET /health HTTP/1.1\" 200 OK",
-          "INFO:     127.0.0.1:51976 - \"GET /health HTTP/1.1\" 200 OK"
-        ],
-        "json_lines": [
-          "{\"timestamp\": \"2026-09-14T06:41:16.045631+00:00\", \"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /health -> 200\", \"request_id\": \"req-abc\"}",
-          "{\"timestamp\": \"2026-09-14T06:41:16.132085+00:00\", \"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /health -> 200\", \"request_id\": \"req-abc\"}"
-        ],
-        "startup_lines_excluded_from_window": 4,
-        "request_id_var_at_uvicorn_access_emit_time": ""
+        "log_lines_emitted_while_serving": 1,
+        "log_line": "{\"timestamp\": \"2026-09-14T10:35:39.325023+00:00\", \"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /health -> 200\", \"request_id\": \"req-abc\"}",
+        "whole_stream_json_parse": "93 of 93 lines parsed as JSON, 0 failures (includes the 4 uvicorn.error startup lines)",
+        "uvicorn_startup_lines": "JSON via the root JSONLogFormatter, e.g. {\"level\": \"INFO\", \"logger\": \"uvicorn.error\", \"message\": \"Application startup complete.\", \"request_id\": \"\"}",
+        "uvicorn_access_logger": "propagate=False with 0 handlers - its records are dropped, so no plain-text access line is emitted; the app emits its own truelend.access line carrying request_id",
+        "hostile_id_robustness": "ids containing a double quote, a backslash, a tab, an ANSI escape and a JSON-envelope-breaking payload ('req-\", \"level\": \"CRITICAL\", \"x\": \"') all produced still-parseable single JSON lines with no forged fields"
       },
-      "failure_reason": "Only 50% of the log lines emitted while serving parse as JSON. The uvicorn.access line is request-scoped (not a startup line), is plain text, and carries no request_id. Excluding startup lines does not reach 100%. Two independent root causes: uvicorn/uvicorn.access have propagate=False plus their own StreamHandler so they never reach root's JSONLogFormatter; and the correlation contextvar is already reset ('') when uvicorn writes its access line, so even fixing the formatter would yield request_id ''.",
-      "artifacts": [
-        ".claude/state/evaluator1-uvicorn.log",
-        "specs/reviews/evaluator-report.md#3-qa-vm-003--fail-the-hard-judgement",
-        "specs/reviews/eval-failures-001.json"
-      ]
+      "criterion_clauses": {
+        "status_200": "pass",
+        "100pct_of_log_lines_parse_as_json": "pass",
+        "each_line_carries_request_id_req_abc": "pass"
+      }
     },
     {
       "id": "QA-VM-004",
       "layer": "api",
+      "matrix_ids": ["VM-004"],
+      "maps_to": ["E15-S1-AC4", "F004"],
       "verdict": "pass",
-      "matrix_ids": [
-        "VM-004"
-      ],
       "interactions": [
-        "curl GET /health with no X-Request-ID header",
-        "stat -c %s log byte-offset window before/after",
-        "json parse of each line in window",
-        "probe handler on uvicorn.access reading request_id_var at emit time"
+        "curl -s -D - http://localhost:8000/health  (no X-Request-ID header)",
+        "tail -n +<mark> .claude/state/ev1-uvicorn.log"
       ],
-      "expected": "200; every request-scoped log line carries the same generated non-empty request_id and the response echoes that id",
       "observed": {
         "status": 200,
-        "response_header_x_request_id": "16e5582b50174c5aa81472015c6a2509",
-        "body": "{\"status\":\"ok\"}",
-        "generated_id_non_empty": true,
-        "generated_id_form": "32-hex (uuid4().hex)",
-        "request_scoped_log_line": "{\"timestamp\": \"2026-09-14T06:41:39.355531+00:00\", \"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /health -> 200\", \"request_id\": \"16e5582b50174c5aa81472015c6a2509\"}",
-        "log_line_id_matches_response_header": true,
-        "response_time_s": 0.003717
+        "generated_id_in_response_header": "908ff398335f46f397b99e8b31377836",
+        "request_scoped_log_lines": 1,
+        "log_line": "{\"timestamp\": \"2026-09-14T10:35:48.775172+00:00\", \"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /health -> 200\", \"request_id\": \"908ff398335f46f397b99e8b31377836\"}",
+        "id_match": "log request_id == echoed x-request-id, non-empty, 32 hex chars",
+        "uniqueness": "22 unannotated requests produced 22 distinct generated ids; no reuse observed"
       },
-      "caveat": "PASS turns on wording that differs from VM-003 and the difference is load-bearing. VM-004 scopes to 'request-scoped' log lines; request_id_var is '' at uvicorn.access emit time, so the uvicorn access line is emitted after the request scope is torn down and is not request-scoped in the sense this substrate defines. VM-004 also imposes no JSON-format requirement, which is VM-003's other independent failure. If a reviewer rejects this asymmetry, VM-004 fails for the same root cause as VM-003 and the remediation is unchanged.",
-      "artifacts": [
-        ".claude/state/evaluator1-uvicorn.log",
-        "specs/reviews/evaluator-report.md#5-qa-vm-004--pass"
-      ]
+      "criterion_clauses": {
+        "status_200": "pass",
+        "every_request_scoped_line_same_generated_non_empty_id": "pass",
+        "response_echoes_that_id": "pass"
+      },
+      "caveat": "The app emits exactly one log line per request, so 'every request-scoped log line' is satisfied over a single line. The invariant holds but the evidence is thin by construction, not by measurement."
     },
     {
       "id": "QA-VM-005",
       "layer": "api",
+      "matrix_ids": ["VM-005"],
+      "maps_to": ["E15-S1-AC5", "F005"],
       "verdict": "pass",
-      "matrix_ids": [
-        "VM-005"
-      ],
       "interactions": [
-        "curl GET /health x10 measuring http_code, content_type, time_total",
-        "json parse of response body"
+        "20 x curl -s -o <body> -w '%{http_code} %{time_total} %{content_type}' http://localhost:8000/health"
       ],
-      "expected": "200; JSON body; measured response time under 1 second",
       "observed": {
-        "samples": 10,
-        "status_all": 200,
-        "content_type": "application/json",
-        "body": "{\"status\":\"ok\"}",
-        "body_parses_as_json": true,
-        "time_total_s": [
-          0.021423,
-          0.003563,
-          0.003239,
-          0.019928,
-          0.003367,
-          0.0034,
-          0.003392,
-          0.003212,
-          0.024824,
-          0.025953
-        ],
-        "max_time_s": 0.025953,
-        "budget_s": 1
+        "samples": 20,
+        "status_codes": "20/20 = 200",
+        "content_type": "20/20 = application/json",
+        "body": "{\"status\":\"ok\"} (valid JSON object)",
+        "latency_s": {
+          "min": 0.202443,
+          "median": 0.2096,
+          "p95": 0.223798,
+          "max": 0.225282,
+          "mean": 0.211
+        },
+        "budget": "contract budget 1.000 s - max observed 0.2253 s; manifest SLO p95 0.500 s - observed p95 0.2238 s"
       },
-      "artifacts": [
-        "specs/reviews/evaluator-report.md#6-qa-vm-005--pass"
-      ]
-    }
-  ],
-  "acceptance_criteria": [
+      "criterion_clauses": {
+        "status_200": "pass",
+        "json_body": "pass",
+        "response_time_under_1s": "pass"
+      },
+      "finding": "The body is {\"status\":\"ok\"} only. The frozen specs/design/api-contracts.md (line 314) documents GET /health as 200 {\"status\":\"ok\",\"database\":\"ok\",\"version\":\"...\"} and cites E15-S1-AC5. The AC text is met; the frozen response shape is not. See EV1-F1."
+    },
     {
-      "feature": "F001",
-      "ac": "E15-S1-AC1",
+      "id": "E15-S1-AC1",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F001"],
       "verdict": "pass",
-      "note": "0 occurrences of PAN/Aadhaar/salary-document content in captured buffer for the marked-payload path. Caveat: no payload endpoint exists in group A, so verified at substrate level; redaction is opt-in via redact_values()."
+      "interactions": [
+        "curl -s -D - -H 'X-Applicant-PAN: ABCDE1234F' 'http://localhost:8000/health?pan=ABCDE1234F&aadhaar=123456789012&salary_doc=SALARY-SECRET-77777'",
+        "grep of the captured live log stream for each of the three values",
+        "in-process: configure_logging(Settings()); redact_values(...) over message / %-args / extra / nested dict / exception traceback"
+      ],
+      "observed": {
+        "live_request_with_pii": "served 200; the captured stream line is 'GET /health -> 200' - the query string is not logged; 0 occurrences of the PAN, the Aadhaar number and the salary-document token anywhere in the 93-line stream",
+        "registered_values_redacted": "message args, the rendered message and the exception traceback all render as [REDACTED]; 0 occurrences of 4 probe values",
+        "extra_fields": "the formatter does not emit extra= fields at all, so that channel cannot leak (it also carries no structured context)",
+        "unregistered_values": "NOT redacted - a value not passed to redact_values() is written verbatim (probe: 'applicant pan=ABCDE1234F aadhaar=1234 5678 9012 salary=SALARY-SLIP-SECRET-77777'). Redaction is opt-in per call site, not pattern- or key-name-based. See EV1-F3."
+      },
+      "caveat": "The AC's literal precondition - 'an application payload carrying synthetic PAN, Aadhaar and salary-document content' served through a request - cannot be exercised at HEAD: /health is the only route and no endpoint accepts an application payload. The nearest executable equivalent (PII in query string and request header) was run live and is clean."
     },
     {
-      "feature": "F002",
-      "ac": "E15-S1-AC2",
-      "verdict": "fail",
-      "note": "In the running server 2 of 17 loggers (uvicorn, uvicorn.access) carry no RedactionFilter on logger or handler and have propagate=False. Proven by leak: GET /health?pan=ABCDE1234F logged verbatim while PAN was marked sensitive. The unit test passes only because pytest never applies uvicorn's dictConfig."
-    },
-    {
-      "feature": "F003",
-      "ac": "E15-S1-AC3",
-      "verdict": "fail",
-      "note": "Same failure as QA-VM-003: 50% JSON parse rate, uvicorn.access line carries no request_id."
-    },
-    {
-      "feature": "F004",
-      "ac": "E15-S1-AC4",
+      "id": "E15-S1-AC2",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F002"],
       "verdict": "pass",
-      "note": "See QA-VM-004 caveat."
+      "interactions": [
+        "in-process: create_app(); enumerate logging.root.manager.loggerDict + root; inspect logger.filters and handler.filters",
+        "in-process: log a registered secret through 9 logger namespaces and grep the handler stream"
+      ],
+      "observed": {
+        "root": "1 handler (StreamHandler, JSONLogFormatter); RedactionFilter present on BOTH the root logger and the root handler",
+        "explicitly_configured_loggers": "asyncio, concurrent.futures, dotenv.main, fastapi, gunicorn.error, pydantic_settings, truelend.access, uvicorn, uvicorn.access, uvicorn.error - all carry RedactionFilter",
+        "configured_loggers_without_redaction": [],
+        "namespace_placeholders_without_a_filter": ["concurrent", "dotenv", "truelend", "gunicorn"],
+        "effective_coverage_probe": "a registered secret logged through truelend, dotenv, concurrent, gunicorn, uvicorn, uvicorn.access, uvicorn.error, a brand-new post-configuration logger and root produced 8 emitted lines, 0 leaking lines, 0 non-JSON lines",
+        "dropped": "uvicorn.access (propagate=False, 0 handlers) never reaches the root handler - its records are discarded rather than formatted",
+        "negative_control": "backend/tests/unit/test_log_redaction.py::test_pii_redaction_control_is_not_vacuous and ::test_redaction_filter_covers_every_logger_under_the_real_server_config exist, so the 'a logger registered without it fails the assertion' clause has a control"
+      },
+      "note": "The four filter-less names are auto-created parent namespace nodes, not loggers the app configures; every record they could carry is filtered at the single root handler, which was proven empirically (0 leaks). The prior round's failure (uvicorn / uvicorn.access carrying no RedactionFilter, PAN in a plain-text uvicorn access line) is closed at HEAD."
     },
     {
-      "feature": "F005",
-      "ac": "E15-S1-AC5",
+      "id": "E9-S1-AC1",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F009"],
       "verdict": "pass",
-      "note": "See QA-VM-005."
+      "interactions": [
+        "in-process: Money('10.005'|'10.004'|'0.1'|10|Decimal('3.14159')|'-5.555'|'1e2') and .add/.subtract/.multiply; Decimal.as_tuple().exponent assertion",
+        "uv run pytest tests/architecture/test_no_float_money.py -v (36 passed, incl. test_random_principal_rate_tenure_triples_always_quantize_to_two_places)"
+      ],
+      "observed": {
+        "quantization": "every constructed and every derived value has exponent == -2 (exactly 2 places); ROUND_HALF_UP ('10.005' -> 10.01, '10.004' -> 10.00, '-5.555' -> -5.56)",
+        "arithmetic": "add -> 10.03, subtract -> 9.99, multiply(3) -> 30.03, multiply(Decimal('0.333')) -> 3.33; all return Money holding Decimal",
+        "float_rejection": "float, nan, inf, -inf rejected as InvalidMoneyAmountError; string 'nan'/'inf'/'NaN'/'-Infinity' rejected as non-finite; multiply(1.5) rejected",
+        "wire_format_D_G": "MoneyField round-trips to a quoted 2dp string: {\"amount\":\"10.00\"} / \"10.50\" / \"10.01\" / \"0.10\" / \"7.25\"; float input rejected by the validator"
+      },
+      "caveat": "The AC names 'a schedule computed from principal/rate/tenure triples'. No schedule computation exists at HEAD (later epic), so the schedule clause is UNTESTED end to end; the quantization invariant it rests on is verified directly on the type, and the project's own randomized triple test exercises the triples against Money."
     },
     {
-      "feature": "F009",
-      "ac": "E9-S1-AC1",
+      "id": "E9-S1-AC2",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F010"],
       "verdict": "pass",
-      "note": "2000 triples, independent seed 999777, 8000 money fields, all Decimal with exponent -2. Caveat: no schedule generator exists in group A; invariant verified on the Money type itself."
-    },
-    {
-      "feature": "F010",
-      "ac": "E9-S1-AC2",
-      "verdict": "pass",
-      "note": "Independent AST scan broader than the shipped check (float() calls, float literals, and true-division) over money.py and serializers.py: 0 hits."
-    },
-    {
-      "feature": "F011",
-      "ac": "E9-S1-AC3",
-      "verdict": "pass",
-      "note": "Held as decimal.js Decimal; static check exists at money.test.ts:70-88 and passes; 0 number-typed arithmetic in money.ts and MoneyText.tsx; typecheck clean, no any."
-    },
-    {
-      "feature": "F070",
-      "ac": "E11-S1-AC1",
-      "verdict": "pass",
-      "note": "classify_by_days_past_due(35) -> DPD-30."
-    },
-    {
-      "feature": "F071",
-      "ac": "E11-S1-AC2",
-      "verdict": "pass",
-      "note": "Exhaustive 0..400: 401/401 correct against an independently written expected function, all five buckets, no gap, no overlap; negative raises ValueError."
-    },
-    {
-      "feature": "F072",
-      "ac": "E11-S1-AC3",
-      "verdict": "pass",
-      "note": "Due today / +1 day / +10 days all classify CURRENT."
-    },
-    {
-      "feature": "F073",
-      "ac": "E11-S1-AC4",
-      "verdict": "pass",
-      "note": "DelinquencyBucket StrEnum, five members, no fee/penal/charge/interest/amount attribute."
-    }
-  ],
-  "deterministic_suites": [
-    {
-      "command": "cd backend && uv run pytest -q",
-      "exit": 0,
-      "result": "42 passed, 2 warnings in 0.12s"
-    },
-    {
-      "command": "cd backend && uv run mypy src/",
-      "exit": 0,
-      "result": "Success: no issues found in 12 source files"
-    },
-    {
-      "command": "cd backend && uv run ruff check .",
-      "exit": 0,
-      "result": "All checks passed!"
-    },
-    {
-      "command": "cd frontend && npm test",
-      "exit": 0,
-      "result": "Test Files 1 passed (1), Tests 11 passed (11)"
-    },
-    {
-      "command": "cd frontend && npm run lint",
-      "exit": 0,
-      "result": "eslint clean"
-    },
-    {
-      "command": "cd frontend && npm run typecheck",
-      "exit": 0,
-      "result": "tsc --noEmit clean"
-    }
-  ],
-  "performance": {
-    "verdict": "warn",
-    "matrix_ids": [
-      "VM-005"
-    ],
-    "endpoint": "GET /health",
-    "samples": 10,
-    "max_ms": 25.95,
-    "slo_p95_ms": 500,
-    "baseline_present": false,
-    "note": "No perf baseline artifact exists and features.json has zero prior passes:true in any group, so group A is the first landed group. A missing baseline is a WARN per the ratchet rule, not a FAIL. No regression computable."
-  },
-  "slo": {
-    "verdict": "pass",
-    "error_rate_5xx_pct": 0,
-    "observed_5xx": 0,
-    "p95_ms_observed": 25.95,
-    "p95_ms_budget": 500
-  },
-  "additional_findings": [
-    {
-      "severity": "major",
-      "area": "backend/src/api/middleware.py:32",
-      "finding": "Untrusted X-Request-ID reflected with no length cap or charset allow-list: a 4000-char id was echoed in full (4015-byte response header) and written to the log; a tab control character was echoed verbatim. Log-bloat / header-bloat amplification. Owned by security-reviewer; no group A AC covers it."
-    },
-    {
-      "severity": "info",
-      "area": "backend/src/config/logging.py",
-      "finding": "Verified safe: JSON log-injection is not possible. request_id values 'x\",\"injected\":\"yes', 'a<TAB>b' and a 4000-char value all serialize to lines that parse correctly with no field injection or line splitting. Recorded so the header-length finding is not over-read."
-    },
-    {
-      "severity": "minor",
-      "area": "backend/src/config/logging.py:85",
-      "finding": "_install_redaction_filter_everywhere() walks only loggers existing at configure time. A logger created later gets no filter (confirmed: truelend.laterstory -> False)."
-    },
-    {
-      "severity": "minor",
-      "area": "backend/tests/architecture/test_no_float_money.py:29",
-      "finding": "_count_float_usages detects only float() calls and float literals, not true-division. Stricter independent scan found 0 hits today, so nothing is masked, but the check will weaken as money paths grow."
-    },
-    {
-      "severity": "minor",
-      "area": "specs/stories/E9-S1.md",
-      "finding": "E9-S1-AC1 is worded against a schedule computation that does not exist until E9-S2/E4. AC wording vs story scope mismatch."
-    }
-  ],
-  "scope_conflicts": [
-    "project-manifest.json is modified in the working tree (verification.mode docker->local plus mode_note) while listed as frozen and outside the task envelope allowed_paths. Not edited by me. The pack's duplicate-'mode'-key worry is unfounded: the file parses and verification.mode appears exactly once inside verification.",
-    ".claude/state/task-envelope.json was rotated rather than amended: previous_envelope_hash is null and amendments is [] despite two files in task-envelope-history/. Chain unauditable. Not edited by me.",
-    "plan-seal.js check exits 1 (specs/design/reasons-canvas.md, specs/bundles/E{9,11,15}-S1.json changed). contract-freeze.js --check passes, so sprint-contracts/A.json is intact; I treated it as read-only.",
-    "regression-suite-full BLOCK is a misapplied check: features.json has zero passes:true in any group, so group A is the first landed group and the prior-contract regression set is empty. Its findings are 404s on unimplemented groups B..M.",
-    "ownership-check: backend/src/__init__.py has no owning story row in specs/design/component-map.md. The fix is a specs/design/ edit, frozen to me. Reported, not made."
-  ],
-  "files_created_by_this_evaluation": [
-    ".claude/state/evaluator1-uvicorn.log",
-    "specs/reviews/evaluator-report.md",
-    "specs/reviews/evaluator-evidence.json",
-    "specs/reviews/eval-failures-001.json"
-  ],
-  "security_gate": {
-    "verdict": "fail",
-    "source": "specs/reviews/security-verdict.json",
-    "pass": false,
-    "block_findings": 1,
-    "warn": 7,
-    "info": 6,
-    "blocking": [
-      {
-        "id": "VULN-001",
-        "severity": "high",
-        "cwe": "CWE-770",
-        "file": "backend/src/api/middleware.py:32",
-        "matrix_ids": [
-          "VM-003",
-          "VM-004"
-        ],
-        "summary": "Caller-supplied X-Request-ID accepted with no length cap, echoed verbatim into the response header and into every structured log line. 8 MB header value returns 200 with full echo; 20 x 1 MB requests to unauthenticated, unrate-limited GET /health wrote 20.98 MB to the log in 1.28 s (~15.6 MB/s). Remote unauthenticated disk/bandwidth exhaustion."
+      "interactions": [
+        "independent AST scan (ast.walk) of backend/src/types/money.py and backend/src/api/serializers.py for float literals, float() calls, math.* calls and Div/FloorDiv/Pow BinOps",
+        "uv run pytest tests/architecture/test_no_float_money.py",
+        "grep for exemption markers in the scanned money paths"
+      ],
+      "observed": {
+        "independent_scan": "money.py 0 findings, serializers.py 0 findings (also delinquency.py and types/delinquency.py: 0)",
+        "project_check": "test_float_guard_still_reports_zero_for_the_real_money_modules PASSED",
+        "exemptions_used": "none - no exempt/noqa/allow-float marker in either money path, so the per-line exemption mechanism does not hollow out the check"
       }
-    ],
-    "evaluator_note": "Independently corroborated. I recorded the same header reflection as a MAJOR additional finding (4000-char id echoed in full, 4015-byte response header, tab control char echoed). The security reviewer proved a materially stronger impact than my probe did, and owns the finding. Per the evaluator security gate, pass:false makes the overall verdict FAIL regardless of functional results. This also explains the abnormal size and NUL padding of .claude/state/uvicorn.log, which is why I measured log windows against an isolated instance instead."
-  },
-  "overall_verdict": "FAIL",
-  "overall_failure_layers": [
-    "api",
-    "security"
+    },
+    {
+      "id": "E9-S1-AC3",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F011"],
+      "verdict": "pass",
+      "interactions": [
+        "node --experimental-strip-types import of frontend/src/types/money.ts (node v24.13.0) - surface: static fromWire; prototype toWire/add/subtract/multiply/equals/format",
+        "independent grep scan of src/types/money.ts for Number(, parseFloat, and numeric operators",
+        "cd frontend && npm test (18 passed), npm run lint (clean), npm run typecheck (clean)"
+      ],
+      "observed": {
+        "held_as_decimal": "the amount is a decimal.js Decimal; toFixed(2) is decimal.js string formatting, not Number arithmetic; quantization uses Decimal.ROUND_HALF_UP",
+        "float_ops_found": "0 - no Number(), no parseFloat, no arithmetic operator applied to the value; the only string operations are toFixed(2) and a thousands-separator regex replace",
+        "no_minor_units": "no scale/unscale helper and no integer-minor-unit representation (D-J honoured)"
+      },
+      "caveat": "The frontend runtime assertions on formatting behaviour come from the project's own 18 vitest cases plus a node type-stripped import of the module surface; I did not author an independent frontend driver."
+    },
+    {
+      "id": "E11-S1-AC1",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F070"],
+      "verdict": "pass",
+      "interactions": [
+        "in-process: classify_by_days_past_due(35); classify(date(2026,1,1), date(2026,2,5))"
+      ],
+      "observed": {
+        "by_days": "DPD-30",
+        "by_dates_35_days": "DPD-30",
+        "floors": "[('CURRENT', 0), ('DPD-30', 30), ('DPD-60', 60), ('DPD-90', 90), ('NPA', 180)]"
+      },
+      "note": "The functions live in backend/src/config/delinquency.py, not in backend/src/types/delinquency.py as E11-S1 Generation Contract operation 2 specifies (types/delinquency.py holds only the enum). Behaviour is correct; the owned-file placement drifts from the story bundle. See EV1-F4."
+    },
+    {
+      "id": "E11-S1-AC2",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F071"],
+      "verdict": "pass",
+      "interactions": [
+        "in-process sweep: classify_by_days_past_due(d) for d in range(0, 401), grouped by returned bucket"
+      ],
+      "observed": {
+        "coverage": "401 of 401 values classified, exactly one bucket each",
+        "ranges": "CURRENT 0-29 (30), DPD-30 30-59 (30), DPD-60 60-89 (30), DPD-90 90-179 (90), NPA 180-400 (221)",
+        "transitions": "[(0,'CURRENT'), (30,'DPD-30'), (60,'DPD-60'), (90,'DPD-90'), (180,'NPA')] - monotone, exactly at the floors, no gap and no overlap",
+        "distinct_buckets": 5,
+        "edges": "-1 and -100 raise ValueError('days_past_due must be zero or positive'); 1e9 -> NPA"
+      }
+    },
+    {
+      "id": "E11-S1-AC3",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F072"],
+      "verdict": "pass",
+      "interactions": [
+        "in-process: classify(date(2026,3,10), date(2026,3,10)); classify(date(2026,4,10), date(2026,3,10)); classify_by_days_past_due(0) and (29)"
+      ],
+      "observed": {
+        "as_of_equals_due": "CURRENT",
+        "due_in_future": "CURRENT",
+        "dpd_0_and_29": "CURRENT / CURRENT"
+      }
+    },
+    {
+      "id": "E11-S1-AC4",
+      "layer": "api",
+      "matrix_ids": [],
+      "maps_to": ["F073"],
+      "verdict": "pass",
+      "interactions": [
+        "in-process: inspect the returned object - type, dir(), attribute scan for fee/penal/charge/interest"
+      ],
+      "observed": {
+        "result": "DelinquencyBucket StrEnum member (value 'DPD-30'); attributes beyond str/enum machinery: name, value only",
+        "fee_like_attributes": "none (0 matches for fee/penal/charge/interest)",
+        "purity": "the module reads and writes no loan state; classify takes two dates and returns a bucket"
+      }
+    }
   ],
-  "overall_reason": "QA-VM-003 / E15-S1-AC3 fails (50% JSON parse rate on request-scoped log lines); E15-S1-AC2 fails (uvicorn loggers bypass PII redaction, demonstrated leak); and the security gate reports pass:false with one high-severity BLOCK (VULN-001)."
+  "supplementary_probes": [
+    {
+      "probe": "500 path correlation id (the CR-003 claim)",
+      "method": "in-process: create_app() returns the pure-ASGI CorrelationIdMiddleware wrapping the FastAPI app; a deliberately failing route was added to the inner app in memory and driven with TestClient(raise_server_exceptions=False)",
+      "result": "500 with x-request-id: req-500 echoed, and the access log line carries request_id 'req-500'; 0 non-JSON lines on the error path. The middleware does sit outside ServerErrorMiddleware.",
+      "note": "The 500 response body is the plain-text 'Internal Server Error' from Starlette, not the JSON error envelope; and no app-emitted ERROR record with a traceback was captured on that path."
+    },
+    {
+      "probe": "AppError envelope and the new context channel",
+      "method": "in-process route raising AppError('human message', context={...})",
+      "result": "500 application/json {\"error\":\"AppError\",\"detail\":\"human message\",\"context\":{\"loan_id\":\"L-1\",\"internal_path\":\"/etc/passwd\",\"pan\":\"ABCDE1234F\"}} - the context mapping is passed to the client verbatim with no allowlist, no redaction and no size limit, and 'error' reports the exception class name. AppError currently has 0 subclasses. See EV1-F5 (security-reviewer remit)."
+    },
+    {
+      "probe": "404 / 405 envelopes",
+      "result": "GET /does-not-exist -> 404 {\"detail\":\"Not Found\"}; POST /health -> 405 {\"detail\":\"Method Not Allowed\"} - Starlette defaults, not the {error, detail, context} envelope. Both echo x-request-id and produce one JSON access line."
+    },
+    {
+      "probe": "untrusted X-Request-ID",
+      "result": "a 5000-character id is echoed in the response header in full and written to the log in full (no length cap); ANSI escape, tab, quote, backslash and JSON-envelope-breaking payloads are JSON-escaped and cannot forge a field or split a line. See EV1-F6 (security-reviewer remit)."
+    },
+    {
+      "probe": "OpenAPI generation",
+      "result": "GET /openapi.json -> 200 (450 bytes) and GET /docs -> 200 today, because no model uses MoneyField yet. Generating a schema for a model with a MoneyField raises pydantic.errors.PydanticInvalidForJsonSchema ('Cannot generate a JsonSchema for core_schema.PlainValidatorFunctionSchema'). See EV1-F2."
+    }
+  ],
+  "untested": [
+    {
+      "check": "observability SLO sensor (/metrics scrape)",
+      "reason": "GET /metrics returns 404 at HEAD. project-manifest.json sets observability.enabled=true with metrics_path /metrics, and the frozen specs/design/api-contracts.md assigns GET /metrics to E15-S1, but no E15-S1 acceptance criterion covers it and the story scope forbids endpoints beyond /health. The SLO error-rate sensor therefore could not be run. Recorded as untested, not as a pass.",
+      "verdict": "untested"
+    },
+    {
+      "check": "performance ratchet (p95 regression vs baseline)",
+      "reason": "No recorded perf baseline exists for this project (group A is the first group). Absolute latency was measured instead: p95 223.8 ms against a 1 s contract budget and a 500 ms manifest SLO. Per the no-baseline rule this is a WARN, not a FAIL.",
+      "verdict": "untested"
+    },
+    {
+      "check": "E9-S1-AC1 schedule clause",
+      "reason": "No schedule computation exists at HEAD; only the Money quantization invariant the clause depends on could be exercised.",
+      "verdict": "untested"
+    },
+    {
+      "check": "E15-S1-AC1 served-application-payload clause",
+      "reason": "No endpoint accepts an application payload at HEAD; PII was driven through the query string, a request header, log messages, %-args, nested extra payloads and an exception traceback instead.",
+      "verdict": "untested"
+    },
+    {
+      "check": "browser / accessibility layer",
+      "reason": "Not contracted - zero playwright_checks, design_checks or accessibility_checks in any sprint contract, and no e2e/ directory. Nothing to execute; nothing claimed.",
+      "verdict": "not_applicable"
+    }
+  ],
+  "findings": [
+    {
+      "id": "EV1-F1",
+      "severity": "major",
+      "layer": "schema",
+      "location": "backend/src/api/platform/routes.py vs specs/design/api-contracts.md:314",
+      "finding": "GET /health returns {\"status\":\"ok\"}; the frozen contract documents 200 {\"status\":\"ok\",\"database\":\"ok\",\"version\":\"...\"} and cites E15-S1-AC5. Two of three documented fields are absent.",
+      "blocks_contract_check": false,
+      "resolution": "Human decision. api-contracts.md is frozen and out of scope for edits; either the contract line or the handler has to move. Omitting 'database' looks defensible (no database exists until group B) and omitting 'version' is defensible on disclosure grounds, which suggests the contract line is the thing that is wrong."
+    },
+    {
+      "id": "EV1-F2",
+      "severity": "major",
+      "layer": "api",
+      "location": "backend/src/api/serializers.py (MoneyField)",
+      "finding": "MoneyField uses a plain validator with no __get_pydantic_json_schema__, so OpenAPI generation raises PydanticInvalidForJsonSchema for any model that carries a money field. /openapi.json and /docs are 200 only because no route uses MoneyField yet; the first money-carrying contract breaks both.",
+      "blocks_contract_check": false,
+      "repro": "class M(BaseModel): amount: MoneyField  ->  M.model_json_schema() raises"
+    },
+    {
+      "id": "EV1-F3",
+      "severity": "major",
+      "layer": "api",
+      "location": "backend/src/config/logging.py (RedactionFilter / redact_values)",
+      "finding": "Redaction is opt-in by exact value registration inside a redact_values() scope. There is no pattern-based or key-name-based redaction, so any call site that logs applicant PII without registering the exact value leaks it verbatim (demonstrated). E15-S1-AC1 holds today only because the sole route logs no payload.",
+      "blocks_contract_check": false,
+      "mitigation_observed": "tests/unit/test_log_redaction.py::test_modules_handling_applicant_pii_enter_a_redaction_scope is a structural guard on future call sites."
+    },
+    {
+      "id": "EV1-F4",
+      "severity": "minor",
+      "layer": "design",
+      "location": "backend/src/config/delinquency.py",
+      "finding": "classify() and classify_by_days_past_due() live in the Config layer; E11-S1 Generation Contract operation 2 places the pure classifier in backend/src/types/delinquency.py, which at HEAD holds only the enum. No layering rule is broken (Config may import Types) but the owned-file contract in specs/bundles/E11-S1.json drifted."
+    },
+    {
+      "id": "EV1-F5",
+      "severity": "major",
+      "layer": "api",
+      "location": "backend/src/api/errors.py, backend/src/types/errors.py",
+      "finding": "AppError.context is serialized to the client verbatim with no allowlist, redaction or size limit, and 'error' is the exception class name. An internal path and a PAN placed in context by a caller were returned to the client in full. No production call site uses it yet (0 AppError subclasses), so this is a forward-looking outbound channel, but it is unguarded. Security-reviewer remit; recorded here with a live repro."
+    },
+    {
+      "id": "EV1-F6",
+      "severity": "minor",
+      "layer": "api",
+      "location": "backend/src/api/middleware.py",
+      "finding": "A caller-supplied X-Request-ID is accepted, echoed and logged with no length cap or character allowlist: a 5000-character id was reflected and logged in full. JSON escaping does prevent log-line forgery and header splitting was not reproducible, so the impact is log/header bloat rather than injection. Security-reviewer remit."
+    },
+    {
+      "id": "EV1-F7",
+      "severity": "minor",
+      "layer": "api",
+      "location": "backend/src/config/logging.py",
+      "finding": "uvicorn.access is silenced (propagate=False, no handler) rather than routed through the JSON formatter. That is what closes the prior plain-text-access-line failure, but it discards uvicorn's access records (client address, bytes, protocol) and makes --access-log a no-op. The app's own truelend.access line replaces them and carries request_id. Also: the JSON formatter drops extra= fields entirely, so structured log context cannot be attached."
+    }
+  ]
 }

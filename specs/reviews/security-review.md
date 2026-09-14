@@ -1,497 +1,513 @@
-# Security Review — ai-native-capstone-truelend (Group A) — 2026-09-14
+# Security Review — ai-native-capstone-truelend — story group A — 2026-09-14
 
-Reviewer: `security-reviewer` instance 1 of 3 (canonical outputs)
-Range: `14e9487..d0b5c94` plus the uncommitted working tree
-Branch: `feat/harness-scaffold-and-planning`
-Stories: E15-S1 (logging/correlation/health), E9-S1 (Money), E11-S1 (delinquency ladder)
-Runtime target: `http://127.0.0.1:8000`, live throughout this review
-Machine-readable verdict: `specs/reviews/security-verdict.json`
+**Instance:** 1 of 3 (independent). **Tree reviewed:** HEAD `f4abd41`.
+**Range:** `git diff 14e9487..HEAD -- backend frontend` (24 files, all additions).
+**Scope:** the changed files, the review context pack, and their immediate
+data-flow neighbours. Judged fresh at HEAD; no prior-round verdict was read.
+
+All findings below were reached by reading the code and then **testing it against a
+live server**, not by pattern matching. Where a candidate finding was refuted by a
+real mitigation, it is recorded as refuted rather than dropped silently.
 
 ## Summary
 
-- BLOCK findings: **1**
-- WARN findings: **7**
-- INFO findings: **6**
+- BLOCK findings: **2**
+- WARN findings: **9**
+- INFO findings: **9**
 - Overall verdict: **BLOCK**
 
-One finding is exploitable today against the live service and is proven with a
-reproduction. Everything else is either a latent weakness that becomes dangerous
-when the next story lands, or a configuration default that should be corrected
-before the API surface grows.
+### Honest framing of the two BLOCKs
 
-Nine additional candidate vulnerabilities — including three of the four vectors the
-task brief flagged as highest priority — were **refuted with evidence** and are
-recorded in the "Refuted candidates" section rather than reported as findings. In
-particular, the CRLF header-injection string suggested in the brief does not
-inject, and the caller-supplied correlation id cannot forge a log entry.
+Neither BLOCK is reachable over HTTP at HEAD, because no production code calls
+`redact_values()` yet (verified: the only call sites are in
+`backend/tests/unit/test_log_redaction.py`). Both are defects **inside
+`backend/src/config/logging.py`**, on the path that the repo's own control test
+`test_modules_handling_applicant_pii_enter_a_redaction_scope` *obliges* the next
+story (`POST /applications`, E4-S1) to take. A reviewer who scopes the gate strictly
+to "exploitable through a live route today" would read both as WARN, and that reading
+is defensible — this report does not hide that.
 
-## Scope and verification of the pack's claims
-
-Production files read in full: the 13 backend/frontend source files listed in the
-context pack, plus `frontend/package.json` and `frontend/vite.config.ts`. No files
-outside the change set and its immediate data-flow neighbours were searched.
-
-The pack asserts there is no authn/authz, no persistence, no migrations, no
-outbound network, no uploads and no payment execution. **All six claims are
-accurate.** A grep across `backend/src/` for `httpx`, `requests.`, `sqlalchemy`,
-`psycopg`, `alembic`, `UploadFile`, `Depends`, `subprocess`, `os.system`, `eval(`,
-`exec(`, `pickle` and `yaml.load` returns nothing; `httpx` appears only in the dev
-dependency-group. The only route is `GET /health`, which accepts no input.
-
-Consequently the entire OWASP injection family (SQL, command, LDAP/XPath/NoSQL),
-path traversal, SSRF, insecure deserialization, CSRF, open redirect, IDOR, auth
-bypass and privilege escalation are **not applicable** to this diff — there is no
-code of that shape to be vulnerable.
+They are nonetheless recorded as BLOCK, for one reason: E15-S1 exists specifically so
+this substrate is correct *before* anything depends on it (the story's own rationale:
+"D12 places this first in M1 because NFR-03 and NFR-06 are retrofit-hostile"). Both
+defects are unfixable by the future caller — SEC-002 leaks PII even when the caller
+uses the API exactly as the project's enforced control test mandates — and both fixes
+are local to this diff. Merging them turns a 20-line fix into the retrofit the story
+was written to prevent.
 
 ---
 
 ## BLOCK Findings
 
-### [VULN-001] Unbounded caller-controlled `X-Request-ID` reflected into the response and written 1:1 to disk
+### [SEC-001] Catastrophic regex backtracking (ReDoS) in the PII redaction pattern
+**File:** `backend/src/config/logging.py` line 58 (`_redaction_pattern`), consumed at
+line 67 (`_scrub`)
+**Severity:** high → BLOCK · **Category:** dos / redos
 
-- **File:** `backend/src/api/middleware.py` line 32 (echo at line 36; log write at `backend/src/config/logging.py` line 66)
-- **Severity:** high → **BLOCK**
-- **CWE:** CWE-770 (allocation of resources without limits), with CWE-400
-- **Matrix IDs:** VM-003, VM-004
+**Description.** `_redaction_pattern` builds a matcher by joining the escaped
+characters of the sensitive value with the separator class `[\s\-]*`
+(`_SEPARATORS`, line 46). When the value itself contains characters that the
+separator class also matches (space, tab, hyphen), every literal in the pattern
+becomes ambiguous with its neighbouring quantifier, and matching degenerates to
+exponential backtracking.
 
-**Description.** `dispatch` takes the inbound header with
-`request.headers.get("X-Request-ID") or uuid4().hex` and applies no length cap, no
-charset allow-list and no validation of any kind. That untrusted value is then used
-twice: echoed verbatim into the `X-Request-ID` response header, and written verbatim
-into the `request_id` field of every structured log line emitted for the request.
+Measured against the real production `_scrub`, imported from
+`src.config.logging` (single-threaded CPU, no I/O):
 
-A correlation id has a natural bound of a few dozen characters (the generated one is
-a 32-character hex UUID). Accepting an 8 MB value and persisting it is a remote,
-unauthenticated resource-exhaustion primitive. `GET /health` requires no
-authentication and has no rate limit, and there is no reverse proxy, ingress, or
-header-size cap anywhere in the reviewed stack — `project-manifest.json#verification.mode`
-is `local` and there is no `docker-compose.yml` until E15-S2 — so **no compensating
-control exists in the system under review.**
+| sensitive value | text scanned | time |
+|---|---|---|
+| `"-"*12 + "Z"` (13 chars) | 20 hyphens | 8 ms |
+| `"-"*12 + "Z"` (13 chars) | 30 hyphens | 3,125 ms |
+| `"-"*12 + "Z"` (13 chars) | **40 hyphens** | **199,326 ms** |
+| `"-"*18 + "Z"` (19 chars) | 30 hyphens | 11,404 ms |
+| `" "*18 + "Z"` (19 chars) | 30 spaces | 10,304 ms |
 
-**Reproduction (run against the live server).**
+A 13-character value and a 40-character log line cost **over three minutes** of one
+worker's CPU. `_scrub` runs this loop for every registered value against every log
+line emitted in the scope, so the cost multiplies.
 
-Single oversized request — accepted, echoed in full:
+The value is attacker-supplied **by the module's own documented contract** (lines
+9-13): "Business code (a future story's origination endpoint) marks the values that
+must never reach a log sink ... it redacts whatever values the caller marks as
+sensitive, which is the only sound approach given those are per-applicant,
+per-request data." An applicant submitting a PAN/Aadhaar/salary-document field of
+`"------------Z"` therefore chooses the regex. `_MIN_REDACTABLE_LENGTH = 6` does not
+help (13 > 6); there is no length cap, no character-class restriction and no timeout.
+
+**Adversarial check.** The only refutation found is that `redact_values` has no
+production caller at HEAD. That is sprint sequencing, not a mitigation. The exploit
+path I could not refute: attacker-submitted applicant field → `redact_values(field)`
+(mandated by the repo's own control test) → any log line in that scope → `_scrub` →
+exponential match → worker pinned for minutes against a `p95_ms: 500` SLO, with no
+authentication and no rate limiting (D-O ships none).
+
+**Fix.** Normalise instead of tolerating separators inside the pattern: strip
+`[\s\-]` from both the sensitive value and a normalised copy of the text, match on
+the normalised form, and map the match back — or, minimally, build the separator
+class only *between* characters that are not themselves separator characters, cap the
+registered value length, and reject values that are predominantly separator
+characters. Add a regression test asserting `_scrub` over `"-"*12 + "Z"` against 40
+hyphens completes in under a millisecond.
+
+---
+
+### [SEC-002] PII in an exception message bypasses redaction and is logged at ERROR
+**File:** `backend/src/config/logging.py` lines 34-42 (`redact_values` scope),
+100-118 (`JSONLogFormatter`, the new `payload["exception"]`), 141
+(`_JSON_ROUTED_LOGGERS`)
+**Severity:** high → BLOCK · **Category:** sensitive-data-exposure
+
+**Description.** `redact_values` is a lexical context manager whose `finally` resets
+the sensitive-value set. An exception raised inside the scope unwinds that scope
+first, then propagates past `ServerErrorMiddleware`, which re-raises it; uvicorn then
+formats the traceback and logs it on `uvicorn.error`. By then
+`_sensitive_values` is empty, so the `RedactionFilter` installed on that logger
+no-ops, and the raw exception message is written into the JSON `exception` field at
+ERROR level.
+
+Demonstrated end-to-end against a live uvicorn process with the unmodified
+application (probe handler standing in for E4-S1, doing exactly what the project's
+control test requires — entering the redaction scope before touching PII):
 
 ```
-python - <<'PY'
-import socket
-head = (b"GET /health HTTP/1.1\r\nHost: 127.0.0.1\r\nX-Request-ID: "
-        + b"D"*8388608 + b"\r\nConnection: close\r\n\r\n")
-s = socket.create_connection(("127.0.0.1", 8000), timeout=15)
-s.sendall(head)
-buf = b""
-while True:
-    c = s.recv(262144)
-    if not c: break
-    buf += c
-print(buf.split(b"\r\n")[0], len(buf))
-PY
+handler:  with redact_values(PAN, AADHAAR):
+              raise RuntimeError(f"could not score applicant pan={PAN} aadhaar={AADHAAR}")
+
+log line: {"level":"ERROR","logger":"uvicorn.error","request_id":"",
+           "exception":"... RuntimeError: could not score applicant
+                        pan=ABCDE1234F aadhaar=234123412346"}
 ```
 
-Observed: `b'HTTP/1.1 200 OK' 8388783` — an 8 MB header value accepted, 200 OK, and
-the full 8 MB echoed back in the response header. Values of 8 KB, 15 KB, 64 KB,
-256 KB, 1 MB, 4 MB and 8 MB were all accepted (`full_echo=True` in every case).
+The PAN and Aadhaar appear verbatim. For comparison, the same values logged
+*inside* the scope were correctly redacted to `[REDACTED]` in the same run, so the
+mechanism works — it simply does not cover the error path, which is the single most
+likely place an identifier ends up in a log.
 
-Sustained disk-fill rate — 20 sequential 1 MB requests:
+This diff created the sink: commit `f4abd41` deliberately routed `uvicorn.error`
+through the root JSON handler (line 141) and added `payload["exception"]` to the
+formatter (lines 111-117). Before those two changes the traceback was dropped.
 
-```
-LOGBYTES_BEFORE=15770862
-20 sequential requests of 1.0 MB header in 1.28s
-  sent   ~20.0 MB  (15.6 MB/s)
-  echoed ~20.0 MB back in response headers
-LOGBYTES_AFTER=36746522
-```
+Violates the project threat model rule "NEVER log secrets, tokens, passwords, or
+full PII (email, SSN, card numbers) at INFO level or above"
+(`.claude/claude-security-guidance.md`), the story's E15-S1-AC1 ("the captured buffer
+contains 0 occurrences of each of those three values") and its scope_out ("must not
+write applicant PAN, Aadhaar or salary-document content to any log sink").
 
-**+20.98 MB written to `.claude/state/uvicorn.log` in 1.28 seconds from a single
-client** — about 15.6 MB/s, or roughly 1.3 GB per minute, with amplification
-slightly above 1:1 because the JSON line carries the value plus envelope overhead.
-Every additional request-scoped log line added by a future story multiplies that
-factor. A single attacker exhausts the log volume in minutes and takes the service
-down; on a loan-origination platform that is an availability incident with
-regulatory reporting consequences.
+**Adversarial check.** Refutations attempted and rejected: (a) the
+`RedactionFilter` *is* attached to `uvicorn.error`, but has nothing registered to
+scrub by then; (b) the caller cannot hold the scope open across the uvicorn boundary,
+because uvicorn logs after the ASGI callable has already raised; (c) the caller
+cannot guarantee no exception message ever embeds PII — a DB driver, pydantic, or any
+library raise site is outside the caller's control. Same latency caveat as SEC-001
+(no PII endpoint exists yet), but unlike a normal "future misuse" risk, the leak
+occurs when the caller does everything right.
 
-**Adversarial refutation attempted and failed.** I looked for any mitigation between
-source and sink: there is no validation in `dispatch`, no `max_header_size` setting
-on the uvicorn invocation, no proxy in the repo, and `httptools` itself accepted
-8 MB in a single header field without complaint. The exploit path is source
-(unauthenticated request header) → sink (response header + persistent log file) with
-nothing in between. The finding survives.
-
-**Fix.** Validate before binding, and regenerate rather than truncate so the caller
-cannot control the stored value:
-
-```python
-_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
-
-inbound = request.headers.get(_REQUEST_ID_HEADER, "")
-request_id = inbound if _ID_RE.match(inbound) else uuid4().hex
-```
-
-Truncating and using the prefix is not sufficient — it still lets a caller pin the
-id to a value of their choosing. Add a request-rate limit on public routes as
-defence in depth (see VULN-012).
+**Fix.** Make the sensitive-value set request-scoped rather than handler-lexical:
+bind it in `CorrelationIdMiddleware` (which sits outside `ServerErrorMiddleware`) and
+have handlers register into that request-scoped store, so it outlives handler
+unwinding; and/or catch the exception in the middleware, log it scrubbed while the
+scope is live, then re-raise. Add a test that drives a raising handler through the
+real ASGI stack and asserts the PAN is absent from the traceback line.
 
 ---
 
 ## WARN Findings
 
-### [VULN-002] `RedactionFilter` does not scrub exception tracebacks, and the live plain-text sink renders them
+### [SEC-003] `AppError.context` and `detail` are echoed to the client unfiltered
+**File:** `backend/src/api/errors.py` lines 25-31; `backend/src/types/errors.py` lines 23-37
+**Severity:** medium → WARN · **Category:** information-disclosure
 
-- **File:** `backend/src/config/logging.py` line 45
-- **Severity:** medium → WARN · **CWE-532**
-
-`RedactionFilter.filter` operates only on `record.getMessage()`. It never touches
-`record.exc_info` or `record.exc_text`. PII carried in an exception message
-therefore bypasses redaction entirely.
-
-This matters because the JSON formatter is not the only sink. `JSONLogFormatter.format`
-silently drops `exc_info`, so tracebacks never appear there — but uvicorn's own
-`uvicorn.error` logger keeps its own handler and its own plain-text formatter, which
-does render tracebacks. That sink is live in this exact deployment: the server log
-currently holds **184 plain-text uvicorn lines alongside 124 JSON lines.**
-
-**Reproduction** (in-process, against the real module):
-
-```python
-with redact_values("ABCDE1234F"):
-    try:
-        raise ValueError("KYC failed for PAN ABCDE1234F")
-    except ValueError:
-        uvicorn_error_logger.exception("unhandled error")
-```
-
-Output, with a `RedactionFilter` attached to *both* the logger and the handler:
+The handler serialises `exc.context` (typed `Mapping[str, object]`, i.e. anything)
+and `exc.message` straight into the response body. Demonstrated against the live app
+— a 422 returned, in full:
 
 ```
-ERROR: unhandled error
-Traceback (most recent call last):
-  ...
-ValueError: KYC failed for PAN ABCDE1234F
->>> PAN PRESENT IN PLAIN SINK: True
+{"error":"AppError","detail":"rejected applicant pan=ABCDE1234F",
+ "context":{"pan":"ABCDE1234F","aadhaar":"234123412346",
+            "db_url":"<a Postgres DSN carrying user, password, host, port, db>",
+            "sql":"SELECT * FROM applications WHERE pan = 'ABCDE1234F'",
+            "config_path":"/app/backend/src/config/settings.py"}}
 ```
 
-**Why WARN and not BLOCK.** No borrower PII exists in the system yet — the only
-route is `GET /health`, and nothing constructs an exception around applicant data.
-There is no attacker-reachable path to a PII leak today, so per the gate's own
-standard this is a control gap rather than an exploitable vulnerability. It will
-become high the moment the origination endpoint lands.
+PII, a DSN with credentials, a SQL string and a filesystem path all egressed. Note
+the probe held an **active `redact_values` scope** and it made no difference:
+redaction covers log records only, never response bodies, so this new outbound
+channel sits entirely outside the story's PII control. Separately,
+`AppError.__init__` defaults `status_code=500`, so a bare
+`AppError("internal detail")` echoes an internal message on a 5xx.
 
-**Fix.** Render the traceback in the filter (`Formatter.formatException` or
-`traceback.format_exception`), apply the same replacement, write the scrubbed text
-back to `record.exc_text` and clear `record.exc_info`. Add a regression test that
-asserts a PII-bearing exception is redacted through a non-JSON formatter.
+Nothing in the diff raises `AppError` with a populated context yet, and the envelope
+itself matches the frozen contract (`specs/design/api-contracts.md:27`, whose own
+example legitimately returns the caller's `submitted_value`) — hence WARN, not BLOCK.
+The gap is that no discipline constrains what may ride out.
 
-### [VULN-003] The `request_id` log field is structurally unredactable
+**Fix.** Give each subclass a declared, typed, disclosure-safe context model (or an
+explicit `public_context` allowlist); never place applicant PII, DSNs, SQL or paths
+in it; for 5xx suppress `detail`/`context` and return a generic message plus the
+correlation id. Add a test asserting a 5xx body carries no `detail`.
 
-- **File:** `backend/src/config/logging.py` line 66
-- **Severity:** medium → WARN · **CWE-532**
+### [SEC-004] `X-Request-ID` is accepted unvalidated and unbounded
+**File:** `backend/src/api/middleware.py` lines 50-51, 58, 61
+**Severity:** medium → WARN · **Category:** dos / input-validation
 
-`JSONLogFormatter.format` reads `request_id_var` and writes it into the payload.
-Formatters run *after* filters, so nothing placed in that field can ever be
-redacted — the filter has already finished by the time the value is introduced.
+`inbound = Headers(scope=scope).get("x-request-id")` is used verbatim with no length
+cap and no character-class restriction. Verified live: a **64 KB** `X-Request-ID` was
+accepted, echoed in full in the response header (65,692-byte response) and written in
+full into the `request_id` field of the access log line. Unauthenticated and
+unthrottled — `/health` needs no credentials and D-O ships no rate limiting — so this
+is a cheap log-volume and response-size amplifier.
 
-**Reproduction:** set the contextvar to a PAN, enter `redact_values(PAN)`, log a
-line. Result:
+**Fix.** Cap the accepted value (e.g. 128 characters) and restrict it to
+`[A-Za-z0-9_.:-]`; on violation generate a fresh id rather than echoing the
+caller's.
 
-```
-{"timestamp": "...", "level": "INFO", "logger": "truelend.origination",
- "message": "serving", "request_id": "ABCDE1234F"}
->>> PAN PRESENT IN request_id FIELD: True
-```
+### [SEC-005] The correlation id is fully caller-controlled, so it can be forged or collided
+**File:** `backend/src/api/middleware.py` lines 50-51
+**Severity:** medium → WARN · **Category:** audit-integrity
 
-The field is caller-supplied (VULN-001), so any client that embeds a customer
-identifier in its correlation id — a common anti-pattern — writes unredactable PII
-into the log.
+Any caller can set `X-Request-ID` to any value, including one identical to another
+request's id, and every log line for that request then carries it. An attacker can
+therefore stamp their own traffic with a chosen or copied correlation id, merge their
+requests into someone else's trace, or fragment their own — degrading incident
+forensics and repudiation for a lending platform. Honouring the inbound header is
+mandated by the frozen contract (`api-contracts.md:19-20`, E15-S1-AC3), so the header
+cannot simply be ignored. Generated ids themselves are sound (`uuid4().hex`, CSPRNG —
+not guessable).
 
-**Fix.** Inject `request_id` onto the record inside the filter so the filter scrubs
-it, or apply the replacement inside `format` before `json.dumps`. The VULN-001
-allow-list also mitigates this: an id constrained to `[A-Za-z0-9_-]{1,64}` cannot
-carry structured PII.
+**Fix.** Always emit a server-generated `request_id` on every log line and record the
+caller's value separately as `client_request_id`, echoing the caller's value in the
+response header to satisfy the contract. Validate per SEC-004.
 
-### [VULN-004] PII redaction is inert by default, has no deny-list, and is case-sensitive
+### [SEC-006] The 500 path loses the correlation id on the traceback line
+**File:** `backend/src/api/middleware.py` lines 56-67; `backend/src/config/logging.py` line 141
+**Severity:** medium → WARN · **Category:** audit-integrity
 
-- **File:** `backend/src/config/logging.py` line 32
-- **Severity:** medium → WARN · **CWE-311**
-
-Three compounding weaknesses in the same control:
-
-1. **No production caller.** `grep -rn redact_values backend/src/` returns only the
-   definition itself. The sole caller in the repo is
-   `backend/tests/unit/test_log_redaction.py`. The control is exercised only by its
-   own test.
-2. **No default deny-list.** Redaction is entirely opt-in per request scope. There
-   is no key-name matching and no format-based matching, so nothing is redacted
-   unless business code remembers to wrap itself.
-3. **Case-sensitive exact substring match.** `message.replace(value, ...)` misses
-   any casing variant. With `redact_values("ABCDE1234F")` active, logging
-   `abcde1234f` emits it **unredacted** (verified).
-
-The module docstring claims the filter "drops PAN, Aadhaar and salary-document
-content before a record is formatted." It does not — it drops whatever strings a
-caller has registered, in the exact case registered. That overstatement is itself a
-risk, because the next story author will reasonably trust it.
-
-Values passed via `extra=` are silently *dropped* by `JSONLogFormatter` rather than
-redacted, so they do not leak to the JSON sink — but they would leak through any
-handler whose formatter renders them.
-
-**Fix.** Add an always-on layer that does not depend on opt-in: a key-name deny-list
-over `record.__dict__`/`extra` (`pan`, `aadhaar`, `ssn`, `account_no`, `email`,
-`phone`, `salary`, `dob`, `token`, `password`) plus format regexes for PAN and
-Aadhaar. Make value matching case-insensitive. Correct the docstring. Land the first
-production `redact_values` call with the story that introduces PII.
-
-### [VULN-005] `AppError` defaults to 500 and echoes its message to the client
-
-- **File:** `backend/src/types/errors.py` line 14 (handler at `backend/src/api/errors.py` line 20)
-- **Severity:** medium → WARN · **CWE-209**
-
-`AppError.__init__` defaults `status_code` to 500, and `_handle_app_error` returns
-`exc.message` verbatim in the body at whatever status was given.
-
-**Reproduction** (TestClient against the real app):
+`f4abd41` is credited with making the correlation id survive the 500 path. It does
+for the response header and the access line — but not for the traceback. Measured in
+one live failing request:
 
 ```
-raise AppError("internal: /srv/truelend/src/service/underwriting.py line 88 rule table missing")
-→ 500 {"error":"internal: /srv/truelend/src/service/underwriting.py line 88 rule table missing"}
+{"logger":"truelend.access","message":"GET /probe/raise-inside-scope -> 500",
+ "request_id":"probe-raise-inside-scope"}
+{"logger":"uvicorn.error","message":"Exception in ASGI application\n",
+ "request_id":""}            <-- the line an operator actually needs
 ```
 
-An internal filesystem path disclosed to an unauthenticated client. The insecure
-part is the *default*: a 5xx should never echo a developer-authored string, and this
-default makes the leaky path the path of least resistance for every future story.
-No production raiser exists yet, so nothing leaks today.
+uvicorn logs the traceback after the ASGI callable raised, by which point the
+middleware's `finally` has already reset `request_id_var`. E15-S1-AC3 ("100% of the
+lines ... each carries request_id equal to req-abc") is therefore **not** met on the
+error path. The repo's own test asserts only the access line, so it passes with the
+hole open. Primarily a correctness/observability defect — flagged here because it is
+the forensic half of SEC-002 and contradicts the pack's claimed CR-003 fix.
 
-**Fix.** Make `status_code` required (or default it to 400). In the handler, return
-a fixed `{"error": "Internal Server Error"}` for any status of 500 or above while
-logging `exc.message` server-side with the bound `request_id`. Echo `exc.message`
-only for 4xx.
+**Fix.** Log the exception from inside `CorrelationIdMiddleware` while the contextvar
+is still set, then re-raise; or attach a filter to `uvicorn.error` that reads a
+request-scoped store rather than the contextvar.
 
-### [VULN-006] `/docs`, `/redoc` and `/openapi.json` are unauthenticated, and `/docs` executes CDN script on the app origin
+### [SEC-007] Money wire format is unvalidated, silently coerced, and parsed differently on each side
+**File:** `backend/src/api/serializers.py` lines 20-26; `backend/src/types/money.py`
+lines 59-69; `frontend/src/types/money.ts` lines 24-35
+**Severity:** medium → WARN · **Category:** financial-integrity
 
-- **File:** `backend/src/api/app.py` line 23
-- **Severity:** medium → WARN · **CWE-1188**, with **CWE-829**
+D-G specifies "a quoted 2dp string", but `_validate_money` accepts anything
+`Decimal()` can parse and then silently rounds. Measured on the real types:
 
-`FastAPI(title=settings.service_name)` is constructed without `docs_url`,
-`redoc_url` or `openapi_url` overrides, so all three interactive surfaces are live
-and unauthenticated. Verified against the running server:
-
-```
-/docs         -> 200 text/html
-/redoc        -> 200 text/html
-/openapi.json -> 200 application/json
-```
-
-`/openapi.json` discloses the service name and version (`truelend-backend`, `0.1.0`)
-and the complete route schema. That is trivial today with only `/health`, but it
-will publish the entire loan-origination API surface — every path, parameter and
-model — as stories land.
-
-Separately, `/docs` loads and executes third-party script on the application origin:
-
-```
-https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js
-https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css
-```
-
-An unpinned major version with no `integrity` attribute, and no
-`Content-Security-Policy` on the response (see VULN-011). A CDN or DNS compromise
-yields arbitrary script execution on the bank's own origin.
-
-**Fix.** Gate the docs surface on an explicit setting — pass `docs_url`/`redoc_url`/
-`openapi_url` as `None` unless a new `Settings` flag (e.g. `enable_api_docs`,
-default `False`) is set. If docs must stay reachable in a deployed environment,
-self-host the Swagger UI assets rather than loading them from a CDN.
-
-### [VULN-007] `Money` accepts `NaN`, and serializes it onto the wire
-
-- **File:** `backend/src/types/money.py` line 56
-- **Severity:** medium → WARN · **CWE-20**
-
-`Decimal("NaN")` constructs without raising `InvalidOperation`, and `quantize()`
-propagates a quiet NaN rather than rejecting it. So:
-
-```
-Money("NaN")   -> OK, amount = Decimal('NaN')
-Money("nan")   -> OK, amount = Decimal('NaN')
-Money("-NaN")  -> OK, amount = Decimal('-NaN')
-MoneyField wire representation -> {"amount":"NaN"}
-```
-
-This violates decision D-G, which requires a quoted 2dp string, and the frontend
-rejects it (`money.ts` `isFinite` check throws), so the two ends of the wire
-disagree. Worse, NaN propagates silently through the value type:
-
-```
-Money("NaN").add(Money("10.00"))  -> NaN
-Money("NaN") == Money("NaN")      -> False
-```
-
-A NaN amount therefore does not raise anywhere; it quietly poisons arithmetic, and
-because `NaN != NaN`, balance reconciliation and paid-in-full equality checks
-silently evaluate `False` instead of erroring. On a lending ledger that is a
-financial-integrity failure mode, not just a type nit.
-
-Credit where due: `Infinity`, `-Infinity`, `inf`, `sNaN`, `1E999999999` and a
-400-digit input are **all correctly rejected**, so there is no decimal
-memory-exhaustion vector here. There is one further asymmetry: `Money("1_000.00")`
-is accepted (Python's underscore digit separator) but `decimal.js` rejects that
-string.
-
-**Why WARN.** `MoneyField` is the designated untrusted-input parser, but no endpoint
-currently accepts a money value, so this is not attacker-reachable today. It becomes
-high the moment a money-accepting endpoint lands.
-
-**Fix.** After constructing the `Decimal`, reject non-finite values explicitly:
-`if not decimal_amount.is_finite(): raise InvalidMoneyAmountError(...)`. Constrain
-accepted strings to a canonical grammar (e.g. `^-?[0-9]{1,12}([.][0-9]{1,2})?$`) so
-Python and `decimal.js` agree. Add unit tests for `"NaN"`, `"nan"`, `"-NaN"` and
-`"1_000.00"`.
-
-### [VULN-008] Critical and high npm advisories in the changed frontend manifest (dev-only)
-
-- **File:** `frontend/package.json` line 27
-- **Severity:** medium → WARN · **CWE-1395**
-
-`npm audit` on the changed manifest reports 5 advisories:
-`{info: 0, low: 0, moderate: 3, high: 1, critical: 1}`.
-
-| Package | Severity | Advisory |
+| wire value | backend `Money` | frontend `Money.fromWire` |
 |---|---|---|
-| `vitest` | critical | Arbitrary file read/execute when the Vitest UI server is listening; `@vitest/mocker` path traversal |
-| `vite` | high | Path traversal in optimized-deps `.map` handling; `server.fs.deny` bypass on Windows alternate paths |
-| `esbuild`, `vite-node`, `@vitest/mocker` | moderate | transitive |
+| `"1.005"` | `1.01` (silently rounded up) | `1.01` |
+| `"0.001"` | `0.00` (silently zeroed) | `0.00` |
+| `"-0.001"` | **`-0.00`** (negative zero on the wire) | `0.00` |
+| `"1E5"` | `100000.00` | `100000.00` |
+| `"1_000.00"` | `1000.00` | `1000.00` |
+| `"  1.00  "` | `1.00` | **throws** |
+| `"0x10"` | **rejected** | **`16.00`** |
+| `".5"` / `"5."` | `0.50` / `5.00` | `0.50` / — |
 
-**Refuted as BLOCK.** Both direct offenders are `devDependencies` and are absent
-from the production bundle; the runtime dependencies (`decimal.js`, `react`,
-`react-dom`) are clean. The critical advisory requires `vitest --ui`, which this
-project never runs (`npm test` is `vitest run`). The `vite` advisories do affect
-developer workstations, which are Windows here — a real but bounded exposure.
-Remediation requires a semver-major bump (vite 8, vitest 5) that breaks the
-toolchain and belongs in its own story, not in group A.
+Three distinct problems. (1) A hostile input produces a monetary value different
+from the one submitted, with no error: `"0.001"` → `0.00`, `"0.005"` → `0.01`.
+(2) Exponent, underscore and hex notations are accepted, so any upstream length or
+format check that assumes plain decimal notation is bypassable — `"1E5"` is three
+characters and means one hundred thousand. (3) The two ends of the wire **disagree**:
+`"0x10"` is 16.00 in the browser and a rejection on the server; `"  1.00  "` is
+1.00 on the server and a render-time throw in the browser. The frontend module's own
+docstring promises "the same amount rounds identically on both sides of the wire".
+`-0.00` also reaches the wire as `"-0.00"` while comparing equal to `0.00`.
 
-**Fix.** File a follow-up story to upgrade `vite` to 8.3.0 or later and `vitest` to
-5.0.0 or later together with `@vitejs/plugin-react`, then re-run `npm audit`. Until
-then, do not run `vitest --ui` and do not bind the vite dev server to a non-loopback
-interface.
+Not exploitable today (no money-carrying endpoint exists), but this is the single
+canonical money wire module for the whole platform.
+
+**Fix.** Validate against a strict grammar such as `^-?(0|[1-9]\d{0,11})(\.\d{1,2})?$`
+in `_validate_money` **before** calling `Decimal()`; reject rather than round
+anything with more than 2 decimal places; normalise `-0.00` to `0.00`; apply the
+identical grammar in `toQuantizedDecimal`; drive both with one shared fixture set.
+
+### [SEC-008] `Money.multiply` lets `decimal.Overflow` escape after ~10 s of CPU
+**File:** `backend/src/types/money.py` lines 71-76, 91-101
+**Severity:** medium → WARN · **Category:** dos / error-handling
+
+`_quantize` catches only `InvalidOperation`, and `multiply` wraps nothing around
+`self._amount * scalar`. Python's default decimal context traps `Overflow`, which is
+**not** an `InvalidOperation` subclass, so it escapes `Money`'s documented error
+contract. Measured:
+
+| call | result |
+|---|---|
+| `Money("1.00").multiply(10**30)` | `InvalidMoneyAmountError` (correct) |
+| `Money("1.00").multiply(10**1000)` | `InvalidMoneyAmountError` (correct) |
+| `Money("1.00").multiply(10**1000000)` | **`decimal.Overflow` after 9,690 ms** |
+
+So an oversized scalar both burns ten seconds of CPU and surfaces as an unhandled
+500 rather than a typed validation error. `multiply`'s scalar is an interest rate or
+term, which on a platform whose premise is business-configurable loan products
+without code changes is operator-supplied input.
+
+**Fix.** Bound the scalar's magnitude/digit count before multiplying, and catch
+`decimal.DecimalException` (not just `InvalidOperation`) in `_quantize` and
+`multiply`, re-raising `InvalidMoneyAmountError`.
+
+### [SEC-009] Frontend money rendering hangs on a pathological exponent
+**File:** `frontend/src/types/money.ts` lines 24-35, 74-80;
+`frontend/src/ui/components/MoneyText.tsx` lines 13-16
+**Severity:** medium → WARN · **Category:** dos
+
+`toQuantizedDecimal` applies no magnitude bound, and `MoneyText` accepts an arbitrary
+`string`. Measured in node with the project's `decimal.js@10.6.0`:
+
+| wire value | `toWire()` output | time |
+|---|---|---|
+| `"1e+1000000"` | 1,000,004 chars | 41 ms |
+| `"1e+100000000"` | **100,000,004 chars (~100 MB)** | 4,825 ms |
+| `"1e+200000"` via `format()` | 266,667 chars | **16,482 ms** |
+
+An 11-byte field value allocates hundreds of megabytes and hangs the tab for
+seconds — roughly 20,000x amplification, worst in `format()`, whose thousands-
+separator regex is super-linear. The backend serializer would not currently emit such
+a value (it always renders 2dp via `str(value.amount)`), so this needs a compromised
+or spoofed API response — hence WARN.
+
+**Fix.** Apply the SEC-007 grammar in `toQuantizedDecimal`, which bounds magnitude,
+and cap integer-digit count before `toFixed`/`format`.
+
+### [SEC-010] Known advisories in the newly added `frontend/package.json`
+**File:** `frontend/package.json` (dependency manifest, added by this diff)
+**Severity:** medium → WARN · **Category:** dependency
+
+`npm audit` at HEAD reports 5 advisories — **1 critical, 1 high, 3 moderate**:
+
+| package | installed | severity | advisory |
+|---|---|---|---|
+| `vitest` | 2.1.9 | critical | GHSA-5xrq-8626-4rwp — Vitest UI server arbitrary file read/exec (`<3.2.6`) |
+| `vite` | 5.4.21 | high | GHSA-fx2h-pf6j-xcff — `server.fs.deny` bypass on Windows alternate paths |
+| `vite` | 5.4.21 | moderate | GHSA-4w7w-66w2-5vf9 path traversal; GHSA-v6wh-96g9-6wx3 NTLMv2 disclosure |
+| `esbuild` | 0.21.5 | moderate | GHSA-67mh-4wv8-2f99 — any site can query the dev server |
+| `@vitest/mocker` | 2.1.9 | moderate | GHSA-82fw-gwwq-j7x9 path traversal |
+
+Deliberately recorded as WARN rather than BLOCK despite the raw critical/high
+labels, because: all five are **devDependencies**, no production artifact ships
+them, group A deploys no frontend, and the *critical* requires the Vitest **UI**
+server — `@vitest/ui` is not a dependency of this manifest, so that code path cannot
+even be started here. The `vite` high **is** genuinely reachable in this project's
+documented workflow (`npm run dev` on Windows, which is the host platform): a
+malicious page visited while the dev server runs can read files outside the project
+root. The exposure is the developer's workstation, not the service. A mechanical
+CVE gate elsewhere in the pipeline will report critical/high — that difference is
+this judgement, stated openly.
+
+Backend `pip-audit`: **clean**, no known vulnerabilities.
+
+**Fix.** Bump `vite` and `vitest` to patched lines (`npm audit fix --force` proposes
+vite 8 / vitest 5 as breaking majors); re-audit before group B ships a deployable
+frontend.
+
+### [SEC-011] No lockfile is under version control
+**File:** `frontend/package.json`, `backend/pyproject.toml` (manifests added by this
+diff); `.gitignore` lines 48-49 (pre-existing, outside the diff)
+**Severity:** medium → WARN · **Category:** supply-chain
+
+`git ls-files` shows **no** lockfile of any kind. Both lockfiles exist locally but
+are ignored:
+
+```
+.gitignore:48:*.lock              -> backend/uv.lock
+.gitignore:49:package-lock.json   -> frontend/package-lock.json
+```
+
+This diff introduces the project's first dependency manifests, every entry a `^` or
+`>=` range. Without a committed lockfile, each clone and CI run re-resolves
+transitive dependencies, so a compromised release inside a permitted semver range is
+installed silently, the set audited in SEC-010 is not reproducible, and no build
+attestation is possible. For a lending platform that is a real integrity gap. The
+`.gitignore` rules are pre-existing base state, so the fix touches a file this diff
+does not own — reporting the conflict rather than proposing the edit.
+
+**Fix.** Commit `frontend/package-lock.json` and `backend/uv.lock`, remove those two
+`.gitignore` lines, and use `npm ci` / `uv sync --frozen` in CI.
 
 ---
 
 ## INFO Findings
 
-### [VULN-009] No charset allow-list on `X-Request-ID`
-`backend/src/api/middleware.py` line 32 · CWE-20
+### [SEC-012] `extra=` fields are silently discarded by the formatter
+`backend/src/config/logging.py` lines 103-118 — `JSONLogFormatter` emits six fixed
+keys and never reads `record.__dict__`. Verified: `log.info("extra-test",
+extra={"pan": ..., "aadhaar": ...})` produced a line containing neither key. Safe
+today (nothing leaks), but `extra` is *dropped*, not *redacted* — `RedactionFilter`
+only scrubs `getMessage()` and `exc_text`. Any future change that starts emitting
+extras would emit them unscrubbed. Redact at the formatter, or explicitly document
+that `extra` is unsupported.
 
-Byte-by-byte enumeration against the live server: `httptools` rejects all C0
-controls and DEL with 400, but **HTAB (0x09) and every byte 0x80–0xFF — including
-the C1 control 0x9B (8-bit CSI) — are accepted and echoed verbatim into the response
-header.**
+### [SEC-013] Sensitive values shorter than 6 characters are never redacted
+`backend/src/config/logging.py` lines 45, 63-66 — `_MIN_REDACTABLE_LENGTH = 6`
+silently skips shorter values. The rationale (a 3-character value with separators
+tolerated between every character matches far too much) is sound, but an OTP, PIN,
+CVV or short account suffix registered through `redact_values` would pass through
+unredacted with no warning. Log or raise on a skipped registration so the caller
+knows.
 
-```
-echoed verbatim: [0x9, 0x80..0x9f, 0xff]
-rejected (400):  [0x0..0x8, 0xa..0x1f, 0x7f]
-```
+### [SEC-014] Applicant identifiers persist in a process-global cache beyond request scope
+`backend/src/config/logging.py` lines 49-58 — `_redaction_pattern` is
+`@lru_cache(maxsize=256)` keyed on the sensitive value, so up to 256 PAN/Aadhaar
+values (and their compiled patterns' `.pattern` attributes) stay resident in process
+memory long after the request, visible in any heap or core dump. Prefer a
+request-scoped cache, or `cache_clear()` when the scope exits.
 
-The log sink is safe: `json.dumps(ensure_ascii=True)` stores these as literal
-`	` / `` / `ÿ` text (confirmed in the log file), so there is no
-terminal-escape injection. Residual risk is malformed, non-UTF-8 header bytes
-reflected to clients and intermediaries. Covered by the VULN-001 allow-list.
+### [SEC-015] URL path segments are logged verbatim, outside any redaction scope
+`backend/src/api/middleware.py` line 61 — verified: `GET /health/ABCDE1234F -> 404`
+was logged with the path intact. The access line is emitted on
+`http.response.start`, i.e. after the handler's `redact_values` scope has closed, so
+PII in a path can never be redacted. No current violation (the frozen contract uses
+opaque ids), but applicant identifiers must never become path segments. Query strings
+are safe: `scope["path"]` excludes them and `uvicorn.access` — which would have
+logged them — is disabled (line 150). Verified: `?pan=...&aadhaar=...` appeared
+nowhere in the log.
 
-### [VULN-010] Error paths produce no access log line and no correlation header
-`backend/src/api/middleware.py` line 37 · CWE-778
+### [SEC-016] Redaction coverage is a one-shot enumeration at configure time
+`backend/src/config/logging.py` lines 167-177 — `_install_redaction_filter_everywhere`
+walks `loggerDict` once. A logger created later has no filter of its own and is
+scrubbed only by the root `StreamHandler`'s filter (confirmed working: a logger
+created after `configure_logging` was still redacted). Adding a second handler
+(file/syslog) without a `RedactionFilter` would emit unscrubbed records from
+late-created loggers. Putting redaction in the formatter, or on handlers only, would
+be structurally safer than enumerating loggers.
 
-The access-log call and the header echo both sit *after* `await call_next(request)`
-inside the `try`, so when a request raises, neither runs. Verified: a route that
-raises returns 500 with **no `x-request-id` header** and produces **no
-`truelend.access` line**, while the handled `AppError` route produces both. The
-paths that matter most for audit at a regulated lender are the only paths with no
-correlation id and no structured record. Additionally `JSONLogFormatter` emits
-neither `exc_info` nor `extra`, so no traceback reaches the JSON sink at all.
+### [SEC-017] CR/LF and ANSI injection are blocked only by controls outside this diff
+`backend/src/api/middleware.py` lines 50-58, 61 — the application performs no
+validation, but the attack is refuted in the shipped configuration at two layers.
+Verified live: `httptools`/llhttp rejects CR, bare LF, NUL, ESC and obs-fold in a
+header value at parse time (all four hostile variants returned
+`400 Invalid HTTP request received.` without reaching the app), and uvicorn
+re-validates outgoing header values against `[\x00-\x08\n-\x1f\x7f]`. Log injection is
+independently blocked by `json.dumps`: `é"},{"request_id":"spoof\` came back as one
+valid, fully escaped JSON line (`"Ã©\"},{\"request_id\":\"spoof\\"`), and
+`ensure_ascii` escapes non-ASCII too. **No response splitting and no log injection is
+possible as deployed.** Recorded only because the guarantee lives in the server, not
+the code: a different ASGI server, an HTTP/2 path, or a proxy that normalises
+obs-folds differently could re-open it. Fixing SEC-004 closes it structurally.
 
-**Fix.** Wrap `call_next` in `try/except`, log the failure with the bound
-`request_id`, re-raise; and add `exc_info` plus selected `extra` fields to the
-formatter.
+### [SEC-018] `GET /health` discloses nothing — verified clean
+`backend/src/api/platform/routes.py` lines 10-13 — returns `{"status": "ok"}` and
+nothing else: no version, no config, no dependency state, no secret, no I/O.
+Unauthenticated access is appropriate for a liveness probe. No finding.
 
-### [VULN-011] No security headers on any response
-`backend/src/api/app.py` line 24 · CWE-693
+### [SEC-019] `Settings` holds no secrets and cannot enable debug mode — verified clean
+`backend/src/config/settings.py` lines 18-24 — two non-sensitive fields
+(`service_name`, `log_level`), `env_prefix="TRUELEND_"`, `extra="ignore"`, and no
+`env_file`, so no stray env var can inject a field and nothing can turn on FastAPI
+debug (`build_fastapi_app` never passes `debug`). Confirmed on the live 500 path: the
+client received the plain-text `Internal Server Error` (21 bytes) with **no stack
+trace, no exception type and no internal detail** — the `f4abd41` middleware
+reordering leaks nothing. The reviewer's question "can any secret reach a log line or
+the error context" resolves to no, because no secret exists yet; re-check when a DB
+URL or JWT key is added. Minor: `log_level` is an unvalidated free string, so a bad
+value raises at `root.setLevel` on startup (operator-controlled, availability only).
 
-Verified absent on `GET /health`: no `Content-Security-Policy`,
-`X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security` or
-`Referrer-Policy`. Low impact while the surface is one JSON probe, but `/docs`
-already serves HTML that executes third-party script, and the frontend is not yet
-wired. **Fix.** Add a response-header middleware (`nosniff`, `DENY`, `no-referrer`,
-a CSP); add HSTS at the TLS terminator.
-
-### [VULN-012] No host validation and no rate limiting
-`backend/src/api/app.py` line 24 · CWE-770
-
-`app.user_middleware` contains only `CorrelationIdMiddleware`. No
-`TrustedHostMiddleware`, so the `Host` header is unvalidated; no rate limiter on any
-route. Impact is low today — nothing generates absolute URLs or redirects and there
-is no authentication — but both become material with the first auth or
-password-reset story, and the missing rate limit is what makes VULN-001 sustainable.
-
-### [VULN-013] A non-`str` sensitive value would raise inside the logging filter
-`backend/src/config/logging.py` line 51 · CWE-703
-
-`redact_values` is annotated `*values: str` but does no runtime check, and
-`message.replace(value, ...)` is unguarded. A non-`str` would raise `TypeError`
-inside logging's filter chain, which is not wrapped in `try/except`, so the
-exception propagates back to the `logger.info()` call site and fails the request.
-`mypy --strict` protects in-repo callers, so this is latent. **Fix.** Coerce with
-`frozenset(str(v) for v in values if v)` and make the filter fail closed (drop the
-record) rather than raise.
-
-### [VULN-014] Gate evidence provenance chain is not verifiable
-`.claude/state/task-envelope.json` · no CWE
-
-Noted for completeness; outside the application security surface and owned by the
-gate rather than this review. The working-tree envelope was **rotated** — `created_at`/
-`expires_at` moved ~9h forward, `integrity.hash` rebuilt — while
-`previous_envelope_hash` is still `null` and `amendments` is still `[]`, despite
-history files existing for the superseded hashes. Moving `created_at` forward also
-resets the "evidence created after the envelope" window that
-`finalize-task-evidence.js` enforces. `project-manifest.json` was likewise edited
-outside the envelope's `allowed_paths`. No application vulnerability, but it weakens
-the integrity of this gate's own evidence. **Fix.** Record an amendment with
-`previous_envelope_hash` set to the superseded hash instead of rotating in place.
+### [SEC-020] Framework errors bypass the frozen envelope, and error messages echo unbounded input
+`backend/src/api/errors.py` registers a handler for `AppError` only. Verified: a 404
+returns FastAPI's `{"detail":"Not Found"}`, not the contract's
+`{error, detail, context}` shape (`api-contracts.md:27` says "one shape for every
+non-2xx response"), and pydantic validation errors use `{"detail":[...]}`. No
+information leakage in itself, but pydantic reflects the submitted value back in
+`detail`, and `Money`'s messages embed `{amount!r}` — measured: `Money("9"*100000)`
+raises with a **100,024-character** message. A 100 KB numeric field therefore yields
+a ~100 KB error body and a ~100 KB log line, the same amplification family as
+SEC-004. Contract conformance is the code reviewer's call; truncate values embedded
+in error messages.
 
 ---
 
-## Refuted candidates (adversarial verification)
+## Candidate findings tested and refuted
 
-Each of these was investigated as a potential BLOCK and dropped on evidence. They
-are recorded so the finding is not re-raised without new information.
+Recorded so a later reviewer does not re-litigate them:
 
 | Candidate | Verdict | Evidence |
 |---|---|---|
-| **CRLF response-header injection via `X-Request-ID`** | **Refuted** | `uvicorn[standard]` uses the **httptools** parser (not h11). A CR/LF in the value is consumed as the header separator: `X-Request-ID: abc\r\nX-Injected: 1` yields `request_id == "abc"` and `X-Injected` as its own *request* header; the response echoes only `x-request-id: abc`. Obs-fold continuation (`CRLF`+TAB and `CRLF`+SPACE), bare LF, and NUL all return `400 Bad Request / Invalid HTTP request received.` No byte that can terminate a header line reaches the echoed value. **The exploit string suggested in the task brief does not inject.** |
-| **Forged JSON log entry via `X-Request-ID`** | **Refuted** | Payload `x","level":"CRITICAL","message":"forged` returns 200 and is stored as a *single* line: `{... "request_id": "x\",\"level\":\"CRITICAL\",\"message\":\"forged"}`. `json.dumps` escapes the quotes; the record stays one valid JSON object with `level: INFO`; no second line and no overridden field. All 124 JSON lines in the live log parse cleanly (0 unparseable). |
-| **ANSI / terminal escape injection into logs** | **Refuted** | ESC (0x1b) and BEL (0x07) are rejected at the parser with 400. C1 `0x9b` and high bytes do reach the header, but `ensure_ascii=True` stores them as literal ``/`ÿ` text, so no escape sequence reaches a terminal. |
-| **Stack trace / internal path / secret leak in the unhandled-exception response** | **Refuted** | `app.debug` is `False`. A route raising `ValueError` containing a Postgres DSN, a password and a PAN returns `500 Internal Server Error`, `text/plain`, 21 bytes. Checked explicitly for `Traceback`, `postgres://`, `s3cr3t`, `ABCDE1234F`, `underwriting.py`, `site-packages`, `ValueError` — none present. |
-| **`GET /health` discloses version / config / env / dependency state** | **Refuted** | Body is exactly `{"status":"ok"}`. No version, environment, settings or dependency health. (Version and schema disclosure lives on `/openapi.json` instead — VULN-006.) |
-| **XSS in `MoneyText.tsx`** | **Refuted** | Renders `<span>{value.format()}</span>` — a React text child, auto-escaped. No `dangerouslySetInnerHTML`, `innerHTML`, `outerHTML`, `document.write`, `insertAdjacentHTML`, `eval`, `new Function`, `postMessage`, `target="_blank"`, or web-storage use anywhere in `frontend/src`. `format()` output derives from a `Decimal` via `toFixed(2)` plus a digit-grouping regex, so it cannot contain markup regardless of input. |
-| **Hardcoded secrets / insecure defaults in `settings.py`** | **Refuted** | `Settings` carries only `service_name` and `log_level`, both non-sensitive, from env with prefix `TRUELEND_`. No `.env` or `.env.example` in the repo, no `VITE_`/`NEXT_PUBLIC_` values in frontend source, no debug flag. The only `token` matches in the diff are contextvar reset tokens (`middleware.py:33`, `logging.py:35`). |
-| **Nested dicts/lists escaping redaction** | **Refuted** | The filter replaces over the fully rendered message, so a PAN nested in `{'applicant': {'ids': [PAN], 'name': ...}}` **is** redacted (verified). The real gaps are `exc_info` (VULN-002), `request_id` (VULN-003) and case mismatch (VULN-004). |
-| **Permissive CORS** | **Refuted** | No `CORSMiddleware` registered; `app.user_middleware` contains only `CorrelationIdMiddleware`. No cross-origin access granted — secure by omission. Revisit when the frontend is wired. |
-| **Production dependency CVEs** | **Refuted** | `decimal.js`, `react`, `react-dom` carry no advisories. All 5 npm findings are dev tooling (VULN-008). `backend/pyproject.toml` is **not** in the change set, so no Python dependency audit was in scope. |
-| **Injection family: SQL / command / path traversal / SSRF / deserialization / CSRF / open redirect / IDOR / auth bypass** | **Not applicable** | No database, ORM, raw query, subprocess, request-derived filesystem path, outbound HTTP client, deserializer, cookie/session, redirect or object-by-id lookup exists in the change set. The only route takes no input. Confirms the pack's claim. |
+| CR/LF response splitting via `X-Request-ID` | **refuted** | parser returns 400 before the app; uvicorn re-validates outgoing values (SEC-017) |
+| ANSI escape / control-char injection into the log stream | **refuted** | ESC and NUL rejected at parse; `json.dumps` escapes all `< 0x20` |
+| JSON-breaking log injection (quote/brace/backslash) | **refuted** | one valid escaped JSON line produced (SEC-017) |
+| Non-ASCII breaking the log line | **refuted** | `ensure_ascii` default escapes to `\uXXXX` |
+| Stack trace leaked to the client on the 500 path | **refuted** | body is 21-byte plain `Internal Server Error`; debug unreachable (SEC-019) |
+| PII missed in nested structures beyond a walk depth | **refuted** | there is no walk — `_scrub` runs over the fully formatted message, so a nested dict/list was redacted correctly |
+| PII leaking via `extra=` | **refuted** as a leak | extras are dropped entirely (SEC-012) |
+| Query-string PII reaching the access log | **refuted** | `scope["path"]` excludes the query string and `uvicorn.access` is disabled |
+| Predictable generated correlation ids | **refuted** | `uuid4().hex`, CSPRNG-backed |
+| Cross-request leakage of the correlation id or sensitive set | **refuted** | both are `ContextVar`s reset in `finally`; per-task context copies isolate them |
+| Money accepting NaN / Infinity / float / bool | **refuted** (CR-001 verified) | all rejected as `InvalidMoneyAmountError` |
+| Money DoS via a huge positive exponent | **refuted** | `quantize` raises `InvalidOperation` at the 28-digit context limit; `1E+999999999` rejected in under a millisecond |
+| XSS in `MoneyText` | **refuted** | renders a text child only; no `dangerouslySetInnerHTML`/`innerHTML` anywhere in the diff; React escapes |
+| Hardcoded secrets in the diff | **refuted** | scoped grep found only `token = ...contextvar.set(...)` false positives |
+| SQL / command / template injection, unsafe deserialization, dynamic execution | **not present** | no DB, subprocess, template, pickle or eval code exists in the diff |
 
----
+Out of scope per the context pack and not reviewed: authn/authz, persistence and
+migrations, outbound network calls / SSRF, file upload/download, payment execution.
 
-## Notes for the orchestrator
+## Method notes
 
-1. **Reviewing this diff inflated `.claude/state/uvicorn.log` from ~0.4 MB to
-   ~36.7 MB** — that growth *is* the VULN-001 proof. Truncate the log before the
-   next gate run so it does not skew other checks.
-2. Observed while proving VULN-002 but **out of security scope**: 184 of 308 lines
-   in the live server log are plain-text uvicorn lines carrying no `request_id`.
-   Whether that satisfies QA-VM-003's "100% of log lines emitted while serving parse
-   as JSON" is a question for the evaluator, not this gate.
-3. `specs/reviews/security-verdict.json` carries a top-level `"verdict": "blocked"`
-   **and** `"pass": false`. `blocked` is the token in `FAIL_VERDICTS` in
-   `.claude/hooks/lib/sensor-schema.js`; `"block"` is not, and would only be caught
-   by the `pass === false` fallback. Both keys are set so either normalization path
-   reaches the same conclusion.
-
-**Verdict: BLOCK.** One high-severity finding (VULN-001) is exploitable against the
-running service. Do not merge group A until it is fixed; return to the generator.
+- Booted the unmodified app with `uv run uvicorn src.api.app:app` on an isolated port
+  (8010; port 8000 was already held by another process) and captured stdout.
+- Drove 14 raw-socket requests for the header/log-injection matrix, so malformed
+  bytes reached the parser exactly as sent rather than being normalised by a client.
+- Timed the redaction regex and the `Money` type by importing the real production
+  functions (`src.config.logging._scrub`, `src.types.money.Money`).
+- For SEC-002/SEC-003 a throwaway probe app imported the real `create_app`/
+  `build_fastapi_app` and added handlers standing in for a future PII endpoint.
+  **No production source was modified**; all scratch files were deleted.

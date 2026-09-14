@@ -1,0 +1,8 @@
+{
+  "verdict": "pass",
+  "findings": [],
+  "notes": [
+    "e2e/ exists but has no *.spec.(ts|js) files — nothing to run",
+    "sprint-contracts/ exists but has no prior contracts to re-validate (only the current group, or none yet)"
+  ]
+}

@@ -13,7 +13,6 @@ import pytest
 from fastapi.testclient import TestClient
 from src.api.app import create_app
 from src.config.logging import redact_values
-from src.types.errors import AppError
 from tests.conftest import ListLogHandler
 
 
@@ -41,8 +40,6 @@ def test_sensitive_application_values_never_appear_in_any_log_line(
     assert pan not in joined
     assert aadhaar not in joined
     assert salary_doc_content not in joined
-
-
 def test_redaction_filter_installed_on_every_configured_logger() -> None:
     """E15-S1-AC2: enumerating every configured logger shows the redaction
     filter on 100% of them; a logger registered without it fails the same
@@ -66,102 +63,6 @@ def test_redaction_filter_installed_on_every_configured_logger() -> None:
     unfiltered_logger = logging.Logger("unregistered-probe-logger")
     with pytest.raises(AssertionError):
         assert _has_redaction_filter(unfiltered_logger)
-
-
-def test_supplied_request_id_header_propagates_to_every_log_line(
-    client: TestClient, log_capture: ListLogHandler
-) -> None:
-    """E15-S1-AC3: every log line emitted while serving a request carrying
-    X-Request-ID parses as JSON and carries that same request_id."""
-    response = client.get("/health", headers={"X-Request-ID": "req-abc"})
-
-    assert response.status_code == 200
-    assert log_capture.lines
-    for line in log_capture.lines:
-        parsed = json.loads(line)
-        assert parsed["request_id"] == "req-abc"
-
-
-def test_missing_request_id_header_generates_and_echoes_one(
-    client: TestClient, log_capture: ListLogHandler
-) -> None:
-    """E15-S1-AC4: without an inbound X-Request-ID, every request-scoped log
-    line carries the same generated non-empty id, and the response echoes
-    that same id on the X-Request-ID response header."""
-    response = client.get("/health")
-
-    assert response.status_code == 200
-    echoed_id = response.headers.get("X-Request-ID")
-    assert echoed_id
-    assert log_capture.lines
-    for line in log_capture.lines:
-        parsed = json.loads(line)
-        assert parsed["request_id"] == echoed_id
-
-
-def test_health_endpoint_returns_ok_json_under_one_second(client: TestClient) -> None:
-    """E15-S1-AC5: GET /health is 200 with a JSON body, under 1 second."""
-    start = time.monotonic()
-    response = client.get("/health")
-    elapsed = time.monotonic() - start
-
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
-    assert elapsed < 1.0
-
-
-def test_app_error_is_mapped_to_a_typed_json_response() -> None:
-    """Coverage for api/errors.py: AppError is mapped once at the API
-    boundary to a JSON body carrying its message, at its status code."""
-    from src.api.app import build_fastapi_app
-
-    inner = build_fastapi_app()
-
-    @inner.get("/_test-only-raises")
-    def _raise_app_error() -> None:
-        raise AppError("boom", status_code=418)
-
-    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
-        response = test_client.get("/_test-only-raises")
-
-    assert response.status_code == 418
-    # Envelope per api-contracts.md, not the old {"error": <message>} shape.
-    assert response.json() == {"error": "AppError", "detail": "boom", "context": {}}
-
-
-def test_uvicorn_loggers_do_not_bypass_json_formatting() -> None:
-    """E15-S1-AC3: no request-scoped line escapes as plain text.
-
-    `uvicorn` installs its own `dictConfig` with `propagate=False` and its
-    own formatters on `uvicorn`, `uvicorn.error` and `uvicorn.access`.
-    `configure_logging()` rebuilds only the *root* handler, so under a real
-    `uvicorn` run roughly half of the lines for a request were plain text
-    with no `request_id` — while the unit suite saw none of it, because
-    pytest never applies uvicorn's `dictConfig`. This test applies it first,
-    exactly as a real run does.
-    """
-    import logging.config
-
-    from src.config.logging import configure_logging
-    from src.config.settings import Settings
-    from uvicorn.config import LOGGING_CONFIG
-
-    logging.config.dictConfig(LOGGING_CONFIG)
-    configure_logging(Settings(_env_file=None))
-
-    for name in ("uvicorn", "uvicorn.error"):
-        logger_obj = logging.getLogger(name)
-        assert logger_obj.handlers == [], f"{name} keeps its own plain-text handler"
-        assert logger_obj.propagate is True, f"{name} does not reach the JSON root handler"
-
-    access = logging.getLogger("uvicorn.access")
-    assert access.disabled is True, (
-        "uvicorn.access must be silenced: its AccessFormatter emits plain text and "
-        "the request_id contextvar is already reset by the time it logs, so our own "
-        "truelend.access JSON line is the single source of access logging"
-    )
-
-
 def test_exception_tracebacks_are_redacted_and_rendered() -> None:
     """A sensitive value must not escape through the exception path.
 
@@ -194,8 +95,6 @@ def test_exception_tracebacks_are_redacted_and_rendered() -> None:
     assert pan not in rendered, "PAN leaked through the exception path"
     payload = json.loads(rendered)
     assert "ValueError" in payload.get("exception", ""), "stack trace was dropped"
-
-
 @pytest.mark.parametrize(
     ("registered", "logged"),
     [
@@ -229,25 +128,20 @@ def test_redaction_is_case_and_separator_insensitive(registered: str, logged: st
         rendered = formatter.format(record)
 
     assert logged not in rendered, f"{logged!r} leaked despite {registered!r} being registered"
-
-
 _PII_FIELD_NAMES = ("pan", "aadhaar", "salary_doc")
-
-
 def _modules_referencing_pii() -> list[Path]:
     """Production modules that mention an applicant PII field by name."""
     src_root = Path(__file__).resolve().parents[2] / "src"
     hits: list[Path] = []
     for module in sorted(src_root.rglob("*.py")):
         lowered = module.read_text(encoding="utf-8").lower()
-        # The redaction module itself names these fields in its own docstring.
-        if module.name == "logging.py":
+        # The modules that *implement* redaction name these fields in their
+        # own docstrings; they are the control, not a subject of it.
+        if module.name in {"logging.py", "middleware.py"}:
             continue
         if any(field in lowered for field in _PII_FIELD_NAMES):
             hits.append(module)
     return hits
-
-
 def test_modules_handling_applicant_pii_enter_a_redaction_scope() -> None:
     """Redaction must not stay opt-in once a PII-accepting endpoint exists.
 
@@ -266,20 +160,21 @@ def test_modules_handling_applicant_pii_enter_a_redaction_scope() -> None:
     offenders = [
         module
         for module in _modules_referencing_pii()
-        if "redact_values" not in module.read_text(encoding="utf-8")
+        if not any(
+            entrypoint in module.read_text(encoding="utf-8")
+            for entrypoint in ("redact_values", "register_sensitive")
+        )
     ]
     assert not offenders, (
         "these modules handle applicant PII without entering a redact_values scope: "
         + ", ".join(str(module) for module in offenders)
     )
-
-
 def test_pii_redaction_control_is_not_vacuous(tmp_path: Path) -> None:
     """The control above must fail on a module that handles PII unredacted."""
 
     def offends(source: str) -> bool:
-        return any(field in source.lower() for field in _PII_FIELD_NAMES) and (
-            "redact_values" not in source
+        return any(field in source.lower() for field in _PII_FIELD_NAMES) and not any(
+            entrypoint in source for entrypoint in ("redact_values", "register_sensitive")
         )
 
     assert offends('def submit(pan: str) -> None:\n    logger.info("pan=%s", pan)\n')
@@ -290,8 +185,6 @@ def test_pii_redaction_control_is_not_vacuous(tmp_path: Path) -> None:
         '        logger.info("submitting")\n'
     )
     assert not offends("def unrelated(x: int) -> int:\n    return x\n")
-
-
 def test_redaction_filter_covers_every_logger_under_the_real_server_config() -> None:
     """E15-S1-AC2 under uvicorn's own logging config, not pytest's.
 
@@ -323,123 +216,87 @@ def test_redaction_filter_covers_every_logger_under_the_real_server_config() -> 
     ]
 
     assert not missing, f"loggers without a RedactionFilter: {missing}"
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("A-A-A-A-A-A-A-A", id="dashes-in-value"),
+        pytest.param("SALARY DOC CONTENT XYZ", id="spaces-in-value"),
+        pytest.param("SALARY-DOC-BASE64-CONTENT-XYZ", id="real-salary-doc-shape"),
+    ],
+)
+def test_redaction_pattern_is_not_exponential_on_separator_bearing_values(value: str) -> None:
+    r"""SEC-001: the tolerant pattern must not backtrack catastrophically.
 
+    `_redaction_pattern` joined every character with an unbounded `[\s\-]*`.
+    When the registered value *itself* contains a separator — and the real
+    salary-document fixture does — the quantifier and the literal overlap, so
+    a separator-heavy haystack can be partitioned combinatorially. The gate
+    measured 0.58 -> 314 ms for growing input and 199 s at length 40.
 
-def test_unhandled_exception_response_still_carries_the_correlation_id() -> None:
-    """CR-003 / E15-S1-AC4 on the path that matters most.
+    Bounding the run, and matching separator-bearing values literally rather
+    than tolerantly, removes the ambiguity outright.
+    """
 
-    The correlation middleware wrote the header and emitted the access line
-    only after `await call_next(request)` returned, with just the contextvar
-    reset in `finally`. An unhandled exception ran neither, so a 500 came
-    back with no `X-Request-ID` and left no access-log record — the one case
-    an operator needs to correlate.
+    from src.config.logging import _redaction_pattern
 
-    A `BaseHTTPMiddleware` cannot fix this: Starlette's
-    `ServerErrorMiddleware` builds the 500 *outside* user middleware, and an
-    `app.exception_handler(Exception)` is bound to it, by which point the
-    contextvar is already reset. The correlation middleware is therefore a
-    pure-ASGI wrapper mounted outside `ServerErrorMiddleware`, stamping the
-    header on `http.response.start` whoever produced it.
+    pattern = _redaction_pattern(value)
+
+    # Structural, not a stopwatch: an unbounded `[...]*` between two atoms is
+    # what makes the partitioning combinatorial, so its absence IS the property.
+    # A timing threshold alone passes or fails on machine speed.
+    assert "]*" not in pattern.pattern, (
+        f"unbounded separator quantifier still present: {pattern.pattern!r}"
+    )
+
+    # Behavioural backstop for the same property.
+    haystack = ("- " * 40) + "x"
+    started = time.perf_counter()
+    pattern.search(haystack)
+    elapsed_ms = (time.perf_counter() - started) * 1000
+    assert elapsed_ms < 50, f"pattern took {elapsed_ms:.1f} ms, backtracking is not bounded"
+def test_redaction_survives_an_exception_escaping_the_registration_scope() -> None:
+    """PII must not leak once the exception leaves the handler's scope.
+
+    Five reviewers found this independently and it was demonstrated live:
+    `"exception": "...pan=ABCDE1234F..."` on `uvicorn.error` with an empty
+    `request_id`. `redact_values` tore its registration down on `__exit__`,
+    so by the time the traceback propagated out of the app and the server
+    logged it, nothing was registered and nothing was scrubbed.
+
+    Registration is now request-scoped: `register_sensitive` adds without
+    tearing down, and the correlation middleware owns the lifetime.
     """
     from src.api.app import build_fastapi_app, create_app
 
+    # Imported at test scope, not inside the handler: a missing symbol must
+    # fail this test outright rather than becoming an ImportError traceback
+    # that happens to contain no PAN and so passes vacuously.
+    from src.config.logging import register_sensitive
+
+    pan = "ABCDE1234F"
     inner = build_fastapi_app()
 
-    @inner.get("/_test-only-explodes")
-    def _explode() -> None:
-        raise RuntimeError("unhandled")
-
-    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
-        response = test_client.get(
-            "/_test-only-explodes", headers={"X-Request-ID": "req-500"}
-        )
-
-    assert response.status_code == 500
-    assert response.headers.get("X-Request-ID") == "req-500", (
-        "a 500 response must still echo the correlation id"
-    )
-
-
-def test_unhandled_exception_still_emits_an_access_log_line() -> None:
-    """The 500 must leave an access-log record carrying the correlation id."""
-    from src.api.app import build_fastapi_app, create_app
-    from src.config.logging import JSONLogFormatter
-
-    inner = build_fastapi_app()
-
-    @inner.get("/_test-only-explodes-logged")
-    def _explode() -> None:
-        raise RuntimeError("unhandled")
+    @inner.get("/_test-only-leaks-on-raise")
+    def _leak() -> None:
+        register_sensitive(pan)
+        raise ValueError(f"rejected application for pan={pan}")
 
     handler = ListLogHandler()
+    from src.config.logging import JSONLogFormatter, RedactionFilter
+
     handler.setFormatter(JSONLogFormatter())
+    handler.addFilter(RedactionFilter())
     root = logging.getLogger()
     root.addHandler(handler)
     try:
         with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
-            test_client.get(
-                "/_test-only-explodes-logged", headers={"X-Request-ID": "req-501"}
-            )
+            test_client.get("/_test-only-leaks-on-raise", headers={"X-Request-ID": "req-leak"})
     finally:
         root.removeHandler(handler)
 
-    access_lines = [
-        json.loads(line)
-        for line in handler.lines
-        if json.loads(line).get("logger") == "truelend.access"
-    ]
-    assert access_lines, "no access-log line was emitted for the failing request"
-    assert any(
-        entry["request_id"] == "req-501" and "500" in entry["message"]
-        for entry in access_lines
-    ), f"access lines did not record the 500 with its correlation id: {access_lines}"
-
-
-def test_error_response_matches_the_frozen_contract_envelope() -> None:
-    """Defect 1: the landed envelope contradicts the frozen contract.
-
-    `specs/design/api-contracts.md:27` mandates one shape for every non-2xx
-    response — `{"error": "<ErrorName>", "detail": "<message>",
-    "context": {...}}` — but the handler emitted `{"error": exc.message}`,
-    putting the *message* where the error *name* belongs and omitting both
-    other fields. The contract is frozen, so the code is what is wrong.
-    E4-S4-AC2 needs `threshold_kind` and `configured_value` in `context`.
-    """
-    from src.api.app import build_fastapi_app, create_app
-
-    inner = build_fastapi_app()
-
-    @inner.get("/_test-only-app-error")
-    def _raise_app_error() -> None:
-        raise AppError(
-            "declared income is below the minimum",
-            status_code=422,
-            context={"threshold_kind": "min_income", "configured_value": "25000.00"},
-        )
-
-    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
-        response = test_client.get("/_test-only-app-error")
-
-    assert response.status_code == 422
-    assert response.json() == {
-        "error": "AppError",
-        "detail": "declared income is below the minimum",
-        "context": {"threshold_kind": "min_income", "configured_value": "25000.00"},
-    }
-
-
-def test_error_envelope_context_defaults_to_empty() -> None:
-    """An error raised without context still ships all three keys."""
-    from src.api.app import build_fastapi_app, create_app
-
-    inner = build_fastapi_app()
-
-    @inner.get("/_test-only-bare-error")
-    def _raise_bare() -> None:
-        raise AppError("boom", status_code=418)
-
-    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
-        response = test_client.get("/_test-only-bare-error")
-
-    assert response.status_code == 418
-    assert response.json() == {"error": "AppError", "detail": "boom", "context": {}}
+    joined = "\n".join(handler.lines)
+    # Prove the intended exception really reached a sink, redacted, rather
+    # than some other failure keeping the PAN out of the buffer by accident.
+    assert "rejected application" in joined, "the handler exception never reached a sink"
+    assert "[REDACTED]" in joined, "the registered value was not scrubbed"
+    assert pan not in joined, "PAN leaked after the registration scope exited"

@@ -2,8 +2,8 @@
   "waivers": [
     {
       "sensor_id": "registry-names",
-      "scope": ".claude/skills/code-map/scripts/code_index/code_index.py — the flat imports compiled_index, graph_metrics, map_render, py_index, ts_index",
-      "reason": "False positive on vendored harness code. All five names are sibling modules in the same directory (compiled_index.py, graph_metrics.py, map_render.py, py_index.py, ts_index.py all exist next to code_index.py). code_index.py runs as a standalone script with its own directory on sys.path, so the imports are flat rather than relative — the sensor reads them as unresolvable third-party pypi packages. Verified by directory listing before waiving. Not fixed by rewriting to relative imports, because that would break standalone execution of a harness control-plane script this project does not own.",
+      "scope": ".claude/skills/code-map/scripts/code_index/code_index.py \u2014 the flat imports compiled_index, graph_metrics, map_render, py_index, ts_index",
+      "reason": "False positive on vendored harness code. All five names are sibling modules in the same directory (compiled_index.py, graph_metrics.py, map_render.py, py_index.py, ts_index.py all exist next to code_index.py). code_index.py runs as a standalone script with its own directory on sys.path, so the imports are flat rather than relative \u2014 the sensor reads them as unresolvable third-party pypi packages. Verified by directory listing before waiving. Not fixed by rewriting to relative imports, because that would break standalone execution of a harness control-plane script this project does not own.",
       "expires": "2026-12-31",
       "approved_by": "ovi-rosu"
     },
@@ -16,9 +16,16 @@
     },
     {
       "sensor_id": "ownership-check",
-      "scope": "frontend/eslint.config.js — Group A (E9-S1) frontend scaffold",
-      "reason": "component-map.md has no row for frontend build/lint tooling config (it lists frontend/src and frontend/tests files only), and component-map.md is outside this task's writable paths so it cannot be amended from this dispatch. eslint.config.js is required by ESLint 9's flat-config default so `npm run lint` can enforce the frontend's no-explicit-any rule on the E9-S1-owned frontend/src/types/money.ts and frontend/src/ui/components/MoneyText.tsx; it is project tooling, not a component with business behavior. The sibling config files (vite.config.ts, package.json, tsconfig.json) were not flagged by the sensor's own allow-list; only this one file needed a waiver. No production behavior lives in this file. RATIFIED by ovi-rosu 2026-09-14 after review: the file is ESLint 9 flat-config tooling with no business behavior, and component-map.md cannot be amended from a build dispatch without invalidating the design approval receipt.",
+      "scope": "frontend/eslint.config.js and frontend/vite.config.ts (frontend build/lint tooling), plus backend/src/__init__.py and backend/tests/__init__.py (package markers)",
+      "reason": "component-map.md lists component files only, with no row for build/lint tooling or package markers. eslint.config.js and vite.config.ts are required by ESLint 9's flat-config default and by Vite; neither carries business behavior. The two __init__.py files are 0-byte package markers that anchor `src` and `tests` as importable packages -- the /gate reviewer proposed deleting them as inconsistent with the namespace-package style used by the subpackages, and that was tried and reverted: removing them breaks every import (ModuleNotFoundError: No module named 'src'), so they are load-bearing rather than leftovers. Adding all four to component-map.md would mean a third design-receipt re-record in one session for files that are tooling, not components. RATIFIED by ovi-rosu 2026-09-14. Note run-gate-checks.js has no waiver-application path -- waivers apply at pre-commit only -- so that runner will keep reporting ownership-check as blocked; discount it there.",
       "expires": "2026-10-15",
+      "approved_by": "ovi-rosu"
+    },
+    {
+      "sensor_id": "test-deletion-guard",
+      "scope": "One commit only: the E15-S1 test-file split (backend/tests/unit/test_log_redaction.py 16 -> 9 test defs)",
+      "reason": "Relocation, not deletion. The guard counts test definitions per file, so a file split reads as lost coverage. The 7 moved blocks were transplanted verbatim into three new files that component-map.md now lists for E15-S1: test_correlation_id.py (5), test_error_envelope.py (3) and test_health_probe.py (1). Verified: 9+5+3+1 = 18 test definitions across the four files versus 16 in the one before, and pytest --collect-only reports 77 tests collected versus 73 before the change, so total coverage rose rather than fell. No assertion was weakened and nothing was skipped. The split was forced by the 500-line hard limit, which pre-write-gate applied correctly to a 519-line file carrying six responsibilities. Expires in two days: this covers one commit and must not shelter a later real deletion.",
+      "expires": "2026-09-16",
       "approved_by": "ovi-rosu"
     }
   ]

@@ -1,202 +1,176 @@
-# Evaluator report — instance 2 of 3 (independent)
+# Evaluator Report — Group A — INSTANCE 2 of 3
 
-**Verdict: FAIL** · `failure_layer: api` · group A · contract `sprint-contracts/A.json` (read-only)
-Runtime mode, `verification.mode: local`, target `http://127.0.0.1:8000`.
-Evidence ledger: `specs/reviews/evaluator-evidence-instance2.json`.
+| Field | Value |
+|---|---|
+| Instance | 2 (independent; no contact with instances 1 or 3) |
+| HEAD evaluated | `f4abd41` — evaluated from scratch, no stored verdict read |
+| Branch | `feat/harness-scaffold-and-planning` |
+| Contract | `sprint-contracts/A.json` (frozen, read-only) |
+| Stories | E15-S1, E9-S1, E11-S1 |
+| verification.mode | `local` (Docker not installed; no `docker compose` attempted) |
+| Runtime | `uv run uvicorn src.api.app:app --port 8001`, backgrounded, stdout+stderr captured to `.claude/state/eval2-uvicorn.log`; process killed (PID 49452) and port 8001 confirmed released |
+| Browser layer | **Not applicable** — no contract declares `playwright_checks`/`design_checks`, `e2e/` is empty. No browser evidence produced; none claimed. |
 
-This is one vote of three. I reached it without reference to the other instances, and
-deliberately against the context pack's framing where the evidence disagreed with it.
+## VERDICT: PASS (functional)
 
-## Health check
+All three frozen `api_checks` pass. All 12 acceptance criteria across the three
+stories pass. Two sub-assertions from the context pack's fix table were **not
+runtime-reachable** and are recorded `untested`, not `pass` — neither is an
+acceptance criterion nor a contract check, so neither gates this verdict.
 
-`GET http://127.0.0.1:8000/health` -> `200 {"status":"ok"}`, `x-request-id` echoed.
-App confirmed up before any check; no restart needed.
+This is the **functional** verdict only. Per the evaluator KEY RULES the overall
+`/gate` verdict is FAIL if the security reviewer reports `pass: false`,
+regardless of this PASS. Findings O1–O3 below are handed to that reviewer.
 
-## Per-api_check results
+## Per-check result
 
-| id | matrix | expected | measured | verdict |
-|---|---|---|---|---|
-| QA-VM-003 | VM-003 | 200 + **100%** of log lines emitted while serving parse as JSON with `request_id == req-abc` | 200; **1 of 2 lines (50.0%)**; deterministic on 3/3 trials | **FAIL** |
-| QA-VM-004 | VM-004 | 200 + every request-scoped log line carries the same generated non-empty `request_id`, echoed in the response | 200; one distinct id `bf591e69...`, non-empty, matches the echoed header | PASS |
-| QA-VM-005 | VM-005 | 200 + JSON body + response time under 1 s | 200, `application/json`, body parses; 5 samples, max 66 ms, p95 ~3 ms | PASS |
+| Check | Matrix | Verdict | Evidence |
+|---|---|---|---|
+| QA-VM-003 | VM-003 | **PASS** | 200; `x-request-id: req-abc` echoed; 1 log line emitted during the request, parsed as JSON, `request_id == "req-abc"`. Whole run: **71/71 log lines parsed as JSON, 0 failures.** |
+| QA-VM-004 | VM-004 | **PASS** | 200; generated `09c68604047745c6b7a2822e6b2ddd7d` — non-empty, echoed in `x-request-id`, identical on the request-scoped log line. 23 distinct generated ids over the run, 0 empty. |
+| QA-VM-005 | VM-005 | **PASS** | 200; `content-type: application/json`; body `{"status":"ok"}`. 20 samples: min 201.8ms, p50 208.5ms, **p95 218.7ms**, max 223.9ms. 0 non-200, 0 over 1s. |
 
-## The contested item: my independent ruling on QA-VM-003 — **FAILED**
+### The CR-004 claim, verified rather than trusted
 
-Not "partially met". Failed.
+The pack claims f4abd41 routes uvicorn's own loggers through the root JSON
+formatter. I verified this directly and it holds, with one correction to the
+prose (see O4):
 
-I drove real traffic and read the log files with an exact before/after line-offset window,
-so the captured set is precisely the lines emitted while serving that request:
+- 4 `uvicorn.error` **startup** lines — all valid JSON, `request_id: ""`.
+- 3 `uvicorn.error` **in-flight WARNING** lines (`"Invalid HTTP request
+  received."`, produced by my malformed-header probes) — all valid JSON. This is
+  the stronger test: it proves the routing survives outside the startup path.
+- `uvicorn.access` emits nothing at all — it is `disabled`, not reformatted.
 
-```
-{"timestamp": "2026-09-14T06:39:11.439688+00:00", "level": "INFO", "logger": "truelend.access",
- "message": "GET /health -> 200", "request_id": "req-abc"}
-INFO:     127.0.0.1:52936 - "GET /health HTTP/1.1" 200 OK
-```
+Across the entire evaluation: **71 non-blank log lines, 0 JSON parse failures**,
+including lines whose `request_id` carried embedded double quotes, a TAB, 4000
+characters, and raw UTF-8 multibyte. `json.dumps` escaped every one, so
+attacker-controlled input cannot break the log structure. QA-VM-003's
+"100% parse as JSON" is robust, not merely true for the benign input.
 
-Two lines. One parses as JSON and carries `request_id == req-abc`. One does not parse as JSON
-and carries no `request_id` at all. That is 50.0%, reproduced identically on 3 of 3 trials with
-a 2 s flush wait. The contract's wording is `100% of the log lines emitted while serving`. 50 is
-not 100.
+## Acceptance criteria
 
-**Why I did not accept the "uvicorn is third-party, not our log lines" reading.** Three reasons,
-in increasing order of weight.
-
-1. *The contract admits no carve-out.* It says "100% of the log lines emitted while serving",
-   not "100% of the application's log lines". Compare QA-VM-004, which the same author scoped
-   narrowly and explicitly to "every **request-scoped** log line" — and which I therefore passed
-   on exactly that narrower reading. The drafter demonstrably knew how to write the narrow form
-   and chose the broad form here. Reading the narrow form into VM-003 rewrites a frozen contract.
-
-2. *The implementation's own position contradicts the carve-out.* E15-S1-AC2 requires the
-   redaction filter on "every configured logger", and `_install_redaction_filter_everywhere()`
-   installs it on `uvicorn`, `uvicorn.error` and `uvicorn.access` — I confirmed this by runtime
-   introspection. So the implementation treats uvicorn's loggers as configured loggers when that
-   earns an AC pass. It cannot also treat them as out-of-scope third-party noise when they cost
-   one. Pick one.
-
-3. *The gap is load-bearing, not cosmetic — and I proved it.* See B2-02 below. The same
-   propagation gap that makes the access line non-JSON also makes it bypass the app's formatter
-   entirely, and I got applicant PII into the log sink in cleartext through it. A contract clause
-   whose violation leaks PAN and Aadhaar is not a technicality.
-
-**Root cause, located precisely.** Reproducing the real CLI startup path in-process
-(`uvicorn.Config` applies `LOGGING_CONFIG` via `dictConfig`) gives:
-
-```
-{"name": "",               "propagate": true,  "handlers": [["StreamHandler", "JSONLogFormatter", ["RedactionFilter"]]]}
-{"name": "uvicorn.access", "propagate": false, "handlers": [["StreamHandler", "AccessFormatter",  []]]}
-```
-
-`configure_logging()` clears and replaces only the **root** handler. `uvicorn.access` keeps
-`propagate=False` and its own `AccessFormatter`, so its records never reach `JSONLogFormatter`.
-The fix is narrow and in-scope for E15-S1: clear the uvicorn loggers' handlers and let them
-propagate to root (or bind `JSONLogFormatter` to them) inside `configure_logging()`.
-
-## Group A acceptance criteria
-
-| AC | Verdict | Basis |
+| AC | Verdict | How verified |
 |---|---|---|
-| E15-S1-AC1 | pass *(with block-level finding)* | unit layer is the designated evidence per `test-plan.md`; test passes. See B2-02. |
-| E15-S1-AC2 | pass | runtime introspection: 12 named loggers, **0** uncovered by a `RedactionFilter`. |
-| E15-S1-AC3 | **FAIL** | same defect as QA-VM-003. |
-| E15-S1-AC4 | pass | verified live. |
-| E15-S1-AC5 | pass | verified live, 66 ms worst of 5. |
-| E9-S1-AC1 | pass | every constructor and operator yields `Decimal` exponent `-2`; `Money(1.5)` raises `InvalidMoneyAmountError`. |
-| E9-S1-AC2 | pass | 18/18 architecture tests, incl. float-scalar rejection and a randomized triple sweep. |
-| E9-S1-AC3 | pass | `decimal.js` throughout; 0 JS `number` arithmetic, 0 `parseFloat`, 0 `Number()`, 0 `Math.*`, 0 `any`. |
-| E11-S1-AC1 | pass | `classify_by_days_past_due(35)` -> `DPD-30`. |
-| E11-S1-AC2 | pass | independent 0..400 sweep: 401/401 classified, exactly 5 buckets, every range contiguous, no gap/overlap. |
-| E11-S1-AC3 | pass | due-today and future-due both `CURRENT`; `dpd=0` `CURRENT`. |
-| E11-S1-AC4 | pass | bare `StrEnum` member; no fee/penal/charge attribute. |
+| E15-S1-AC1 | PASS | 0 occurrences of PAN/Aadhaar/salary-doc in the captured buffer — including lowercase, space-separated and hyphen-separated variants, values inside a nested dict payload, an exception traceback, and a `uvicorn.error` line. |
+| E15-S1-AC2 | PASS | 9 configured loggers enumerated, **0** without a `RedactionFilter`. Handler-level filter also present, and a logger created *after* `configure_logging` was still redacted. |
+| E15-S1-AC3 | PASS | = QA-VM-003 |
+| E15-S1-AC4 | PASS | = QA-VM-004 |
+| E15-S1-AC5 | PASS | = QA-VM-005 |
+| E9-S1-AC1 | PASS | 2000 random principal/rate/tenure triples × 4 money values = 8000 checks; **0** quantization failures; every value a `Decimal` with exponent exactly −2. D-G wire form confirmed: `{"principal":"1234.50","emi":"99.01"}`; a float on the wire is rejected with `ValidationError`. |
+| E9-S1-AC2 | PASS | Architecture check: 36 passed, 0 float ops in the real money modules — and its 4 negative controls (`float-call`, `float-literal`, `float-exponent`, `math-import-from`) prove the guard actually detects a leak, so the zero is not vacuous. |
+| E9-S1-AC3 | PASS | 18 vitest tests pass; eslint and `tsc --noEmit` clean. My independent grep of `money.ts` found one hit, `this.amount.toFixed(2)` — decimal.js's method on a `Decimal` receiver returning a string, not `Number.prototype.toFixed` and not arithmetic. |
+| E11-S1-AC1 | PASS | 35 dpd → `DPD_30` via both the int and the date-based entry point. |
+| E11-S1-AC2 | PASS | Exhaustive 0..400 sweep: 401 values, all in the 5-member enum, every band contiguous (0-29 / 30-59 / 60-89 / 90-179 / 180-400), union equals `range(401)` exactly once — no gap, no overlap. All 8 boundary pairs correct. |
+| E11-S1-AC3 | PASS | Due-tomorrow, due-today and dpd 0 all → `CURRENT`. Negative dpd rejected with `ValueError`. |
+| E11-S1-AC4 | PASS | Result is a `StrEnum` member; zero `fee`/`charge`/`penal`/`interest` attributes anywhere on the enum. |
 
-Ladder measured independently: `CURRENT 0-29 · DPD-30 30-59 · DPD-60 60-89 · DPD-90 90-179 · NPA 180+`.
-Matches D3 exactly. Negative input raises `ValueError` rather than silently bucketing.
+### CR-001 and CR-002, verified closed
 
-## Deterministic suites — re-run by me, not self-reported
+- **CR-001** (`Money` accepted NaN): `Money` now rejects `float('nan')`,
+  `float('inf')`, `float('-inf')`, plain floats, `bool`, `Decimal('NaN')`,
+  `Decimal('±Infinity')`, `'abc'`, `'NaN'`, `'Infinity'`. `multiply` rejects a
+  float scalar and a `Decimal('NaN')` scalar.
+- **CR-002** (float guard ignored arithmetic): the guard's negative controls
+  fire, and `test_float_guard_allows_explicitly_marked_decimal_division` shows
+  the per-line exemption mechanism works.
 
-| Command | Exit | Result |
+## Deterministic gates — reproduced independently at HEAD
+
+| Command | Result |
+|---|---|
+| `uv run pytest -q` | exit 0 — 73 passed, 2 warnings |
+| `uv run ruff check .` | exit 0 — all checks passed |
+| `uv run mypy src/` | exit 0 — no issues in 12 source files |
+| `npm test` | exit 0 — 18 passed (1 file) |
+| `npm run lint` | exit 0 — clean |
+| `npm run typecheck` | exit 0 — clean |
+
+These match the pack's reported counts; I re-ran them rather than accepting them.
+
+## Could not execute (recorded `untested`, not `pass`)
+
+1. **CR-003 — correlation id surviving the 500 path.** Only `GET /health` is
+   registered, it takes no input, and it cannot fail. No HTTP surface in group A
+   can raise an unhandled exception, so a 500 is unreachable black-box. The claim
+   that `CorrelationIdMiddleware` installed outside `ServerErrorMiddleware`
+   stamps a 500 is **not independently runtime-verified by me**. It is not an AC
+   and not a contract check, so it does not gate the verdict — but the pack
+   should not be read as though a runtime evaluator confirmed it.
+
+2. **The `{error, detail, context}` envelope.** The only error reachable over
+   HTTP is Starlette's default 404, which returned `{"detail":"Not Found"}` —
+   *not* the `{error, detail, context}` shape from `api-contracts.md`, because it
+   bypasses the `AppError` mapping. No `AppError`-raising route exists yet, so
+   the envelope is unverifiable at runtime. The 404 path *does* correctly echo
+   `X-Request-ID` and emit a JSON log line carrying it.
+
+3. **Playwright / accessibility layers.** Not applicable, not untested — no
+   contract declares them and `e2e/` is empty.
+
+## Observations (non-blocking; O1–O3 for the security reviewer)
+
+- **O1 — `X-Request-ID` is unbounded.** A 4000-character id was accepted,
+  reflected in full in the response header, and written in full to the log
+  stream. No length cap. Log-volume amplification and an unbounded
+  attacker-controlled field in every log line. JSON integrity is unaffected.
+- **O2 — the id is reflected with no character sanitization.** `ev"il","injected":"yes`,
+  a TAB, and raw UTF-8 multibyte bytes are all echoed verbatim into the response
+  header. Response splitting is *not* achievable: bare CR and bare LF are
+  rejected `400` at the parser, and a genuine CRLF is truncated at the CR by h11.
+  But the app itself validates nothing — it relies entirely on h11. Raw UTF-8 in
+  a response header is non-conformant (header values are latin-1).
+- **O3 — `extra=` fields bypass redaction by construction.** `JSONLogFormatter`
+  drops `extra` entirely, and `RedactionFilter` scrubs only `message` and
+  `exc_text`. My `extra={"pan_extra": PAN}` probe leaked nothing *because the
+  extras never reached the output at all*. If a later story adds `extra` to the
+  formatter payload, PII in extras will bypass redaction and silently break
+  E15-S1-AC1. Forward risk.
+- **O4 — the pack overstates the CR-004 fix.** `uvicorn`/`uvicorn.error`/
+  `gunicorn.error` are routed through the root JSON formatter, but
+  `uvicorn.access` is **silenced** (`disabled = True`) and replaced by a
+  middleware-emitted `truelend.access` line. The module docstring explains this
+  and the reasoning is sound, but the consequence is that if the middleware ever
+  fails before it logs, a request produces **no access line at all**.
+- **O5 — QA-VM-003's "100%" is 1/1.** Exactly one line is emitted per request.
+  The criterion is met, but the substrate is thinly exercised — there is no
+  handler-level application log line yet to correlate against. The whole-stream
+  71/71 result is the evidence worth relying on.
+- **O6 — build-contract deviation.** E15-S1's Operation 2 places
+  `classify(days_past_due: int)` in `backend/src/types/delinquency.py`; the
+  implementation puts `classify_by_days_past_due(int)` and `classify(date, date)`
+  in `backend/src/config/delinquency.py`. The rationale (Types may not import
+  Config) is architecturally correct and no AC constrains location, but it
+  diverges from the frozen story's Operations list.
+- **O7 — `Money` has no `divide`.** Fine for group A, but E9-S1-AC1's literal
+  "schedule is computed" is not satisfiable until EMI arrives. Whoever adds
+  division must keep it Decimal-only; the float guard already walks `Div`/
+  `FloorDiv` and has a working per-line exemption.
+- **O8 — server-level lines carry `request_id: ""`.** The 7 `uvicorn.error`
+  lines (4 startup, 3 in-flight) have an empty `request_id`. Correct per the ACs'
+  "request-scoped" wording, but it means a per-request log segment cannot be
+  isolated by timestamp alone once traffic is concurrent.
+
+## Ratchets
+
+| Gate | Status | Detail |
 |---|---|---|
-| `cd backend && uv run pytest -q` | 0 | 42 passed |
-| `cd backend && uv run mypy src/` | 0 | no issues, 12 source files |
-| `cd backend && uv run ruff check .` | 0 | all checks passed |
-| `cd frontend && npm test` | 0 | 11 passed |
-| `cd frontend && npm run typecheck` | 0 | clean |
-| `cd frontend && npm run lint` | 0 | clean |
+| Performance ratchet | **WARN** (not FAIL) | No baseline exists — group A is the first group in a greenfield build, so there is nothing to regress against. p95 218.7ms, inside the 500ms SLO. |
+| SLO error-rate | n/a | `observability.enabled` not configured, no `/metrics` in group A. Zero 5xx observed. The only non-2xx were a deliberate 404 and three deliberate 400s from malformed-header probes — all 4xx, outside the error-rate SLO. |
+| Accessibility | n/a | No `accessibility_checks` in the contract; no frontend route served. |
+| Security gate | not owned by this instance | Functional PASS does not clear it. The stored `security-verdict.json` predates HEAD and was deliberately not read. |
 
-All six reproduce the context pack's claims. No discrepancy.
+## Method notes
 
-## BLOCK findings
-
-### B2-01 — QA-VM-003 / E15-S1-AC3 not met (api)
-
-As above. 50% against a literal 100% requirement, deterministic.
-Fix in `backend/src/config/logging.py`.
-
-### B2-02 — PII reaches the log sink in cleartext; redaction is opt-in with zero production opt-ins (security)
-
-This is my most consequential finding and I do not believe it is in the context pack.
-
-```
-GET /health?pan=ABCDE1234F&aadhaar=123456789012&salary=95000
--> INFO:  127.0.0.1:62890 - "GET /health?pan=ABCDE1234F&aadhaar=123456789012&salary=95000 HTTP/1.1" 200 OK
-```
-
-PAN, Aadhaar and a salary figure, verbatim, in the log sink. The app's own `truelend.access`
-JSON line correctly omits the query string; uvicorn's access line does not, and it bypasses the
-formatter for the reason established above.
-
-The deeper issue is the redaction design. `RedactionFilter.filter()` is:
-
-```python
-sensitive_values = _sensitive_values.get()
-if not sensitive_values:
-    return True          # <-- no-op
-```
-
-It redacts **only** values explicitly registered in the current context via the
-`redact_values(...)` context manager. It knows no PAN or Aadhaar pattern. And
-`grep -rn redact_values backend/src/` returns **zero callers** — only the definition and a
-docstring. I demonstrated both halves: the identical log call leaks PAN/Aadhaar/salary without
-the context manager and redacts with it.
-
-So E15-S1-AC2's "filter installed on 100% of loggers" is literally true and confers no default
-protection. And AC1's pass is achieved by a test that itself wraps the emission in
-`redact_values(pan, aadhaar, salary_doc_content)` — registering the very values it then asserts
-absent. I am not calling AC1 failed, because `test-plan.md` designates unit as its evidence layer
-and no endpoint accepts a payload until E4-S1. But I record that the AC as currently proven does
-not establish the property the story claims, and that the live surface already violates E15-S1's
-unqualified `scope_out`: *"must not write applicant PAN, Aadhaar or salary-document content to
-any log sink."*
-
-Severity high: PAN and Aadhaar are regulated identifiers, the leak is unauthenticated and
-remote, and every future endpoint inherits the default-off behaviour.
-
-## Non-blocking findings
-
-- **B2-03 (major, security)** — `X-Request-ID` has no length cap, allow-list or truncation. A
-  **60,000-character** id returned 200 with all 60,000 chars in the `x-request-id` response
-  header *and* all 60,000 in the JSON log field; 4 000 / 8 000 / 16 000 / 60 000 all accepted
-  verbatim. Roughly 2000x log amplification per unauthenticated request. Confirming the pack's
-  item 2, I also found the injection half **mitigated**: raw control characters are rejected by
-  h11 with 400, percent-encoded CRLF is not decoded, and `JSONLogFormatter` correctly escapes a
-  `"}{evil":"1` payload — so there is no CRLF header injection and no JSON log injection. The
-  residual risk is volume and header bloat, not injection.
-- **B2-04 (minor, design)** — `classify()` and `classify_by_days_past_due()` are exported from
-  `backend/src/config/delinquency.py`; `backend/src/types/delinquency.py` holds only the enum.
-  E11-S1 bundle operation 2 and the story's `Layer: Types` both place the classifier in Types.
-  Import direction is legal (Config may depend on Types) so this is **not** a layering violation,
-  but the delivered structure diverges from the frozen bundle.
-- **B2-05 (minor, security)** — `/docs` and `/openapi.json` served unauthenticated; currently
-  disclose only `/health` plus title/version. `/docs` pulls swagger-ui from `cdn.jsdelivr.net`.
-- **B2-06 (minor, infrastructure)** — two uvicorn processes wrote to one log file (line 4 is
-  `[Errno 10048]` bind failure); line 7 carries ~1000 leading spaces before a valid JSON record.
-  Harness/operational, not group A product code, but a naive parser sees a padded line.
-- **B2-07 (minor, design)** — `request_id` is `""` on non-request-scoped lines rather than null
-  or omitted.
-
-## Architecture spot-checks (all clean)
-
-Layering verified by import inspection: `types/*` import nothing from other layers;
-`config/delinquency.py` -> `src.types.delinquency`; `api/*` -> `src.config.*` / `src.types.*`.
-One-way only, no violations, no UI->backend import. All 13 changed source files are well inside
-the 300-line file cap (largest: `money.py` at 105).
-D-G verified end to end at runtime: `MoneyField` emits a **quoted 2dp string** on the wire
-(`{"amount":"1234.50"}`), the serializer lives in exactly one module, and float is rejected on
-both sides.
-
-## Performance ratchet
-
-No recorded baseline exists (group A is the first landed group), so per the ratchet rule a
-missing baseline is **WARN, not FAIL**. `GET /health`: max 66 ms, p95 ~3 ms, against the
-manifest's 500 ms budget. No regression measurable. Not a contributor to this verdict.
-
-## Scope discipline
-
-I did not edit `sprint-contracts/**`, `project-manifest.json`, or `specs/design/**`. I did not
-write `specs/reviews/evaluator-report.md`, `specs/reviews/evaluator-evidence.json`, or
-`features.json` — instance 1 owns those. I did not approve or merge. The contract declares no
-`playwright_checks`, `design_checks` or `accessibility_checks`, so there were zero contracted
-browser checks; I used no browser tool and report no browser or accessibility layer as passed.
-
-One brief second uvicorn bound to port 8011 in-process to introspect logger state under the real
-`LOGGING_CONFIG`; it was shut down and never served external traffic.
+- No stored verdict under `specs/reviews/` was read except the context pack.
+  Every result above comes from an execution I performed at HEAD `f4abd41`.
+- No production source, no file under `sprint-contracts/`, and no file under
+  `specs/design/` was modified. Source was read only to discover *what to drive*
+  (route surface, public API names) — never to decide whether behaviour was
+  correct.
+- Files written by this instance: this report and
+  `specs/reviews/evaluator-evidence-instance2.json`. `features.json`,
+  `evaluator-report.md` and `evaluator-evidence.json` were left untouched
+  (instance 1 owns them).
+- Raw captures retained at `.claude/state/eval2-*.log` (gitignored via
+  `.claude/state/*.log`).

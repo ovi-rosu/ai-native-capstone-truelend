@@ -41,6 +41,23 @@
       "questions_asked": 10,
       "answered": 10,
       "recordedAt": "2026-09-13T15:28:11.515Z"
+    },
+    {
+      "round": 3,
+      "verdict": "approved",
+      "feedback": [
+        "Two amendments approved at the group A gate: E15-S1's single owned test file exceeded the 500-line hard limit with six distinct responsibilities, and E1-S2 had no Modifies authorization for the require_roles retrofit its own Operations require."
+      ],
+      "changes": [
+        "component-map.md: E15-S1 gains three further owned test files (test_correlation_id.py, test_error_envelope.py, test_health_probe.py) alongside test_log_redaction.py, so the story's tests can be split one responsibility per file instead of trimming the rationale out of a 519-line file to dodge the cap.",
+        "component-map.md: added a Modifies row E1-S1 -> E1-S2 covering the policy router. E1-S1's Scope Out deliberately ships that route unenforced and D-F rules out a per-route hand-written check, so E1-S2 must retrofit require_roles(ADMIN) and the audit append onto a file it does not own. Without the row, ownership-check would have blocked every group C commit."
+      ],
+      "declined": [
+        "Did not amend api-contracts.md: it is the authoritative frozen side in both the /health and /metrics decisions, so the code changes to match rather than the contract. Did not widen the Modifies table speculatively for the other unowned-route defects (design defects 2 and 4-6 from session 4); each is decided at the group that hits it."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T11:15:20.800Z"
     }
   ],
   "artifacts": [
@@ -54,16 +71,16 @@
     },
     {
       "path": "specs/design/reasons-canvas.md",
-      "sha256": "780f8d800b83e8f7397a924e860c4ac823c436b3df8a24d9f3f8346724d9e7c0"
+      "sha256": "1fa1fcd7830afbcf97cb0558be7134be1197a91529c46b88c3ee7d96f6d7534b"
     },
     {
       "path": "specs/design/component-map.md",
-      "sha256": "e8619724a3b324f881edbee6235ef487dc362075fb8ba4f6ee49a50edea2b36e"
+      "sha256": "f61923db8768d474ab9d14cd70bf900a71b3e21195c814bcadfb80cc9a315c49"
     }
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-13T15:28:11.515Z",
-  "session_id": "ddfc5903-7f5b-470b-8b3f-0622d32b9d46",
+  "approvedAt": "2026-09-14T11:15:20.800Z",
+  "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

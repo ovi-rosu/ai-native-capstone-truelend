@@ -26,7 +26,7 @@ Migrations never share a file: one Alembic version file per story.
 
 | Story | Cluster | Owned files |
 |---|---|---|
-| E15-S1 | C1 | `backend/src/config/settings.py` `backend/src/config/logging.py` `backend/src/types/errors.py` `backend/src/api/app.py` `backend/src/api/middleware.py` `backend/src/api/errors.py` `backend/src/api/platform/routes.py` `backend/tests/conftest.py` `backend/tests/unit/test_log_redaction.py` |
+| E15-S1 | C1 | `backend/src/config/settings.py` `backend/src/config/logging.py` `backend/src/types/errors.py` `backend/src/api/app.py` `backend/src/api/middleware.py` `backend/src/api/errors.py` `backend/src/api/platform/routes.py` `backend/tests/conftest.py` `backend/tests/unit/test_log_redaction.py` `backend/tests/unit/test_correlation_id.py` `backend/tests/unit/test_error_envelope.py` `backend/tests/unit/test_health_probe.py` |
 | E15-S2 | C1 | `docker-compose.yml` `Dockerfile.backend` `Dockerfile.frontend` `init.sh` `backend/tests/architecture/test_layer_dependencies.py` `project-manifest.json` |
 | E16-S1 | C1 | `backend/tests/architecture/invariant_registry.py` `backend/tests/architecture/test_invariant_registry.py` `backend/tests/architecture/test_agent_provenance.py` |
 | E9-S1 | C6 | `backend/src/types/money.py` `backend/src/api/serializers.py` `backend/tests/architecture/test_no_float_money.py` `frontend/src/types/money.ts` `frontend/src/ui/components/MoneyText.tsx` `frontend/tests/unit/money.test.ts` |
@@ -225,6 +225,7 @@ the ladder rather than each other.
 | E9-S2 | E9-S3 | the schedule service gains the real EMI and residual rules |
 | E9-S2 | E10-S1 | the servicing router gains the real disbursement handler |
 | E4-S3 | E17-S1 | the Apply screen is remediated for accessibility; no endpoint or contract change |
+| E1-S1 | E1-S2 | the policy router gains `require_roles(ADMIN)` and the audit append; E1-S1's Scope Out deliberately left the route unenforced and D-F rules out a per-route hand-written check, so the single enforcement point has to be retrofitted here |
 
 ---
 

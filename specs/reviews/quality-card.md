@@ -1,6 +1,6 @@
 # Quality card
 
-Generated: 2026-09-14T06:56:16.487Z
+Generated: 2026-09-14T11:05:21.430Z
 Range: `14e9487..HEAD`
 
 **Overall: FAIL** — 4 pass · 5 fail · 0 missing · 4 skipped
@@ -21,6 +21,7 @@ Range: `14e9487..HEAD`
 
 ## Human navigation
 
+- [`docs/CODEBASE.md`](../../docs/CODEBASE.md)
 - [`specs/brownfield/wiki/WIKI.md`](../../specs/brownfield/wiki/WIKI.md)
 - [`specs/brownfield/symbol-map.md`](../../specs/brownfield/symbol-map.md)
 - [`specs/reviews/walkthrough.md`](../../specs/reviews/walkthrough.md)

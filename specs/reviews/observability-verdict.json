@@ -1,10 +1,10 @@
 {
   "gate": "observability",
   "pass": true,
-  "checked": 13,
+  "checked": 21,
   "summary": {
     "block": 0,
-    "warn": 4
+    "warn": 3
   },
   "findings": [
     {
@@ -13,13 +13,6 @@
       "file": "backend/src/api/app.py",
       "line": 1,
       "message": "Likely service boundary without structured logger usage"
-    },
-    {
-      "id": "OBS-MIDDLEWARE-NO-REQUEST-ID",
-      "level": "WARN",
-      "file": "backend/src/api/app.py",
-      "line": 1,
-      "message": "HTTP middleware without request_id / X-Request-ID correlation"
     },
     {
       "id": "OBS-BOUNDARY-NO-LOGGER",
