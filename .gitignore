@@ -45,8 +45,13 @@ coverage/
 *.min.js
 *.min.css
 *.map
-*.lock
-package-lock.json
+
+# Lockfiles ARE tracked, deliberately. They were ignored here alongside
+# generated assets, which made every install unpinned: `npm ci` fails outright
+# without package-lock.json, so E15-S2-AC1's "clean checkout -> docker compose
+# up -> all three report healthy" could never pass, and `uv sync` silently
+# re-resolved the backend. A lockfile is the reproducibility record, not a
+# build artifact.
 
 # Harness state — .claude/state/ is a tracked snapshot: ratchet baselines
 # (agent-readiness/coupling/coverage/cycle), learned-rules.md, process-rules.md,

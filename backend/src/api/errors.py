@@ -63,18 +63,41 @@ def _scalar(value: object) -> str | int | bool | None:
     return None
 
 
+def _sanitise_value(value: str | int | bool) -> str | int | bool | None:
+    """Scrub one wire-safe scalar, or `None` to drop it.
+
+    A non-string is scrubbed through its text form and only converted when
+    that actually removes something: a 12-digit Aadhaar arriving as an `int`
+    used to egress untouched (SEC-103), but stringifying every harmless
+    integer would change the wire contract for a caller reading a numeric
+    threshold out of `context`.
+    """
+    if isinstance(value, str):
+        if _CREDENTIAL_URI.search(value) or len(value) > _MAX_CONTEXT_VALUE_CHARS:
+            return None
+        return scrub_text(value)
+
+    as_text = str(value)
+    scrubbed = scrub_text(as_text)
+    return value if scrubbed == as_text else scrubbed
+
+
 def sanitise_context(context: Mapping[str, object]) -> dict[str, str | int | bool]:
-    """Allow-list a `context` mapping for the wire."""
+    """Allow-list a `context` mapping for the wire.
+
+    Keys are scrubbed as well as values. A key is caller-chosen text that
+    reaches the client verbatim, so `pan-ABCDE1234F` leaked a PAN through the
+    key while the value beside it was being cleaned.
+    """
     clean: dict[str, str | int | bool] = {}
     for key, raw in context.items():
-        value = _scalar(raw)
+        scalar = _scalar(raw)
+        if scalar is None:
+            continue
+        value = _sanitise_value(scalar)
         if value is None:
             continue
-        if isinstance(value, str):
-            if _CREDENTIAL_URI.search(value) or len(value) > _MAX_CONTEXT_VALUE_CHARS:
-                continue
-            value = scrub_text(value)
-        clean[str(key)] = value
+        clean[scrub_text(str(key))] = value
     return clean
 
 

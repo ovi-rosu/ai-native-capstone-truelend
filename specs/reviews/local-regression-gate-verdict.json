@@ -5,12 +5,15 @@
     "changed file not found in code-graph: .claude/state/phase-cost-cursor.json",
     "changed file not found in code-graph: .claude/state/phase-cost.json",
     "changed file not found in code-graph: .claude/state/red-phase-presnap.json",
+    "changed file not found in code-graph: backend/src/api/serializers.py",
     "changed file not found in code-graph: backend/tests/architecture/test_no_float_money.py",
     "changed file not found in code-graph: specs/reviews/local-regression-gate-verdict.json",
+    "changed file not found in code-graph: specs/reviews/sensor-checks.json",
     "no owning story-group resolved for .claude/state/phase-cost-cursor.json",
     "no owning story-group resolved for .claude/state/phase-cost.json",
     "no owning story-group resolved for .claude/state/red-phase-presnap.json",
     "no owning story-group resolved for specs/reviews/local-regression-gate-verdict.json",
+    "no owning story-group resolved for specs/reviews/sensor-checks.json",
     "no e2e spec found for story \"E15-S1\"",
     "no e2e spec found for story \"E9-S1\"",
     "no e2e spec found for story \"E11-S1\"",
@@ -23,8 +26,10 @@
       ".claude/state/phase-cost-cursor.json",
       ".claude/state/phase-cost.json",
       ".claude/state/red-phase-presnap.json",
+      "backend/src/api/serializers.py",
       "backend/tests/architecture/test_no_float_money.py",
-      "specs/reviews/local-regression-gate-verdict.json"
+      "specs/reviews/local-regression-gate-verdict.json",
+      "specs/reviews/sensor-checks.json"
     ],
     "blastRadiusFiles": [],
     "impactedGroups": [

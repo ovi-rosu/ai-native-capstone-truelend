@@ -213,3 +213,50 @@ def test_http_exception_headers_survive_the_envelope() -> None:
     assert response.status_code == 401
     assert response.headers.get("WWW-Authenticate") == "Bearer"
     assert response.json()["error"] == "Unauthorized"
+
+
+def test_context_scrubs_numeric_and_key_borne_sensitive_values() -> None:
+    """SEC-103: `sanitise_context` only ever scrubbed string *values*.
+
+    Two bypasses, both reproduced before the fix:
+      - an Aadhaar arriving as an `int` returned through `_scalar` untouched,
+        and a 12-digit Aadhaar is a perfectly natural int
+      - the mapping *key* was never scrubbed at all, so `pan-ABCDE1234F`
+        egressed verbatim as a key while the value beside it was cleaned
+
+    Nothing referenced `sanitise_context` in the suite, so neither would have
+    self-corrected.
+    """
+    from src.api.errors import sanitise_context
+    from src.config.logging import redact_values
+
+    pan = "ABCDE1234F"
+    aadhaar_digits = "123456789012"
+
+    with redact_values(pan, aadhaar_digits):
+        cleaned = sanitise_context(
+            {
+                "aadhaar": int(aadhaar_digits),
+                f"pan-{pan}": "ok",
+                "note": f"pan is {pan}",
+            }
+        )
+
+    rendered = repr(cleaned)
+    assert aadhaar_digits not in rendered, "an Aadhaar passed as an int egressed"
+    assert pan not in rendered, "a PAN in a mapping key egressed"
+    assert "[REDACTED]" in rendered
+
+
+def test_context_keeps_harmless_numbers_as_numbers() -> None:
+    """Scrubbing must not stringify every integer it sees.
+
+    E4-S4's context carries numeric thresholds; turning those into strings
+    would change the wire contract for a caller that reads them.
+    """
+    from src.api.errors import sanitise_context
+
+    cleaned = sanitise_context({"attempts": 3, "enabled": True})
+
+    assert cleaned["attempts"] == 3
+    assert cleaned["enabled"] is True

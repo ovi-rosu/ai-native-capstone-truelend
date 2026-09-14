@@ -1,1 +1,1 @@
-{"command":"uv run pytest -q 2>&1 | tail -3 && cd ../frontend && npm test --silent 2>&1 | tail -3","hashes":{}}
+{"command":"uv run pytest -q 2>&1 | tail -3 && uv run ruff check . 2>&1 | tail -1 && uv run mypy src/ 2>&1 | tail -1 && uv run python -c \"\nfrom src.api.errors import sanitise_context\nfrom src.config.logging import register_sensitive\nregister_sensitive('ABCDE1234F'); register_sensitive('123456789012')\nprint(sanitise_context({'aadhaar': 123456789012, 'pan-ABCDE1234F': 'ok', 'attempts': 3}))\n\" 2>&1 | tail -2","hashes":{}}
