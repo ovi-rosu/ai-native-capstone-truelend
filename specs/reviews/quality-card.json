@@ -1,7 +1,7 @@
 {
   "gate": "quality-card",
   "pass": false,
-  "generated_at": "2026-09-14T12:16:07.567Z",
+  "generated_at": "2026-09-14T13:37:46.247Z",
   "range": "14e9487..HEAD",
   "checks": [
     {
@@ -19,27 +19,27 @@
       "status": "fail",
       "pass": false,
       "optional": false,
-      "detail": "All three prior code-review BLOCKs (CR-001 error envelope, CR-002 request-scoped PII redaction, CR-003 money-guard exemption) are independently verified CLOSED by executing the code at HEAD, not by reading its comments. Two NEW BLOCKs found, both introduced by the remediation commits themselves: (1) the /metrics RED counter is keyed on the raw request path instead of the matched route template, giving unbounded attacker-controlled counter cardinality (500 unknown paths -> 500 permanent series, 37 KB /metrics body) and destroying per-route aggregation as soon as a path-param route lands; (2) the new global HTTPException handler discards exc.headers, so 405 responses lose the RFC-required Allow header and a future 401 loses its WWW-Authenticate challenge - a regression against the FastAPI default handler it replaced. Four of the six reviewer hypotheses supplied in the spawn prompt were refuted with evidence (contextvar non-unwind, bare asserts under -O, per-request Settings(), and the loggerDict-once gap for the common propagating case). E11-S1 and the Money type are clean; no file exceeds 300 lines and no function exceeds 24.",
-      "summary": "All three prior code-review BLOCKs (CR-001 error envelope, CR-002 request-scoped PII redaction, CR-003 money-guard exemption) are independently verified CLOSED by executing the code at HEAD, not by reading its comments. Two NEW BLOCKs found, both introduced by the remediation commits themselves: (1) the /metrics RED counter is keyed on the raw request path instead of the matched route template, giving unbounded attacker-controlled counter cardinality (500 unknown paths -> 500 permanent series, 37 KB /metrics body) and destroying per-route aggregation as soon as a path-param route lands; (2) the new global HTTPException handler discards exc.headers, so 405 responses lose the RFC-required Allow header and a future 401 loses its WWW-Authenticate challenge - a regression against the FastAPI default handler it replaced. Four of the six reviewer hypotheses supplied in the spawn prompt were refuted with evidence (contextvar non-unwind, bare asserts under -O, per-request Settings(), and the loggerDict-once gap for the common propagating case). E11-S1 and the Money type are clean; no file exceeds 300 lines and no function exceeds 24."
+      "detail": {
+        "block": 1,
+        "warn": 12,
+        "info": 5
+      },
+      "summary": {
+        "block": 1,
+        "warn": 12,
+        "info": 5
+      }
     },
     {
       "key": "security",
       "file": "security-verdict.json",
-      "status": "fail",
-      "pass": false,
+      "status": "pass",
+      "pass": true,
       "optional": true,
       "detail": {
-        "block": 3,
-        "warn": 9,
-        "info": 10,
-        "headline": "BLOCK on 3 high findings: unbounded metric cardinality (unauthenticated memory exhaustion) and Prometheus exposition injection, both HTTP-reachable and proven live in the newly shipped GET /metrics; plus a sanitise_context bypass that passes registered PII through unfiltered on the int and mapping-key paths.",
-        "prior_block_disposition": {
-          "SEC-001": "closed - confirmed fixed; five different adversarial backtracking shapes all linear and sub-millisecond; the axis is clean, no ReDoS shape exists on this design",
-          "SEC-002": "closed - request-scoped design proven correct on both the async and the threadpool/context-copy handler paths; traceback logged, scrubbed and correlated; residual is the still-exported redact_values API (SEC-109)",
-          "SEC-003": "partially closed - string path is protected; int/bool values and mapping keys bypass scrubbing entirely (SEC-103, new BLOCK); credential-URI heuristic bypassable (SEC-108)",
-          "SEC-004_005": "unchanged at HEAD - re-rated medium; CRLF log injection and HTTP response splitting sub-claims explicitly refuted with evidence",
-          "SEC-010_011": "unchanged - advisories re-measured (SEC-111); lockfile is not merely uncommitted, it is gitignored at .gitignore:49 (SEC-112)"
-        }
+        "block": 0,
+        "warn": 6,
+        "info": 4
       },
       "summary": null
     },
@@ -55,8 +55,8 @@
     {
       "key": "ownership",
       "file": "ownership-check.json",
-      "status": "pass",
-      "pass": true,
+      "status": "fail",
+      "pass": false,
       "optional": true,
       "detail": null,
       "summary": null

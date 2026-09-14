@@ -2,36 +2,36 @@
   "schema_version": 1,
   "type": "task_completion",
   "task_id": "truelend-build",
-  "task_envelope_hash": "9a1142eaa81a33a48bcc68d2252eefe06fb3db52e50f19947aa449da5d909a0d",
+  "task_envelope_hash": "ca69aafb561f072b387662da12300e17bb6ac46268df084ccb6b093a310a8298",
   "run_id": "run-a5737b1b-fdbe-4023-b908-cbabca4e9fd8",
-  "generated_at": "2026-09-14T12:16:29.465Z",
+  "generated_at": "2026-09-14T13:38:56.677Z",
   "pass": false,
   "evidence": [
     {
       "kind": "unit",
       "path": "specs/reviews/gate-checks.json",
-      "sha256": "2ebccd46fce03d6513c69c8a59f3debcdfad20ecabf55878c78b24ecfb980031",
+      "sha256": "32cf46808fb8f37e572913bc2e324dcfee01f870fa12c6855fb761ef6787a8b9",
       "current": true,
       "pass": false
     },
     {
       "kind": "acceptance",
       "path": "specs/reviews/gate-checks.json",
-      "sha256": "2ebccd46fce03d6513c69c8a59f3debcdfad20ecabf55878c78b24ecfb980031",
+      "sha256": "32cf46808fb8f37e572913bc2e324dcfee01f870fa12c6855fb761ef6787a8b9",
       "current": true,
       "pass": false
     },
     {
       "kind": "independent_review",
       "path": "specs/reviews/code-review-verdict.json",
-      "sha256": "2b52079f9b87e0485c42cde61381836d84c04b904b755704f21535640ef8259c",
+      "sha256": "7e424a678e21b6b3455502a7c062250db0ace7b80bc796dc325dbf49a90878b7",
       "current": true,
       "pass": false
     },
     {
       "kind": "integration",
       "path": "specs/reviews/gate-checks.json",
-      "sha256": "2ebccd46fce03d6513c69c8a59f3debcdfad20ecabf55878c78b24ecfb980031",
+      "sha256": "32cf46808fb8f37e572913bc2e324dcfee01f870fa12c6855fb761ef6787a8b9",
       "current": true,
       "pass": false
     },
@@ -52,9 +52,9 @@
     {
       "kind": "security_review",
       "path": "specs/reviews/security-verdict.json",
-      "sha256": "2bef380d275b00287dc9fd1c4f25274022ccb975d020302d89086fde3e4d24fd",
+      "sha256": "9d4dab3ac83b6b24159fc633c5249069d5bb900af34d64b0df6fefaa7e1fe811",
       "current": true,
-      "pass": false
+      "pass": true
     },
     {
       "kind": "threat_model",
@@ -81,12 +81,11 @@
       "integration",
       "sast",
       "dependency_scan",
-      "security_review",
       "gate_pass"
     ]
   },
   "integrity": {
     "algorithm": "sha256",
-    "hash": "d4bfcb196bf297a58e26ea32716361d45427f9bac500b07b4dfb5167c51d0e9f"
+    "hash": "93dfde3484bbe99ad3bf07079a2ce34f85642a595d8e4230bdb914ad5cfc0b22"
   }
 }

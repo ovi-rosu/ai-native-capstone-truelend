@@ -1,47 +1,57 @@
 {
   "gate": "pr-walkthrough",
-  "generated_at": "2026-09-14T12:15:23.638Z",
+  "generated_at": "2026-09-14T13:37:37.677Z",
   "base": "14e9487",
-  "file_count": 162,
+  "file_count": 225,
   "slices": [
+    {
+      "story": "E15-S3",
+      "files": [
+        {
+          "path": ".claude/state/eval-i1/harness.py",
+          "findings": []
+        }
+      ],
+      "program_design": [
+        {
+          "title": "Types",
+          "excerpt": "```\n# backend/src/types/money.py\nMoney                      = Decimal            # always quantized to 2dp when stored or serialized\nMONEY_SCALE                = 2\n\n# backend/src/types/loan_terms.py  (argument-clump value objects)\nLoanTerms       { principal: Money, annual_rate_pct: Decimal, tenure_months: int }\nLadderState     { loan_id: UUID, as_of_date: date, oldest_unpaid_due_date: date | None,\n                  cumulative_due: Money, cumulative_paid: Money, days_past_due: int }\nLoanAgeing      { loan_id: UUID, as_of_date: date, days_past_due: int, bucket: DelinquencyBucket }\n\n# backend/src/types/enums.py\nRole                       = CUSTOMER | UNDERWRITER | ADMIN\nApplicationStatus          = SUBMITTED | AWAITING_DOCUMENTS | UNDER_REVIEW | MANUAL_REVIEW | APPROVED | REJECTED | DISBURSE"
+        },
+        {
+          "title": "Signatures",
+          "excerpt": "```\n# ---------- Config (layer 2) -------------------------------------------------\n# backend/src/config/delinquency.py            (D-B, single owner of the mapping)\nDPD_BUCKET_FLOORS: tuple[tuple[int, DelinquencyBucket], ...]   # 0, 30, 60, 90, 180\nclassify(days_past_due: int) -> DelinquencyBucket\n# backend/src/config/settings.py\nSettings { database_url, jwt_secret, jwt_ttl_seconds = 3600, log_level, funding_source_id }   # TTL per D-M\n\n# ---------- Repository (layer 3, insert-only where D-E says so) --------------\n# policy\nPolicyVersionRepository.insert(product_code, rules: PolicyRules, created_by) -> PolicyVersion\nPolicyVersionRepository.get(policy_version_id) -> PolicyVersion\nPolicyVersionRepository.get_active(product_code) -> PolicyVersion\nPolicyVersionRepository.activate(policy_versi"
+        },
+        {
+          "title": "Call stack",
+          "excerpt": "```\n+ POST /applications                               [CUSTOMER]\n+   require_roles(CUSTOMER)\n+   origination.submit\n+     policy.active_policy_version                 # only call site permitted by D-D\n+     guard_minimum_income                         # raises PolicyViolation -> 422, rollback\n+     ApplicationRepository.insert                 # pins policy_version_id\n+     origination.generate_checklist\n+       ChecklistRepository.insert_many\n+     origination.score                            # deterministic stub\n+       ApplicationRepository.set_credit_score\n+     origination.evaluate\n+       policy.rules_for_version(pinned)\n+       policy.reason_codes_for_version(pinned)\n+       DecisionRepository.insert\n+       servicing.on_approved                       # only when the outcome approve"
+        },
+        {
+          "title": "File tree",
+          "excerpt": "```\n+ backend/\n+   src/\n+     types/        money.py loan_terms.py enums.py policy.py origination.py servicing.py\n+                   identity.py delinquency.py errors.py\n+     config/       settings.py delinquency.py logging.py database.py\n+     repository/\n+       policy/         product_repository.py policy_version_repository.py\n+       origination/    application_repository.py checklist_repository.py decision_repository.py\n+       servicing/      loan_repository.py schedule_repository.py disbursement_repository.py\n+                       repayment_repository.py\n+       delinquency/    portfolio_repository.py\n+       identity/       user_repository.py audit_repository.py\n+       models.py       # SQLAlchemy tables (Repository layer only)\n+     service/\n+       policy/         catalog.py"
+        }
+      ]
+    },
     {
       "story": "E15-S1",
       "files": [
         {
           "path": "backend/src/api/app.py",
-          "findings": [
-            {
-              "id": "CR2-W08",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/src/api/errors.py",
           "findings": [
             {
-              "id": "CR2-002",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR2-I02",
+              "id": "CR-307",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR2-I04",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR2-I05",
-              "confidence": "high",
+              "id": "CR-308",
+              "level": "WARN",
+              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             }
@@ -51,21 +61,38 @@
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR2-001",
+              "id": "CR-301",
+              "level": "BLOCK",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR2-W06",
+              "id": "CR-314",
+              "level": "INFO",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR2-I01",
+              "id": "CR-315",
+              "level": "INFO",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-316",
+              "level": "INFO",
               "confidence": "high",
-              "axis": "spec",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-318",
+              "level": "INFO",
+              "confidence": "medium",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -74,33 +101,24 @@
           "path": "backend/src/api/platform/routes.py",
           "findings": [
             {
-              "id": "CR2-W01",
+              "id": "CR-302",
+              "level": "WARN",
               "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W07",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W12",
-              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR2-W13",
+              "id": "CR-309",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR2-I03",
+              "id": "CR-317",
+              "level": "INFO",
               "confidence": "high",
-              "axis": "standards",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -109,26 +127,16 @@
           "path": "backend/src/config/logging.py",
           "findings": [
             {
-              "id": "CR2-W02",
+              "id": "CR-305",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR2-W09",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W10",
+              "id": "CR-310",
+              "level": "WARN",
               "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W16",
-              "confidence": "medium",
               "axis": "standards",
               "summary": ""
             }
@@ -144,18 +152,19 @@
         },
         {
           "path": "backend/tests/conftest.py",
-          "findings": []
-        },
-        {
-          "path": "backend/tests/unit/test_correlation_id.py",
           "findings": [
             {
-              "id": "CR2-I06",
-              "confidence": "high",
+              "id": "CR-313",
+              "level": "WARN",
+              "confidence": "medium",
               "axis": "standards",
               "summary": ""
             }
           ]
+        },
+        {
+          "path": "backend/tests/unit/test_correlation_id.py",
+          "findings": []
         },
         {
           "path": "backend/tests/unit/test_error_envelope.py",
@@ -163,26 +172,14 @@
         },
         {
           "path": "backend/tests/unit/test_health_probe.py",
-          "findings": [
-            {
-              "id": "CR2-W05",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/tests/unit/test_log_redaction.py",
           "findings": [
             {
-              "id": "CR2-W03",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W04",
+              "id": "CR-311",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
@@ -212,7 +209,8 @@
           "path": "backend/src/api/serializers.py",
           "findings": [
             {
-              "id": "CR2-W11",
+              "id": "CR-306",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
@@ -231,14 +229,9 @@
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR2-W15",
+              "id": "CR-304",
+              "level": "WARN",
               "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-I08",
-              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             }
@@ -280,6 +273,48 @@
         {
           "title": "Signatures",
           "excerpt": "```\n# ---------- Config (layer 2) -------------------------------------------------\n# backend/src/config/delinquency.py            (D-B, single owner of the mapping)\nDPD_BUCKET_FLOORS: tuple[tuple[int, DelinquencyBucket], ...]   # 0, 30, 60, 90, 180\nclassify(days_past_due: int) -> DelinquencyBucket\n# backend/src/config/settings.py\nSettings { database_url, jwt_secret, jwt_ttl_seconds = 3600, log_level, funding_source_id }   # TTL per D-M\n\n# ---------- Repository (layer 3, insert-only where D-E says so) --------------\n# policy\nPolicyVersionRepository.insert(product_code, rules: PolicyRules, created_by) -> PolicyVersion\nPolicyVersionRepository.get(policy_version_id) -> PolicyVersion\nPolicyVersionRepository.get_active(product_code) -> PolicyVersion\nPolicyVersionRepository.activate(policy_versi"
+        }
+      ]
+    },
+    {
+      "story": "E15-S4",
+      "files": [
+        {
+          "path": "backend/tests/architecture/test_observability_contract.py",
+          "findings": [
+            {
+              "id": "CR-303",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-312",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            }
+          ]
+        }
+      ],
+      "program_design": [
+        {
+          "title": "Types",
+          "excerpt": "```\n# backend/src/types/money.py\nMoney                      = Decimal            # always quantized to 2dp when stored or serialized\nMONEY_SCALE                = 2\n\n# backend/src/types/loan_terms.py  (argument-clump value objects)\nLoanTerms       { principal: Money, annual_rate_pct: Decimal, tenure_months: int }\nLadderState     { loan_id: UUID, as_of_date: date, oldest_unpaid_due_date: date | None,\n                  cumulative_due: Money, cumulative_paid: Money, days_past_due: int }\nLoanAgeing      { loan_id: UUID, as_of_date: date, days_past_due: int, bucket: DelinquencyBucket }\n\n# backend/src/types/enums.py\nRole                       = CUSTOMER | UNDERWRITER | ADMIN\nApplicationStatus          = SUBMITTED | AWAITING_DOCUMENTS | UNDER_REVIEW | MANUAL_REVIEW | APPROVED | REJECTED | DISBURSE"
+        },
+        {
+          "title": "Signatures",
+          "excerpt": "```\n# ---------- Config (layer 2) -------------------------------------------------\n# backend/src/config/delinquency.py            (D-B, single owner of the mapping)\nDPD_BUCKET_FLOORS: tuple[tuple[int, DelinquencyBucket], ...]   # 0, 30, 60, 90, 180\nclassify(days_past_due: int) -> DelinquencyBucket\n# backend/src/config/settings.py\nSettings { database_url, jwt_secret, jwt_ttl_seconds = 3600, log_level, funding_source_id }   # TTL per D-M\n\n# ---------- Repository (layer 3, insert-only where D-E says so) --------------\n# policy\nPolicyVersionRepository.insert(product_code, rules: PolicyRules, created_by) -> PolicyVersion\nPolicyVersionRepository.get(policy_version_id) -> PolicyVersion\nPolicyVersionRepository.get_active(product_code) -> PolicyVersion\nPolicyVersionRepository.activate(policy_versi"
+        },
+        {
+          "title": "Call stack",
+          "excerpt": "```\n+ POST /applications                               [CUSTOMER]\n+   require_roles(CUSTOMER)\n+   origination.submit\n+     policy.active_policy_version                 # only call site permitted by D-D\n+     guard_minimum_income                         # raises PolicyViolation -> 422, rollback\n+     ApplicationRepository.insert                 # pins policy_version_id\n+     origination.generate_checklist\n+       ChecklistRepository.insert_many\n+     origination.score                            # deterministic stub\n+       ApplicationRepository.set_credit_score\n+     origination.evaluate\n+       policy.rules_for_version(pinned)\n+       policy.reason_codes_for_version(pinned)\n+       DecisionRepository.insert\n+       servicing.on_approved                       # only when the outcome approve"
+        },
+        {
+          "title": "File tree",
+          "excerpt": "```\n+ backend/\n+   src/\n+     types/        money.py loan_terms.py enums.py policy.py origination.py servicing.py\n+                   identity.py delinquency.py errors.py\n+     config/       settings.py delinquency.py logging.py database.py\n+     repository/\n+       policy/         product_repository.py policy_version_repository.py\n+       origination/    application_repository.py checklist_repository.py decision_repository.py\n+       servicing/      loan_repository.py schedule_repository.py disbursement_repository.py\n+                       repayment_repository.py\n+       delinquency/    portfolio_repository.py\n+       identity/       user_repository.py audit_repository.py\n+       models.py       # SQLAlchemy tables (Repository layer only)\n+     service/\n+       policy/         catalog.py"
         }
       ]
     },
@@ -326,11 +361,151 @@
           "findings": []
         },
         {
+          "path": ".claude/state/eval-i1/attack.log",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f003.body",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f003.hdr",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f003.lines",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f004.body",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f004.hdr",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f004.lines",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f005.timings",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/features.json.bak",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/harness.log",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/logcheck.js",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/metrics-forged.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/metrics-poisoned.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/metrics.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/money.py.bak",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/pii-window.log",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/promcheck.js",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/update-features.js",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/vm003.lines",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/vm004.body",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/vm004.hdr",
+          "findings": []
+        },
+        {
           "path": ".claude/state/failures.md",
           "findings": []
         },
         {
+          "path": ".claude/state/g3eval2-500.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-body005.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-chatty.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-conc.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-h003.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-h004.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-injlines.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-lines003.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-lines004.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-perf.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-piiboom.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2_probe.py",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval3-expected-ids.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/gate-receipt.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/handoff/gate-group-A.md",
           "findings": []
         },
         {
@@ -370,7 +545,23 @@
           "findings": []
         },
         {
+          "path": ".claude/state/task-envelope-history/62e4d6055406f528dbaf106b4c2490ab209a6769c21f981f45bcead78a5a94ed.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/7ae6bff4fdcfe4e5e350b8cc6b4823a2f49a8a7805e97359a800301b681b5394.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/task-envelope-history/8914ad672f478b7a255bfa5bae84a4f42f262d43034b9944be6525ac67b9e330.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/9a1142eaa81a33a48bcc68d2252eefe06fb3db52e50f19947aa449da5d909a0d.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/b0a253ab010f74d11bb8d478187ee07dbd6f37f63b7637cbfd40acc8e8eff5bc.json",
           "findings": []
         },
         {
@@ -398,11 +589,19 @@
           "findings": []
         },
         {
+          "path": ".gitignore",
+          "findings": []
+        },
+        {
           "path": "backend/src/__init__.py",
           "findings": []
         },
         {
           "path": "backend/tests/__init__.py",
+          "findings": []
+        },
+        {
+          "path": "backend/uv.lock",
           "findings": []
         },
         {
@@ -419,6 +618,10 @@
         },
         {
           "path": "frontend/eslint.config.js",
+          "findings": []
+        },
+        {
+          "path": "frontend/package-lock.json",
           "findings": []
         },
         {
@@ -483,6 +686,10 @@
         },
         {
           "path": "specs/bundles/E15-S3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E15-S4.json",
           "findings": []
         },
         {
@@ -558,6 +765,10 @@
           "findings": []
         },
         {
+          "path": "specs/design/amendments/e15-s4-observability-contract.md",
+          "findings": []
+        },
+        {
           "path": "specs/design/amendments/group-a-gate-remediation.md",
           "findings": []
         },
@@ -575,6 +786,10 @@
         },
         {
           "path": "specs/reviews/canvas-semantic-review.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/canvas-sync-check-productscope.md",
           "findings": []
         },
         {
@@ -603,6 +818,10 @@
         },
         {
           "path": "specs/reviews/eval-failures-001.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/eval-failures-002.json",
           "findings": []
         },
         {
@@ -638,6 +857,14 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/local-regression-gate-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/metrics-forgery-evidence.txt",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/observability-gate.md",
           "findings": []
         },
@@ -670,7 +897,15 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/regression-gate-verdict-groupA-live.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/regression-gate-verdict-nobaseline.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/regression-gate-verdict-registryinvocation.json",
           "findings": []
         },
         {
@@ -726,6 +961,10 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/slo-verdict-poisoned-evidence.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/slo-verdict.json",
           "findings": []
         },
@@ -734,7 +973,19 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/spec-approval.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/test-approval.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/test-grounding.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/verification-matrix-verdict.json",
           "findings": []
         },
         {
@@ -787,6 +1038,10 @@
         },
         {
           "path": "specs/stories/E15-S3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S4.md",
           "findings": []
         },
         {
@@ -862,7 +1117,27 @@
           "findings": []
         },
         {
+          "path": "specs/stories/acceptance-criteria.json",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/stories.json",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/story-traces.json",
+          "findings": []
+        },
+        {
+          "path": "specs/test_artefacts/ac-index.json",
+          "findings": []
+        },
+        {
           "path": "specs/test_artefacts/test-plan.md",
+          "findings": []
+        },
+        {
+          "path": "specs/test_artefacts/test-traces.json",
           "findings": []
         },
         {
@@ -871,6 +1146,10 @@
         },
         {
           "path": "sprint-contracts/A.json",
+          "findings": []
+        },
+        {
+          "path": "uv.lock",
           "findings": []
         }
       ],
@@ -901,39 +1180,22 @@
       "files": [
         {
           "path": "backend/src/api/app.py",
-          "findings": [
-            {
-              "id": "CR2-W08",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/src/api/errors.py",
           "findings": [
             {
-              "id": "CR2-002",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR2-I02",
+              "id": "CR-307",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR2-I04",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR2-I05",
-              "confidence": "high",
+              "id": "CR-308",
+              "level": "WARN",
+              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             }
@@ -943,21 +1205,38 @@
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR2-001",
+              "id": "CR-301",
+              "level": "BLOCK",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR2-W06",
+              "id": "CR-314",
+              "level": "INFO",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR2-I01",
+              "id": "CR-315",
+              "level": "INFO",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-316",
+              "level": "INFO",
               "confidence": "high",
-              "axis": "spec",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-318",
+              "level": "INFO",
+              "confidence": "medium",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -966,33 +1245,24 @@
           "path": "backend/src/api/platform/routes.py",
           "findings": [
             {
-              "id": "CR2-W01",
+              "id": "CR-302",
+              "level": "WARN",
               "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W07",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W12",
-              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR2-W13",
+              "id": "CR-309",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR2-I03",
+              "id": "CR-317",
+              "level": "INFO",
               "confidence": "high",
-              "axis": "standards",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -1001,7 +1271,8 @@
           "path": "backend/src/api/serializers.py",
           "findings": [
             {
-              "id": "CR2-W11",
+              "id": "CR-306",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
@@ -1022,26 +1293,16 @@
           "path": "backend/src/config/logging.py",
           "findings": [
             {
-              "id": "CR2-W02",
+              "id": "CR-305",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR2-W09",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W10",
+              "id": "CR-310",
+              "level": "WARN",
               "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W16",
-              "confidence": "medium",
               "axis": "standards",
               "summary": ""
             }
@@ -1088,6 +1349,10 @@
           "findings": []
         },
         {
+          "path": ".claude/state/handoff/gate-group-A.md",
+          "findings": []
+        },
+        {
           "path": ".claude/state/iteration-log.md",
           "findings": []
         },
@@ -1145,6 +1410,10 @@
         },
         {
           "path": "specs/bundles/E15-S3.json",
+          "findings": []
+        },
+        {
+          "path": "specs/bundles/E15-S4.json",
           "findings": []
         },
         {
@@ -1220,6 +1489,10 @@
           "findings": []
         },
         {
+          "path": "specs/design/amendments/e15-s4-observability-contract.md",
+          "findings": []
+        },
+        {
           "path": "specs/design/amendments/group-a-gate-remediation.md",
           "findings": []
         },
@@ -1237,6 +1510,10 @@
         },
         {
           "path": "specs/reviews/canvas-semantic-review.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/canvas-sync-check-productscope.md",
           "findings": []
         },
         {
@@ -1265,6 +1542,10 @@
         },
         {
           "path": "specs/reviews/eval-failures-001.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/eval-failures-002.json",
           "findings": []
         },
         {
@@ -1300,6 +1581,14 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/local-regression-gate-verdict.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/metrics-forgery-evidence.txt",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/observability-gate.md",
           "findings": []
         },
@@ -1332,7 +1621,15 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/regression-gate-verdict-groupA-live.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/regression-gate-verdict-nobaseline.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/regression-gate-verdict-registryinvocation.json",
           "findings": []
         },
         {
@@ -1388,6 +1685,10 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/slo-verdict-poisoned-evidence.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/slo-verdict.json",
           "findings": []
         },
@@ -1396,7 +1697,19 @@
           "findings": []
         },
         {
+          "path": "specs/reviews/spec-approval.json",
+          "findings": []
+        },
+        {
           "path": "specs/reviews/test-approval.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/test-grounding.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/verification-matrix-verdict.json",
           "findings": []
         },
         {
@@ -1449,6 +1762,10 @@
         },
         {
           "path": "specs/stories/E15-S3.md",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/E15-S4.md",
           "findings": []
         },
         {
@@ -1524,7 +1841,27 @@
           "findings": []
         },
         {
+          "path": "specs/stories/acceptance-criteria.json",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/stories.json",
+          "findings": []
+        },
+        {
+          "path": "specs/stories/story-traces.json",
+          "findings": []
+        },
+        {
+          "path": "specs/test_artefacts/ac-index.json",
+          "findings": []
+        },
+        {
           "path": "specs/test_artefacts/test-plan.md",
+          "findings": []
+        },
+        {
+          "path": "specs/test_artefacts/test-traces.json",
           "findings": []
         },
         {
@@ -1547,6 +1884,146 @@
         },
         {
           "path": ".claude/state/current-task",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/attack.log",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f003.body",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f003.hdr",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f003.lines",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f004.body",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f004.hdr",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f004.lines",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/f005.timings",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/features.json.bak",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/harness.log",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/harness.py",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/logcheck.js",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/metrics-forged.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/metrics-poisoned.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/metrics.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/money.py.bak",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/pii-window.log",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/promcheck.js",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/update-features.js",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/vm003.lines",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/vm004.body",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/eval-i1/vm004.hdr",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-500.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-body005.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-chatty.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-conc.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-h003.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-h004.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-injlines.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-lines003.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-lines004.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-perf.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2-piiboom.txt",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval2_probe.py",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/g3eval3-expected-ids.json",
           "findings": []
         },
         {
@@ -1586,7 +2063,23 @@
           "findings": []
         },
         {
+          "path": ".claude/state/task-envelope-history/62e4d6055406f528dbaf106b4c2490ab209a6769c21f981f45bcead78a5a94ed.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/7ae6bff4fdcfe4e5e350b8cc6b4823a2f49a8a7805e97359a800301b681b5394.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/task-envelope-history/8914ad672f478b7a255bfa5bae84a4f42f262d43034b9944be6525ac67b9e330.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/9a1142eaa81a33a48bcc68d2252eefe06fb3db52e50f19947aa449da5d909a0d.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/b0a253ab010f74d11bb8d478187ee07dbd6f37f63b7637cbfd40acc8e8eff5bc.json",
           "findings": []
         },
         {
@@ -1614,6 +2107,10 @@
           "findings": []
         },
         {
+          "path": ".gitignore",
+          "findings": []
+        },
+        {
           "path": "backend/src/__init__.py",
           "findings": []
         },
@@ -1638,8 +2135,35 @@
           "findings": []
         },
         {
+          "path": "backend/tests/architecture/test_observability_contract.py",
+          "findings": [
+            {
+              "id": "CR-303",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-312",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            }
+          ]
+        },
+        {
           "path": "backend/tests/conftest.py",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-313",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         },
         {
           "path": "backend/tests/unit/test_bucket_ladder.py",
@@ -1647,14 +2171,7 @@
         },
         {
           "path": "backend/tests/unit/test_correlation_id.py",
-          "findings": [
-            {
-              "id": "CR2-I06",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/tests/unit/test_error_envelope.py",
@@ -1662,9 +2179,14 @@
         },
         {
           "path": "backend/tests/unit/test_health_probe.py",
+          "findings": []
+        },
+        {
+          "path": "backend/tests/unit/test_log_redaction.py",
           "findings": [
             {
-              "id": "CR2-W05",
+              "id": "CR-311",
+              "level": "WARN",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
@@ -1672,21 +2194,8 @@
           ]
         },
         {
-          "path": "backend/tests/unit/test_log_redaction.py",
-          "findings": [
-            {
-              "id": "CR2-W03",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR2-W04",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "path": "backend/uv.lock",
+          "findings": []
         },
         {
           "path": "claude-progress.txt",
@@ -1697,17 +2206,16 @@
           "findings": []
         },
         {
+          "path": "frontend/package-lock.json",
+          "findings": []
+        },
+        {
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR2-W15",
+              "id": "CR-304",
+              "level": "WARN",
               "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR2-I08",
-              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             }
@@ -1724,11 +2232,19 @@
         {
           "path": "sprint-contracts/A.json",
           "findings": []
+        },
+        {
+          "path": "uv.lock",
+          "findings": []
         }
       ]
     }
   ],
-  "review_summary": "All three prior code-review BLOCKs (CR-001 error envelope, CR-002 request-scoped PII redaction, CR-003 money-guard exemption) are independently verified CLOSED by executing the code at HEAD, not by reading its comments. Two NEW BLOCKs found, both introduced by the remediation commits themselves: (1) the /metrics RED counter is keyed on the raw request path instead of the matched route template, giving unbounded attacker-controlled counter cardinality (500 unknown paths -> 500 permanent series, 37 KB /metrics body) and destroying per-route aggregation as soon as a path-param route lands; (2) the new global HTTPException handler discards exc.headers, so 405 responses lose the RFC-required Allow header and a future 401 loses its WWW-Authenticate challenge - a regression against the FastAPI default handler it replaced. Four of the six reviewer hypotheses supplied in the spawn prompt were refuted with evidence (contextvar non-unwind, bare asserts under -O, per-request Settings(), and the loggerDict-once gap for the common propagating case). E11-S1 and the Money type are clean; no file exceeds 300 lines and no function exceeds 24.",
+  "review_summary": {
+    "block": 1,
+    "warn": 12,
+    "info": 5
+  },
   "review_pass": false,
   "blast_radius": {
     "callers": [],
@@ -1738,9 +2254,101 @@
     "E15-S1",
     "E9-S1",
     "E11-S1",
-    "E1-S1",
-    "E15-S2"
+    "E15-S4",
+    "E1-S1"
   ],
-  "intent": "# Review Context Pack — /gate --group A (round 2) / **Gate lane:** on-demand pre-merge (`/gate`) / **Generated:** 2026-09-14 (session 5) ## 1. Request / scope | Field | Value | |---|---| | Group | A | | Stories | E15-S1 (platform logging + health), E9-S1 (Money value type), E11-S1 (delinquency bucket) | | Sprint contract | `sprint-contracts/A.json` (FROZEN — do not edit) |",
-  "high_signal": []
+  "intent": "# Review Context Pack — /gate --group A (round 3) **Gate lane:** on-demand pre-merge (`/gate`) **Generated:** 2026-09-14 (session 6) ## 1. Request / scope | Field | Value | |---|---| | Group | A | | Stories | E15-S1 (platform logging + health), E9-S1 (Money value type), E11-S1 (delinquency bucket), **E15-S4 (NEW — duration histogram + hostile-input hardening)** | | Sprint contract | `sprint-contra",
+  "high_signal": [
+    {
+      "id": "CR-301",
+      "level": "BLOCK",
+      "confidence": "high",
+      "file": "backend/src/api/middleware.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-302",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/api/platform/routes.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-303",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/tests/architecture/test_observability_contract.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-304",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "frontend/src/types/money.ts",
+      "summary": ""
+    },
+    {
+      "id": "CR-305",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/config/logging.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-306",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/api/serializers.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-307",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/api/errors.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-308",
+      "level": "WARN",
+      "confidence": "medium",
+      "file": "backend/src/api/errors.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-309",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/api/platform/routes.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-310",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/config/logging.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-311",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/tests/unit/test_log_redaction.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-312",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/tests/architecture/test_observability_contract.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-313",
+      "level": "WARN",
+      "confidence": "medium",
+      "file": "backend/tests/conftest.py",
+      "summary": ""
+    }
+  ]
 }

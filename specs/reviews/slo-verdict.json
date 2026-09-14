@@ -1,11 +1,11 @@
 {
   "verdict": "pass",
   "error_rate_pct": 0,
-  "p95_ms": null,
+  "p95_ms": 4.750647638958324,
   "budgets": {
     "error_rate_pct": 1,
     "p95_ms": 500
   },
   "breaches": [],
-  "scraped": "http://127.0.0.1:8021/metrics"
+  "scraped": "http://127.0.0.1:8232/metrics"
 }

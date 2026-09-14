@@ -126,3 +126,76 @@ def test_hostile_log_input_renders_as_one_control_character_free_line() -> None:
     assert len(rendered.splitlines()) == 1
     assert not any(char in rendered for char in ("\n", "\r", "\x00"))
     assert json.loads(rendered)["logger"] == "app"
+
+
+def test_escape_label_neutralises_exposition_metacharacters() -> None:
+    """The escaping needs a direct test, not only an end-to-end one.
+
+    Mutation-tested: replacing `_escape_label` with the identity function left
+    all 104 tests green. The cause was my own pair of fixes interfering — once
+    the counters keyed on the matched route template, a crafted path resolved
+    to `<unmatched>` and the raw attacker string never reached a label, so the
+    integration test passed for the wrong reason and the escaping was
+    unprotected. A refactor could have silently reopened the injection.
+    """
+    from src.api.platform.routes import _escape_label
+
+    # Each metacharacter becomes its escaped two-character form.
+    assert _escape_label('a"b') == 'a\\"b'
+    assert _escape_label("a\\b") == "a\\\\b"
+    assert _escape_label("a\nb") == "a\\nb"
+
+    # The real payload: no bare quote or newline survives, so the crafted text
+    # cannot terminate the label and start a new series.
+    escaped = _escape_label('x" 1\nhttp_requests_total{route="/forged"} 9')
+    assert "\n" not in escaped, "a raw newline could start a forged series"
+    assert not re.search(r'(?<!\\)"', escaped), "an unescaped quote could close the label"
+    assert escaped.count('\\"') == 3, "all three quotes must be escaped"
+    # Unchanged for the ordinary case, so the escaping cannot be "passing" by
+    # mangling every label.
+    assert _escape_label("/products/{product_code}") == "/products/{product_code}"
+
+
+def test_metric_label_cardinality_is_bounded_on_the_method_dimension() -> None:
+    """CR-301: the route dimension was bounded, the method dimension was not.
+
+    `method` flowed straight from the request into the keys of
+    `_request_counts`, `_duration_counts` and `_duration_totals` — all
+    process-global, never evicted, behind an unauthenticated /metrics. The
+    reviewers measured 3,000 distinct methods producing ~6,000 series and
+    22,003 producing 25.3 MB retained. It only looked safe because
+    `uvicorn[standard]`'s httptools rejects unknown methods at 400 below the
+    ASGI layer — an optional C extension that nothing documents, tests or
+    pins, under a middleware that is deliberately server-agnostic.
+    """
+    from src.api.middleware import (
+        duration_snapshot,
+        record_request,
+        request_counter_snapshot,
+        reset_request_counters,
+    )
+
+    reset_request_counters()
+    for index in range(200):
+        record_request(f"BOGUS{index}", "/health", 200, 0.001)
+
+    methods = {method for method, _, _ in request_counter_snapshot()}
+    duration_methods = {method for method, _ in duration_snapshot()}
+
+    assert len(methods) == 1, f"unbounded method labels on the counters: {methods}"
+    assert len(duration_methods) == 1, (
+        f"unbounded method labels on the histogram: {duration_methods}"
+    )
+    assert methods == {"<other>"}
+
+
+def test_known_methods_keep_their_own_label() -> None:
+    """Bounding must not collapse the methods anyone actually reports on."""
+    from src.api.middleware import record_request, request_counter_snapshot, reset_request_counters
+
+    reset_request_counters()
+    for method in ("GET", "POST", "PUT", "PATCH", "DELETE"):
+        record_request(method, "/health", 200, 0.001)
+
+    methods = {method for method, _, _ in request_counter_snapshot()}
+    assert methods == {"GET", "POST", "PUT", "PATCH", "DELETE"}

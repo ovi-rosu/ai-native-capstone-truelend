@@ -1,6 +1,6 @@
 # Canvas Sync Check
 
-Changed files checked: 4
+Changed files checked: 3
 Missing from Governs: 1
 - .claude/state/red-phase-presnap.json
 

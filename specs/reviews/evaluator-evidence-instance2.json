@@ -1,312 +1,293 @@
 {
-  "instance": 2,
-  "instance_count": 3,
-  "independent": true,
+  "instance": "evaluator-instance-2-of-3",
+  "round": 3,
+  "gate": "/gate --group A",
   "group": "A",
-  "lane": "gate",
-  "round": 2,
-  "head": "9112495",
-  "base": "14e9487",
-  "timestamp": "2026-09-14T11:50:00Z",
+  "head": "ba457bf",
+  "timestamp": "2026-09-14T13:40:00Z",
   "verification_mode": "local",
-  "port": 8001,
-  "boot_command": "cd backend && uv run uvicorn src.api.app:app --port 8001",
-  "served_app": "src.api.app:app",
-  "model_tier": "opus",
-  "verdict": "PASS",
-  "verdict_scope": "functional",
-  "failure_layer": null,
-  "security_gate": {
-    "cleared": false,
-    "reason": "specs/reviews/security-verdict.json self-reports commit f4abd41, two commits behind HEAD 9112495, and reports pass:false. It is a snapshot of a superseded tree. Its only two blocking findings (SEC-001, SEC-002) were independently re-tested live against HEAD and found fixed, but no verdict exists for 9112495. The security gate is unresolved, not cleared, and clearing it is not in the evaluator's gift.",
-    "stale_verdict_commit": "f4abd41",
-    "stale_verdict_pass": false,
-    "stale_verdict_blocking_findings": ["SEC-001", "SEC-002"]
+  "docker_available": false,
+  "boot_command": "cd backend && uv run uvicorn src.api.app:app --host 127.0.0.1 --port 8032",
+  "secondary_boot_command": "cd backend && uv run uvicorn src.api.app:app --host 127.0.0.1 --port 8232 --http h11",
+  "secondary_boot_purpose": "isolate whether the `method` label dimension is bounded by the application or by the HTTP parser (B-2 re-test only)",
+  "health_check": {
+    "url": "http://127.0.0.1:8032/health",
+    "attempts_used": 1,
+    "retries_allowed": 5,
+    "status": 200
   },
-  "browser_checks_contracted": false,
-  "browser_checks_note": "sprint-contracts/A.json declares api_checks only - no playwright_checks, no design_checks, no accessibility_checks. No frontend is served in group A. No browser tool was used and none was required.",
-  "checks": [
+  "servers_killed": true,
+  "tree_clean": true,
+  "production_source_mutated": false,
+  "frozen_artifacts_touched": [],
+  "contract_integrity": {
+    "file": "sprint-contracts/A.json",
+    "sha256": "a0625d4b737e36c76e628352fd2c130c8342187558f4e4dc4e5c30f1793e99a7",
+    "matches_contract_freeze_json": true,
+    "git_status_for_sprint_contracts": "clean"
+  },
+  "functional_verdict": "PASS",
+  "functional_verdict_scope": "the three frozen api_checks and the 16 story acceptance criteria of E15-S1, E9-S1, E11-S1 and E15-S4 — nothing wider",
+  "gate_recommendation": "BLOCK",
+  "gate_recommendation_basis": [
+    "B-4 still open and reproduced at full magnitude: a 9-byte wire string costs 421,223.8 ms of main-thread CPU through the public Money.fromWire(...).format() path",
+    "SEC-103's claimed fix (f5a5ace) is empirically inert: scrub_text is registration-driven and backend/src/ has zero register_sensitive call sites, so a 12-digit int Aadhaar and a PAN carried in a context key still egress on the wire"
+  ],
+  "deterministic_checks": {
+    "backend_pytest": "104 passed",
+    "backend_ruff": "All checks passed!",
+    "backend_mypy": "Success: no issues found in 12 source files",
+    "frontend_vitest": "18 passed",
+    "frontend_eslint": "clean",
+    "frontend_tsc": "clean",
+    "observability_contract_tests": "6 passed (tests/architecture/test_observability_contract.py)",
+    "no_float_money_tests": "42 passed"
+  },
+  "api_checks": [
     {
       "id": "QA-VM-003",
       "layer": "api",
       "matrix_ids": ["VM-003"],
       "verdict": "pass",
-      "request": "GET http://127.0.0.1:8001/health with header X-Request-ID: req-abc",
-      "expected_status": 200,
-      "actual_status": 200,
-      "response_header_x_request_id": "req-abc",
-      "log_lines_total": 1,
-      "log_lines_parsed_as_json": 1,
-      "log_lines_with_request_id_req_abc": 1,
-      "json_parse_rate_pct": 100,
-      "correlation_rate_pct": 100,
-      "vacuous": false,
-      "vacuity_note": "Literal denominator is 1 because GET /health genuinely emits exactly one log line. Not accepted on that alone - corroborated by four larger independent denominators, see corroborating_denominators.",
-      "interactions": ["curl", "byte-offset log delimitation", "node JSON.parse assertion per line"],
-      "artifacts": [
-        ".claude/state/g3eval2-server.log",
-        ".claude/state/g3eval2-lines003.txt",
-        ".claude/state/g3eval2-h003.txt"
-      ]
+      "request": "GET http://127.0.0.1:8032/health with header 'X-Request-ID: req-abc'",
+      "observed_status": 200,
+      "observed_headers": { "x-request-id": "req-abc", "content-type": "application/json" },
+      "observed_body": "{\"status\":\"ok\",\"database\":\"unconfigured\",\"version\":\"0.1.0\"}",
+      "log_lines_emitted_while_serving": 1,
+      "log_lines_parsing_as_json": 1,
+      "log_lines_carrying_request_id_req_abc": 1,
+      "percent_json": 100,
+      "interactions": ["curl -D - -H 'X-Request-ID: req-abc'", "byte-offset tail of the server's stdout log", "json.loads on each new line"],
+      "artifacts": [".claude/state/g3eval2i2-uvicorn-8032.log"]
     },
     {
       "id": "QA-VM-004",
       "layer": "api",
       "matrix_ids": ["VM-004"],
       "verdict": "pass",
-      "request": "GET http://127.0.0.1:8001/health with NO X-Request-ID header",
-      "expected_status": 200,
-      "actual_status": 200,
-      "generated_request_id": "85daf79199cf475faee136cb7965f0d7",
-      "response_header_echoes_generated_id": true,
-      "log_lines_total": 1,
-      "log_lines_parsed_as_json": 1,
-      "log_lines_sharing_the_generated_id": 1,
-      "generated_id_non_empty": true,
-      "vacuous": false,
-      "interactions": ["curl", "byte-offset log delimitation", "node header/log id equality assertion"],
-      "artifacts": [
-        ".claude/state/g3eval2-lines004.txt",
-        ".claude/state/g3eval2-h004.txt"
-      ]
+      "request": "GET http://127.0.0.1:8032/health with NO X-Request-ID header",
+      "observed_status": 200,
+      "generated_id": "6e2e8d01cd9e4de9bd6b021c809f5feb",
+      "id_echoed_on_response": true,
+      "id_identical_on_every_request_scoped_log_line": true,
+      "id_non_empty": true,
+      "failure_path_also_checked": "a forced RuntimeError produced a 500 that still carried x-request-id 1a6a9f67e41a4f3ba8e6b36fcd0ad7aa plus a correlated ERROR line with the same id (CR-003 stays closed)",
+      "interactions": ["curl -D -", "byte-offset tail of the server log", "TestClient against create_app(build_fastapi_app()) with an in-process throwaway route"],
+      "artifacts": [".claude/state/g3eval2i2-uvicorn-8032.log"]
     },
     {
       "id": "QA-VM-005",
       "layer": "api",
       "matrix_ids": ["VM-005"],
       "verdict": "pass",
-      "request": "GET http://127.0.0.1:8001/health",
-      "expected_status": 200,
-      "actual_status": 200,
+      "request": "GET http://127.0.0.1:8032/health x5",
+      "observed_statuses": [200, 200, 200, 200, 200],
+      "time_total_seconds": [0.001384, 0.001336, 0.001597, 0.001403, 0.001362],
+      "budget_seconds": 1,
+      "body_parsed_by_json_load": true,
       "content_type": "application/json",
-      "body": {"status": "ok", "database": "unconfigured", "version": "0.1.0"},
-      "body_parses_as_json": true,
-      "samples": 60,
-      "p50_ms": 1.27,
-      "p95_ms": 1.57,
-      "max_ms": 1.89,
-      "budget_ms": 1000,
-      "within_budget": true,
-      "interactions": ["curl -w time_total x60", "node percentile computation", "node JSON.parse of body"],
-      "artifacts": [".claude/state/g3eval2-perf.txt"]
+      "interactions": ["curl -w '%{http_code} %{time_total} %{content_type}'", "python json.load on the body"],
+      "artifacts": []
     }
   ],
-  "corroborating_denominators": [
+  "acceptance_criteria": [
     {
-      "probe": "GET /probe/chatty - handler emits two extra log lines",
-      "lines": 3,
-      "parsed_as_json": 3,
-      "carried_correct_request_id": 3,
-      "request_id": "req-abc",
-      "artifact": ".claude/state/g3eval2-chatty.txt"
+      "id": "E15-S1-AC1",
+      "verdict": "pass",
+      "qualifier": "surrogate — the literal Given has no endpoint in group A (POST /applications retargeted to group E)",
+      "evidence": "with values registered, scrub_text returns [REDACTED] for the exact PAN, Aadhaar and salary-document strings, in-sentence and with a trailing dash",
+      "caveat_ids": ["F-1", "F-1c"]
     },
     {
-      "probe": "GET /probe/boom - unhandled 500",
-      "lines": 3,
-      "parsed_as_json": 3,
-      "carried_correct_request_id": 3,
-      "request_id": "err-500",
-      "note": "includes uvicorn.error's own 'Exception in ASGI application' line, proving the contextvar is still bound when the server logs on the way out",
-      "artifact": ".claude/state/g3eval2-500.txt"
+      "id": "E15-S1-AC2",
+      "verdict": "pass",
+      "evidence": "independent enumeration under the real boot order (import src.api.app): 11/11 live loggers carry a RedactionFilter — root, asyncio, concurrent.futures, dotenv.main, fastapi, gunicorn.error, pydantic_settings, truelend.access, uvicorn, uvicorn.access, uvicorn.error. Miss-list empty.",
+      "note": "a partial import loading only src.config.logging shows truelend.access filterless; that is import order in my probe, not a defect — src/api/app.py imports the middleware before configure_logging runs. A logger created AFTER configure_logging carries no logger-level filter; redaction then rests on the root handler's filter. AC2 is a boot-time enumeration and passes."
+    },
+    { "id": "E15-S1-AC3", "verdict": "pass", "evidence": "= QA-VM-003; 100% JSON, 100% correct request_id; uvicorn.access is disabled=True so no non-JSON line competes" },
+    { "id": "E15-S1-AC4", "verdict": "pass", "evidence": "= QA-VM-004, including the 500 failure path" },
+    { "id": "E15-S1-AC5", "verdict": "pass", "evidence": "= QA-VM-005" },
+    {
+      "id": "E9-S1-AC1",
+      "verdict": "pass",
+      "qualifier": "scope-limited — no schedule generator exists in group A; tests/architecture/test_no_float_money.py:8 says so itself",
+      "evidence": "3,000 random principal/rate triples x 4 operations = 12,000 results, 0 that were not a Decimal with exponent == -2. float, bool and a float scalar all rejected with InvalidMoneyAmountError.",
+      "caveat_ids": ["F-5", "F-6"]
+    },
+    { "id": "E9-S1-AC2", "verdict": "pass", "evidence": "uv run pytest tests/architecture/test_no_float_money.py -q -> 42 passed; full suite 104 passed; ruff and mypy clean" },
+    {
+      "id": "E9-S1-AC3",
+      "verdict": "pass",
+      "evidence": "money.ts and MoneyText.tsx contain no Number(, parseFloat, parseInt, Math.*, toNumber, valueOf or +=; the static check carries negative controls that flag planted toNumber / float-literal / parseFloat / Number() snippets; 18 vitest tests pass, lint and tsc clean",
+      "caveat_ids": ["B-4"]
+    },
+    { "id": "E11-S1-AC1", "verdict": "pass", "evidence": "classify_by_days_past_due(35) -> DPD_30; floors confirmed at 0/30/60/90/180" },
+    { "id": "E11-S1-AC2", "verdict": "pass", "evidence": "exhaustive sweep 0..400 (401 values): every result a DelinquencyBucket; ranges CURRENT 0-29, DPD_30 30-59, DPD_60 60-89, DPD_90 90-179, NPA 180-400; each contiguous and adjacent — no gap, no overlap; -1 raises ValueError" },
+    { "id": "E11-S1-AC3", "verdict": "pass", "evidence": "classify(due=today+1d, as_of=today) -> CURRENT; classify(due=today, as_of=today) -> CURRENT; classify(due=today-35d, as_of=today) -> DPD_30" },
+    { "id": "E11-S1-AC4", "verdict": "pass", "evidence": "the result is a bare StrEnum member; no attribute matching fee/interest/charge/penal; five members, no sixth bucket, no orthogonal NPA flag" },
+    {
+      "id": "E15-S4-AC1",
+      "verdict": "pass",
+      "method": "did NOT grep for the metric name — served real traffic, scraped /metrics, parsed the exposition and ran the Prometheus histogram_quantile interpolation in my own code",
+      "exposition_shape": {
+        "bounds": ["0.005", "0.01", "0.025", "0.05", "0.1", "0.25", "0.5", "1", "2.5", "5", "10", "+Inf"],
+        "slo_boundary_0_5_present": true,
+        "labels": ["method", "route"],
+        "cumulative_monotonic": true,
+        "inf_bucket_equals_count": true,
+        "count_and_sum_present": true,
+        "distinct_series": 3
+      },
+      "p95_cross_check_against_empirical_truth": {
+        "sample_distribution": "940 x uniform(0.001,0.02) s plus a 60 x uniform(0.5,3.0) s tail, fed through observe_duration and rendered",
+        "q50": { "from_histogram_ms": 11.98, "empirical_ms": 11.32 },
+        "q90": { "from_histogram_ms": 23.82, "empirical_ms": 19.29 },
+        "q95": { "from_histogram_ms": 884.62, "empirical_ms": 934.22 },
+        "q99": { "from_histogram_ms": 3076.92, "empirical_ms": 2561.63 },
+        "correctly_reports_breach_of_500ms_budget": true
+      },
+      "project_sensor_agreement": "node .claude/scripts/slo-check.js --url http://127.0.0.1:8032 -> {\"verdict\":\"pass\",\"error_rate_pct\":0,\"p95_ms\":4.78740157480315}; p95_ms was permanently null before this story",
+      "caveat_ids": ["F-4"]
     },
     {
-      "probe": "12 concurrent GET /health with distinct ids",
-      "lines": 12,
-      "parsed_as_json": 12,
-      "carried_correct_request_id": 12,
-      "missing_ids": [],
-      "unexpected_ids": [],
-      "note": "zero contextvar cross-contamination between concurrent requests",
-      "artifact": ".claude/state/g3eval2-conc.txt"
-    },
-    {
-      "probe": "whole production server lifetime",
-      "lines": 180,
-      "parsed_as_json": 180,
-      "non_json": 0,
-      "request_scoped_with_non_empty_id": 176,
-      "with_empty_id": 4,
-      "empty_id_lines_are": "pre-request uvicorn.error startup lines (Started server process, Waiting for application startup, Application startup complete, Uvicorn running) - not emitted while serving a request, so out of AC3/AC4 scope",
-      "artifact": ".claude/state/g3eval2-server.log"
+      "id": "E15-S4-AC2",
+      "verdict": "pass",
+      "qualifier": "every reachable vector verified; latent gap F-3 recorded",
+      "log_side_vectors": [
+        { "vector": "%0D %09 %00 %07 %7F %22 %5C %1B[31m in the path", "physical_lines": 1, "json_parses": true, "raw_control_chars": 0, "rendered_as": "\\r \\t \\u0000 \\u0007 \\u007f \\\" \\\\ \\u001b[31m" },
+        { "vector": "%0A plus a complete forged JSON log record in the path", "physical_lines": 1, "json_parses": true, "raw_control_chars": 0, "injected_record_created": false, "note": "the forged record is escaped as data inside message; no line with level CRITICAL was created" },
+        { "vector": "%E2%80%A8 %E2%80%A9 (U+2028/U+2029) in the path", "physical_lines": 1, "raw_control_chars": 0, "rendered_as": "\\u2028\\u2029" },
+        { "vector": "X-Request-ID: a\"b\\c}d{e", "physical_lines": 1, "json_parses": true, "key_set_intact": true },
+        { "vector": "X-Request-ID: x\",\"level\":\"CRITICAL\",\"message\":\"FORGED", "physical_lines": 1, "json_parses": true, "level_remained": "INFO", "note": "the whole string is contained inside the request_id value" }
+      ],
+      "parser_rejected_before_reaching_a_log_call": ["raw CR in the request line", "ESC/DEL in a header value", "quote or backslash in the method token"],
+      "metrics_side": {
+        "forged_string_present_in_exposition": false,
+        "raw_control_chars_in_exposition": 0,
+        "raw_cr_in_payload": false,
+        "route_label_values_ever_observed": ["/health", "/metrics", "<unmatched>"]
+      },
+      "caveat_ids": ["F-3"]
     }
   ],
-  "uvicorn_access_counterfactual": {
-    "question": "Does disabling uvicorn.access make the '100% of log lines are JSON' claim easier to satisfy than E15-S1-AC3 intends?",
-    "answer": "Honest compliance in substance; the stated justification is factually false and the mechanism is broader than necessary.",
-    "gaming_the_denominator": false,
-    "modes_tested": [
-      {
-        "mode": "silenced",
-        "description": "production behaviour - logger.disabled=True, propagate=False, handlers cleared",
-        "line_emitted": null,
-        "parses_as_json": null,
-        "request_id": null
+  "round_2_block_dispositions": [
+    {
+      "id": "B-1",
+      "claim": "/metrics Prometheus exposition injection via percent-decoded scope['path'] f-strung into a label",
+      "disposition": "CLOSED",
+      "proof": "five raw-socket vectors: method-with-quote 400, method-with-backslash 400, CR-in-request-line 400, percent-encoded-CRLF-forged-series 404, percent-encoded-quote 404. Subsequent scrape: 'forged' absent, zero raw control characters, route label values ['/health','/metrics','<unmatched>']. scope['method'] is NOT freely attacker-controlled — quote, backslash, CR and LF are not tchar so the parser rejects them before ASGI. The 99.90%-error-rate forgery does not reproduce: the sensor reads error_rate_pct 0.",
+      "residual_finding": "F-3"
+    },
+    {
+      "id": "B-2",
+      "claim": "/metrics unbounded cardinality -> unauthenticated memory DoS",
+      "disposition": "CLOSED in the shipped configuration; REPRODUCED under --http h11",
+      "route_dimension": "bounded and measured — 20 distinct unrouted paths collapsed to the single <unmatched> bucket; the new _duration_counts/_duration_totals dicts inherit the bound because CorrelationIdMiddleware._observe reuses route_label(scope), and the histogram showed the same three route values as the counters",
+      "method_dimension_under_httptools": "bounded by llhttp's fixed method enum — PROPFIND and MKCOL accepted while FOO, M0000, XYZZY42 and an 80-char token all drew 400 before reaching ASGI; 400 crafted methods on one keep-alive connection yielded 1 method label value and 0 byte growth",
+      "method_dimension_under_h11": {
+        "baseline": { "method_label_values": 1, "exposition_lines": 46, "payload_bytes": 3797 },
+        "after_2000_crafted_methods_one_connection": { "method_label_values": 2003, "exposition_lines": 30049, "payload_bytes": 2384828 },
+        "after_20000_more_one_connection": { "method_label_values": 22003, "exposition_lines": 330064, "payload_bytes": 26484828, "payload_mb": 25.3 },
+        "growth_levelled_off": false,
+        "retained_for": "the process lifetime"
       },
-      {
-        "mode": "native",
-        "description": "re-enabled with uvicorn's own AccessFormatter, as uvicorn's default dictConfig leaves it",
-        "line_emitted": "INFO:     127.0.0.1:53135 - \"GET /health HTTP/1.1\" 200",
-        "parses_as_json": false,
-        "request_id": null,
-        "note": "This is the real AC3 hazard - something did have to be done. The line was NOT dropped by a ValueError even with redaction actively firing, so the second stated reason is not reproducible either."
+      "why_still_closed": "backend/pyproject.toml pins uvicorn[standard]; backend/uv.lock carries httptools 0.8.0 with no platform marker; specs/design/deployment.md starts uvicorn with no --http flag — so the shipped path is httptools. The app applies no bound of its own to `method`; the bound is an accident of the parser.",
+      "recorded_as": "F-2",
+      "slo_sensor_under_pollution": "the 25.3 MB /metrics still parsed in 0.57 s and still returned verdict pass — the damage is to memory and the metrics store, not to the sensor's answer",
+      "artifacts": [".claude/state/g3eval2i2-uvicorn-8232-h11.log"]
+    },
+    {
+      "id": "B-3",
+      "claim": "errors.py discarded HTTPException.headers — 405 lost Allow, 401 lost WWW-Authenticate",
+      "disposition": "CLOSED",
+      "proof": [
+        "POST /health (live, port 8032) -> 405 with 'allow: GET' and body {\"error\":\"HTTPError\",\"detail\":\"Method Not Allowed\",\"context\":{}}",
+        "HTTPException(401, headers={'WWW-Authenticate': 'Bearer realm=\"truelend\"'}) -> 401 with the header intact and body {\"error\":\"Unauthorized\",...}",
+        "GET /no-such-route -> 404 {\"error\":\"NotFound\",\"detail\":\"Not Found\",\"context\":{}}",
+        "POST /probe/validate with a bad type -> 422 {\"error\":\"ValidationError\",\"detail\":\"request validation failed\",\"context\":{\"field\":\"body.amount\"}} — reports the location, never the rejected value",
+        "RuntimeError -> 500 {\"error\":\"InternalServerError\",\"detail\":\"internal server error\",\"context\":{}} in application/json with x-request-id present; body leaks no filesystem path (False), no connection string (False), no SQL (False)"
+      ],
+      "note": "probe routes were registered on build_fastapi_app() inside my own process; no repository file was modified"
+    },
+    {
+      "id": "B-4",
+      "claim": "frontend/src/types/money.ts:78 thousands-separator lookahead is quadratic",
+      "disposition": "STILL OPEN",
+      "isolated_regex_measurement": {
+        "expression": "digits.replace(/\\B(?=(\\d{3})+(?!\\d))/g, \",\")  — no toFixed involved",
+        "samples": [
+          { "digits": 100, "ms": 0.0 },
+          { "digits": 1000, "ms": 0.4 },
+          { "digits": 5000, "ms": 8.6 },
+          { "digits": 10000, "ms": 37.3 },
+          { "digits": 20000, "ms": 158.5, "ratio_vs_previous": 4.25 },
+          { "digits": 40000, "ms": 652.6, "ratio_vs_previous": 4.12 },
+          { "digits": 80000, "ms": 2661.2, "ratio_vs_previous": 4.08 }
+        ],
+        "conclusion": "doubling the input quadruples the time across three consecutive doublings — quadratic, confirmed"
       },
-      {
-        "mode": "routed",
-        "description": "re-enabled and propagated through the JSON root handler - the exact treatment uvicorn.error already receives",
-        "line_emitted": "{\"logger\": \"uvicorn.access\", \"message\": \"127.0.0.1:63273 - \\\"GET /health HTTP/1.1\\\" 200\", \"request_id\": \"req-abc\"}",
-        "parses_as_json": true,
-        "request_id": "req-abc",
-        "note": "Correct id. Satisfies AC3 fully AND preserves client address, HTTP version and query string."
-      }
-    ],
-    "false_claims_in_source_comment": [
-      {
-        "location": "backend/src/config/logging.py:217-223",
-        "claim": "request_id_var is already reset by the time it emits (it logs after the response completes, outside the middleware scope)",
-        "status": "FALSE",
-        "disproof_empirical": "routed mode printed request_id: \"req-abc\"",
-        "disproof_source": ".venv/Lib/site-packages/uvicorn/protocols/http/httptools_impl.py:484-492 emits self.access_logger.info(...) inside RequestResponseCycle.send() at http.response.start, synchronously inside the await send(message) made by CorrelationIdMiddleware._stamping_send, while the contextvar is still bound"
-      },
-      {
-        "location": "backend/src/config/logging.py:220-222",
-        "claim": "its AccessFormatter reads record.args, which RedactionFilter clears, raising ValueError and dropping the line entirely",
-        "status": "MOOT under routing, and not reproducible in native mode",
-        "disproof": "routed mode never invokes AccessFormatter; native mode printed the line even with redaction firing, because RedactionFilter only clears record.args when the scrub changes the message and an access record contains no PII"
-      }
-    ],
-    "artifacts": [
-      ".claude/state/g3eval2-routed.log",
-      ".claude/state/g3eval2-native.log"
-    ]
-  },
-  "story_acceptance_criteria": [
-    {"id": "E15-S1-AC1", "verdict": "pass", "evidence": "GET /probe/pii -> 'pan=[REDACTED] aadhaar=[REDACTED] lower=[REDACTED]'; spaced and lowercase forms both caught. GET /probe/piiboom (PII inside an escaping exception) -> 0 occurrences of ABCDE1234F and 0 of 123456789012 across all 3 log lines", "artifact": ".claude/state/g3eval2-piiboom.txt"},
-    {"id": "E15-S1-AC2", "verdict": "pass", "caveat": "F-2E", "evidence": "9 loggers enumerated at configure_logging time, 0 without a RedactionFilter. Two loggers created afterwards carry 0, but redaction still holds via the root handler filter (verified pan=[REDACTED])"},
-    {"id": "E15-S1-AC3", "verdict": "pass", "evidence": "1/1 for /health; 3/3 for a 3-line handler; 180/180 JSON over the server lifetime"},
-    {"id": "E15-S1-AC4", "verdict": "pass", "evidence": "generated id 85daf79199cf475faee136cb7965f0d7 appeared identically in the response header and the log line"},
-    {"id": "E15-S1-AC5", "verdict": "pass", "evidence": "60 samples, max 1.89 ms, all 200 with application/json"},
-    {"id": "E9-S1-AC1", "verdict": "pass", "caveat": "F-2G", "evidence": "200 random principal/rate/tenure triples; every money field has as_tuple().exponent == -2. Verified by proxy on Money arithmetic - no schedule generator exists in group A"},
-    {"id": "E9-S1-AC2", "verdict": "pass", "evidence": "39 tests in tests/architecture/test_no_float_money.py pass; AST guard reports 0 for money.py and serializers.py; catches true/floor division, math import and attribute access, float() calls, float literals and ** 0.5"},
-    {"id": "E9-S1-AC3", "verdict": "pass", "evidence": "frontend npm test 18/18, npm run lint clean, npm run typecheck clean"},
-    {"id": "E11-S1-AC1", "verdict": "pass", "evidence": "classify_by_days_past_due(35) -> DPD-30"},
-    {"id": "E11-S1-AC2", "verdict": "pass", "evidence": "401 values 0..400 compared against an independently written oracle: 0 mismatches; all 5 buckets observed; boundaries exact at 0/29/30/59/60/89/90/179/180/400; negative dpd raises ValueError"},
-    {"id": "E11-S1-AC3", "verdict": "pass", "evidence": "classify(due=2026-09-20, as_of=2026-09-14) -> CURRENT; due == as_of -> CURRENT"},
-    {"id": "E11-S1-AC4", "verdict": "pass", "evidence": "StrEnum with exactly 5 members; 0 public attributes matching fee/interest/charge/penal/amount/money"}
-  ],
-  "error_envelope": [
-    {"case": "framework 404", "request": "GET /no-such-route", "status": 404, "body": {"error": "NotFound", "detail": "Not Found", "context": {}}, "x_request_id": "err-404", "verdict": "pass"},
-    {"case": "framework 405", "request": "POST /health", "status": 405, "body": {"error": "HTTPError", "detail": "Method Not Allowed", "context": {}}, "x_request_id": "err-405", "verdict": "pass"},
-    {"case": "framework 422 (wrong type)", "request": "POST /probe/validate {\"amount\":\"not-a-number\"}", "status": 422, "body": {"error": "ValidationError", "detail": "request validation failed", "context": {"field": "body.amount"}}, "x_request_id": "err-422", "verdict": "pass", "note": "does not echo the rejected value"},
-    {"case": "framework 422 (missing field)", "request": "POST /probe/validate {}", "status": 422, "body": {"error": "ValidationError", "detail": "request validation failed", "context": {"field": "body.amount"}}, "x_request_id": "err-422b", "verdict": "pass"},
-    {"case": "unhandled 500", "request": "GET /probe/boom", "status": 500, "body": {"error": "InternalServerError", "detail": "internal server error", "context": {}}, "x_request_id": "err-500", "verdict": "pass", "note": "the RuntimeError message did not cross the boundary; the traceback was logged, scrubbed and correlated"},
-    {"case": "500 carries X-Request-ID", "verdict": "pass", "evidence": "x-request-id: err-500 present on the 500 response; CorrelationIdMiddleware is mounted outside ServerErrorMiddleware and stamps http.response.start whoever produced it"},
-    {"case": "GET /health shape", "verdict": "pass", "evidence": "{status, database, version} - all three keys present, body parses as JSON"}
-  ],
-  "prior_block_findings_retested": [
-    {"id": "CR-001", "claim": "envelope applied only to AppError; framework 404/422 and unhandled 500 bypassed it", "verdict": "fixed", "method": "live 404/405/422/500 against a booted app; all four returned the envelope and carried x-request-id"},
-    {"id": "CR-002", "claim": "registered PII leaks unredacted with an empty request_id when the exception escapes the redact_values scope", "verdict": "fixed", "method": "GET /probe/piiboom - 0 PII occurrences, all 3 lines correlated"},
-    {"id": "CR-003", "claim": "per-line money-guard exemption silenced every float category", "verdict": "fixed", "method": "guard source exempts only is_division; test_division_exemption_does_not_silence_other_float_categories present with 3 cases; 39/39 pass"},
-    {"id": "SEC-001", "claim": "catastrophic regex backtracking (ReDoS), 199326 ms at haystack length 40", "verdict": "fixed", "method": "re-attacked with four shapes of my own construction, not the recorded probe", "measurements": [
-      {"shape": "A - long no-separator value vs 4-separator-packed near-miss haystack", "value_lengths": [10, 16, 20, 24, 28, 32, 40, 60], "ms": [0.111, 0.127, 0.157, 0.174, 0.19, 0.216, 0.364, 0.404]},
-      {"shape": "B - repeated-char value vs separator-dense haystack", "value_lengths": [10, 20, 30, 40], "ms": [0.084, 0.146, 0.219, 0.287]},
-      {"shape": "C - repeated-prefix x3 plus 500-char tail", "value_lengths": [12, 20, 30], "ms": [0.093, 0.005, 0.213]},
-      {"shape": "D - 4998-char pure-separator haystack", "value_lengths": [12, 24, 48], "ms": [0.015, 0.015, 0.383]}
-    ], "structural_reason": "the separator class and the literal characters are disjoint - a value containing a separator takes the re.escape literal branch - so the run length at each position is forced by the input, leaving no ambiguity to backtrack through"},
-    {"id": "SEC-002", "claim": "PII in an exception message bypasses redaction and is logged at ERROR", "verdict": "fixed", "method": "GET /probe/piiboom with PAN and Aadhaar in the RuntimeError message; grep -c returned 0 for both values across all 3 emitted lines"},
-    {"id": "SEC-003", "claim": "AppError.context is an unfiltered outbound channel", "verdict": "fixed", "method": "422 returns only {field: body.amount}; 500 returns context {}; sanitise_context drops non-scalars, credential URIs and values over 200 chars, and scrubs registered PII"}
-  ],
-  "injection_surface_tested": [
-    {"vector": "log forging via forged JSON in X-Request-ID", "payload": "x\",\"level\":\"CRITICAL\",\"message\":\"forged", "result": "not exploitable - json.dumps escaped it; no forged CRITICAL line appeared", "verdict": "pass"},
-    {"vector": "CRLF HTTP response splitting", "method": "raw socket with an embedded \\r\\nX-Injected: yes", "result": "blocked at the protocol layer; the app saw X-Request-ID: a", "verdict": "pass"},
-    {"vector": "unbounded X-Request-ID length", "payload": "8000 x 'A'", "result": "accepted, reflected into the response header, and written at full length into every log line for that request", "verdict": "finding F-2C"},
-    {"vector": "HTML payload reflected into a response header", "payload": "<script>alert(1)</script>", "result": "reflected verbatim", "verdict": "finding F-2C"},
-    {"vector": "metrics label cardinality", "method": "150 unauthenticated requests to distinct nonexistent paths", "result": "154 series, 10302-byte /metrics response, counter never evicts", "verdict": "finding F-2B"}
+      "reachability_through_the_public_api": [
+        { "wire": "1e100000", "wire_bytes": 8, "fromWire_ms": 0.1, "toWire_toFixed_ms": 0.6, "integer_digits": 100001, "format_ms": 4129.6 },
+        { "wire": "1e1000000", "wire_bytes": 9, "toWire_toFixed_ms": 29.9, "integer_digits": 1000001, "format_ms": 421223.8 }
+      ],
+      "round_2_refutation_explained": "the cost is entirely in format(); toFixed is 0.6 ms and 29.9 ms — round 2's refuting instance timed a sink roughly 7,000x cheaper than the real one. Both of round 2's original figures reproduce (4,152 ms; 'did not finish in 100 s' — it needs 421 s).",
+      "upstream_bound": "none — Money's constructor is private, fromWire is the only door, and toQuantizedDecimal checks only isFinite(); decimal.js treats 1e1000000 as finite, and toDecimalPlaces(2) constrains the scale, never the exponent",
+      "caller_reachable_path": "MoneyText.tsx:15 is Money.fromWire(money).format() on a `string` prop, so a wire value straight off the API reaches the regex with no intermediate validation — a 9-byte server-supplied amount freezes the browser main thread for seven minutes",
+      "touched_by_any_remediation_commit": false,
+      "fails_an_acceptance_criterion": false,
+      "ac_rationale": "no AC names algorithmic complexity; E9-S1-AC3 asserts decimal-not-float, which holds. This is the basis of the BLOCK recommendation, not of a functional FAIL.",
+      "probe_file": "frontend/tests/unit/_eval_i2_b4.test.ts — created, run under vitest, deleted; tree verified clean afterwards"
+    }
   ],
   "findings": [
-    {"id": "F-2A", "severity": "major", "criterion": "E15-S1-AC3 mechanism / maintainability / operational completeness", "location": "backend/src/config/logging.py:217-238", "finding": "uvicorn.access is disabled on two factually false premises, when routing it through the JSON root handler (the treatment uvicorn.error already gets) demonstrably yields a valid JSON line carrying the correct request_id. disabled=True permanently drops client address, HTTP version and query string from the operational record and suppresses any future uvicorn.access WARNING/ERROR.", "blocks_frozen_checks": false, "suggestion": "Move \"uvicorn.access\" from _SILENCED_LOGGERS to _JSON_ROUTED_LOGGERS and correct the comment."},
-    {"id": "F-2B", "severity": "medium", "criterion": "availability / observability integrity", "location": "backend/src/api/middleware.py:49,75", "finding": "The RED counter is labelled with the raw request path, not the matched route template, and _request_counts is a module-level Counter that never evicts. 150 unauthenticated requests to distinct nonexistent paths produced 154 series and a 10302-byte /metrics response. Unbounded attacker-driven memory growth and metric-cardinality explosion on an unauthenticated endpoint the runtime-SLO sensor scrapes.", "blocks_frozen_checks": false, "suggestion": "Label with the matched route (scope[\"route\"].path) or bucket unmatched paths to a single __unmatched__ label."},
-    {"id": "F-2C", "severity": "medium", "criterion": "user input handling", "location": "backend/src/api/middleware.py:86-87", "finding": "Inbound X-Request-ID is accepted with no length or charset validation. An 8000-character value was reflected verbatim into the response header and written at full length into every log line. Not injection (log forging and CRLF splitting both verified blocked), but unbounded attacker-controlled data written to the log sink E15-S1 exists to protect.", "blocks_frozen_checks": false, "suggestion": "Accept the inbound id only if it matches an opaque-token shape such as ^[A-Za-z0-9._-]{1,128}$, else generate one."},
-    {"id": "F-2D", "severity": "minor", "criterion": "PII control - silent failure", "location": "backend/src/config/logging.py:94,122-129", "finding": "register_sensitive silently ignores any value shorter than _MIN_REDACTABLE_LENGTH (6). _scrub('secret=AB123 here', ['AB123']) returns the string unchanged. A caller registering a short identifier gets no signal that it is unprotected.", "blocks_frozen_checks": false, "suggestion": "Log a warning, or raise, when a registered value falls below the threshold."},
-    {"id": "F-2E", "severity": "minor", "criterion": "E15-S1-AC2 oracle strength", "location": "backend/src/config/logging.py:241-250", "finding": "The AC2 oracle is a boot-time snapshot that decays. 9/9 loggers carry a RedactionFilter at configure_logging time; two loggers created afterwards carry 0. Redaction still holds via the root handler filter, so AC1 is safe today. Forward risk: a later story adding propagate=False plus its own handler - exactly what uvicorn does - bypasses the only load-bearing filter.", "blocks_frozen_checks": false, "suggestion": "Install the filter via a logging.setLoggerClass hook, or assert the invariant at request time rather than once at boot."},
-    {"id": "F-2F", "severity": "minor", "criterion": "performance of a cross-cutting control", "location": "backend/src/config/logging.py:122-129", "finding": "_scrub is O(registered values x text length) per log line. 200 registered values against a 4000-char line costs 23.7 ms of CPU for one line. No group-A caller registers anything, but the project SLO is p95_ms 500.", "blocks_frozen_checks": false, "suggestion": "Consider a single combined alternation pattern, or cap the number of registered values per request."},
-    {"id": "F-2G", "severity": "minor", "criterion": "E9-S1-AC1 traceability", "location": "backend/tests/architecture/test_no_float_money.py:247-268", "finding": "AC1's literal subject - 'when a schedule is computed from each triple' - does not exist in group A; it is verified by proxy on Money arithmetic over 200 random triples. The test file discloses this, and it parallels the contract retargeting in the context pack section 3, so it is a defensible narrowing - but AC1 is not closed as worded until the schedule generator lands.", "blocks_frozen_checks": false, "suggestion": "Re-assert AC1 against the real schedule generator when E9-S3 lands."},
-    {"id": "F-2H", "severity": "info", "criterion": "reproducibility of a documented gate command", "location": "backend/_probe_*.py (7 untracked files)", "finding": "cd backend && uv run ruff check . now returns 41 errors and does not reproduce the context pack section 5 claim 'All checks passed'. All 41 are in untracked _probe_*.py files from a sibling instance or an earlier session. uv run ruff check src/ tests/ is clean - no product source is affected.", "blocks_frozen_checks": false, "suggestion": "Delete backend/_probe_* before re-running the gate."},
-    {"id": "F-2I", "severity": "blocking-process", "criterion": "security gate freshness", "location": "specs/reviews/security-verdict.json", "finding": "The file self-reports commit f4abd41, two commits behind HEAD 9112495, and reports pass:false. Its only two blocking findings (SEC-001, SEC-002) were re-tested live against HEAD and found fixed. It is a snapshot of a superseded tree and must not be read as the current verdict - but no verdict exists for 9112495, so the security gate is unresolved, not cleared.", "blocks_frozen_checks": false, "blocks_overall_gate": true, "suggestion": "Regenerate the security verdict against 9112495 with the security-reviewer running in this round."}
+    { "id": "F-1", "severity": "major", "criterion": "E15-S1-AC1 oracle strength", "location": "backend/src/config/logging.py + every handler", "finding": "Redaction is inert in production: grep -rn register_sensitive backend/src/ finds only a docstring and the definition — zero call sites. With nothing registered, scrub_text returns every PAN, Aadhaar, salary-document name, absolute path and connection string unchanged. Observed live: GET /applicants/ABCDE1234F/123412341234 logged \"message\": \"GET /applicants/ABCDE1234F/123412341234 -> 404\", and X-Request-ID: ABCDE1234F-123412341234 logged \"request_id\": \"ABCDE1234F-123412341234\" — raw PAN and raw Aadhaar in the log sink, on the only endpoints that exist. AC1 passes because its fixture registers the values itself. ba457bf added the call sites to the story text of E1-S1 and E4-S1; no code carries one.", "blocks_frozen_checks": false, "suggestion": "Either land a call site now, or add a request-time assertion so the criterion cannot pass while the substrate is inert." },
+    { "id": "F-1b", "severity": "major", "criterion": "SEC-103 remediation claim", "location": "backend/src/api/errors.py:66-101", "finding": "f5a5ace's fix is structurally inert. sanitise_context now routes ints and keys through scrub_text, but scrub_text is registration-driven, so with nothing registered an AppError context egressed on the wire: \"aadhaar_int\": 123412341234 (12-digit Aadhaar, whole, as an int), \"pan-ABCDE1234F\": \"ok\" (PAN in the key, verbatim), \"path\": \"C:/Users/rosuo/secret/payslip.pdf\" (absolute path). The connection string, the nested mapping and the 300-char value WERE dropped — those use pattern and length rules rather than registration. Round-2 SEC-003 is still open.", "blocks_frozen_checks": false, "axis": "security", "suggestion": "Add pattern-based rules for Aadhaar/PAN shapes and for absolute paths, independent of registration." },
+    { "id": "F-1c", "severity": "major", "criterion": "redaction completeness", "location": "backend/src/config/logging.py:132", "finding": "Redaction bypass by formatting, confirmed far past the 5-dash case. With ABCDE1234F / 123412341234 / salary_slip_march.pdf all registered: exact, spaced and dashed Aadhaar redact; dotted, underscored, slashed, NBSP-, soft-hyphen-, zero-width- and fullwidth-separated forms all egress unchanged.", "blocks_frozen_checks": false, "axis": "security", "suggestion": "Normalize (NFKC + strip separators and format-control characters) then match." },
+    { "id": "F-2", "severity": "major", "criterion": "B-2 residue", "location": "backend/src/api/middleware.py:60-63,132,141", "finding": "`method` is an unbounded label dimension in the app's own code. Under --http h11 one keep-alive connection minted 22,003 method label values, 330,064 exposition lines and a 25.3 MB /metrics payload, retained for the process lifetime. httptools bounds it today by accident of llhttp's method enum, not by anything the application does.", "blocks_frozen_checks": false, "suggestion": "Bound `method` to a known-method allow-list beside route_label, collapsing anything else to one <unknown> bucket. Three lines." },
+    { "id": "F-3", "severity": "major", "criterion": "E15-S4-AC2 robustness", "location": "backend/src/api/platform/routes.py:78-83", "finding": "_escape_label is not a general escaper. Measured: LF, quote and backslash are escaped; CR, TAB, NUL, BEL, ESC and DEL all survive as raw control characters. AC2's 'no raw control character' holds in the exposition today only because no attacker-controlled string can currently reach a label. The first story that labels a series with user-derived text breaks AC2 with no test failing.", "blocks_frozen_checks": false, "suggestion": "Escape or reject the whole C0/C1 range, not three characters." },
+    { "id": "F-4", "severity": "minor", "criterion": "E15-S4-AC1 label accuracy", "location": "backend/src/api/middleware.py:60-63", "finding": "/openapi.json, /docs and /redoc are real routed endpoints but label as route=\"<unmatched>\" — 61 successful 200s landed in the same bucket as 20 garbage-path 404s. route_label() reads scope['route'].path, which FastAPI's APIRoute populates and the plain Starlette routes FastAPI mounts for its docs do not.", "blocks_frozen_checks": false, "suggestion": "Fall back to the matched Starlette route's path when scope['route'] is absent but the status is not 404." },
+    { "id": "F-5", "severity": "minor", "criterion": "E9-S1-AC1 specification", "location": "specs/stories/E9-S1.md", "finding": "AC1's Given names a schedule this story never builds. The criterion is unsatisfiable end-to-end inside group A and its test is a Money-level surrogate that tests/architecture/test_no_float_money.py:8 admits in its own docstring.", "blocks_frozen_checks": false, "axis": "spec", "suggestion": "Re-point the AC at Money, or move it to E9-S3." },
+    { "id": "F-6", "severity": "major", "criterion": "typed-error contract", "location": "backend/src/types/money.py:91-101 (catch at :76 covers only InvalidOperation)", "finding": "Money.multiply lets a bare decimal.Overflow escape — round 2's dispute resolved by execution. Money(Decimal('1.00')).multiply(Decimal('1e1000000')) raises decimal.Overflow, NOT the documented InvalidMoneyAmountError, in 0.000 s (round 2's 9,708 ms reading was noise; the escape is instantaneous and real). 1e999999 is caught correctly; the cliff is at Emax. Overflow is an ArithmeticError, so the API boundary maps it to a generic 500 instead of a typed 4xx.", "blocks_frozen_checks": false, "suggestion": "Catch decimal.DecimalException (or at least Overflow and Underflow) in multiply and _quantize." },
+    { "id": "F-7", "severity": "major", "criterion": "availability", "location": "backend/src/api/middleware.py:151-152", "finding": "X-Request-ID is unvalidated and unbounded — worse than round 2 recorded. A 1 MB header value was accepted, echoed on the response, and produced a single log line of 1,048,722 bytes. One request writes 1 MB to the log sink; the amplification is uncapped.", "blocks_frozen_checks": false, "suggestion": "Cap the inbound id (e.g. 128 chars, [A-Za-z0-9._-]) and regenerate on violation." },
+    { "id": "F-8", "severity": "major", "criterion": "network boundary", "location": "FastAPI redirect_slashes, backend/src/api/app.py:36", "finding": "Host-header-reflected open redirect, still open. GET /health/ with Host: evil.example -> 307 with location: http://evil.example/health; Host: attacker.test:8080 -> location: http://attacker.test:8080/health.", "blocks_frozen_checks": false, "axis": "security", "suggestion": "Add TrustedHostMiddleware, or build redirects relative." },
+    { "id": "F-9", "severity": "minor", "criterion": "security headers", "location": "backend/src/api/app.py", "finding": "No security response headers on /health: Strict-Transport-Security, Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Cache-Control all absent. Server: uvicorn disclosed.", "blocks_frozen_checks": false, "axis": "security" },
+    { "id": "F-10", "severity": "minor", "criterion": "public surface", "location": "backend/src/api/app.py:36, platform/routes.py:126", "finding": "/docs (200, 1015 B), /redoc (200, 897 B), /openapi.json (200, 738 B) and /metrics (200, 13,310 B) are all unauthenticated. The /metrics deferral is documented in E15-S4 Scope Out and I judge it ACCEPTABLE — auth genuinely needs the api-contracts.md amendment and the E1-S1 auth layer, and a bare RED counter set on a pre-production build is low-value to an attacker. F-2 raises the stakes: an unauthenticated 25.3 MB response is amplification, so the deferral should be revisited the moment F-2 is fixed rather than at E1-S1. The interactive docs surfaces carry no such documented deferral.", "blocks_frozen_checks": false, "axis": "security" },
+    { "id": "F-11", "severity": "minor", "criterion": "HTTP conformance", "location": "backend/src/api/platform/routes.py:63", "finding": "HEAD /health -> 405, still open. RFC 9110 9.3.2: a server supporting GET on a resource ought to support HEAD. Container and load-balancer probes commonly use HEAD.", "blocks_frozen_checks": false },
+    { "id": "F-12", "severity": "minor", "criterion": "error envelope vocabulary", "location": "backend/src/api/errors.py:34-41", "finding": "_STATUS_ERROR_NAMES has no entry for 405, so the envelope reads \"error\":\"HTTPError\" rather than a named MethodNotAllowed.", "blocks_frozen_checks": false },
+    { "id": "F-13", "severity": "minor", "criterion": "log-sink hygiene", "location": "backend/src/api/middleware.py:166", "finding": "The 500's traceback is logged with absolute filesystem paths, the database connection string and the SQL text intact. It stays out of the response body, correctly, but the log sink receives it unscrubbed — a direct consequence of F-1.", "blocks_frozen_checks": false }
   ],
-  "deterministic_suites": {
-    "backend_pytest": {"command": "cd backend && uv run pytest -q", "result": "88 passed, 2 warnings, 0.15s", "verdict": "pass"},
-    "backend_ruff_product": {"command": "uv run ruff check src/ tests/", "result": "All checks passed", "verdict": "pass"},
-    "backend_ruff_all": {"command": "uv run ruff check .", "result": "41 errors, all in untracked _probe_*.py", "verdict": "finding F-2H"},
-    "backend_mypy": {"command": "uv run mypy src/", "result": "Success: no issues found in 12 source files", "verdict": "pass"},
-    "frontend_test": {"command": "cd frontend && npm test", "result": "18 passed (1 file)", "verdict": "pass"},
-    "frontend_lint": {"command": "npm run lint", "result": "clean", "verdict": "pass"},
-    "frontend_typecheck": {"command": "npm run typecheck", "result": "clean", "verdict": "pass"}
-  },
   "performance": {
-    "endpoint": "GET /health",
-    "samples": 60,
-    "p50_ms": 1.27,
-    "p95_ms": 1.57,
-    "max_ms": 1.89,
-    "slo_p95_ms": 500,
-    "within_slo": true,
-    "baseline_present": false,
-    "ratchet_verdict": "WARN - no baseline on disk (first/greenfield build), nothing to regress against",
-    "matrix_ids": ["VM-005"],
-    "artifact": ".claude/state/g3eval2-perf.txt"
+    "ratchet_verdict": "WARN",
+    "reason": "specs/brownfield/perf-baseline.json does not exist, so --compare has nothing to regress against — a first/greenfield build, which is a WARN not a FAIL",
+    "measured": { "endpoint": "/health", "samples": 40, "p50_ms": 0.62, "p95_ms": 0.93, "p99_ms": 1.76, "budget_p95_ms": 500 },
+    "command": "node .claude/scripts/perf-baseline.js --measure --base http://127.0.0.1:8032 --endpoints /health --samples 40",
+    "recommendation": "capture the baseline so round 4 has a real ratchet"
   },
   "slo": {
-    "error_rate_pct_observed": 0,
-    "error_rate_pct_budget": 1,
-    "within_budget": true,
-    "note": "The only 5xx produced in this run was the deliberate GET /probe/boom negative test, which ran against the evaluator probe harness, not the production app."
+    "verdict": "pass",
+    "command": "node .claude/scripts/slo-check.js --url http://127.0.0.1:8032",
+    "output": { "verdict": "pass", "error_rate_pct": 0, "p95_ms": 4.78740157480315, "budgets": { "error_rate_pct": 1, "p95_ms": 500 }, "breaches": [] },
+    "note": "counts only 5xx, so 22 deliberate 404s and 8 405s did not trip it — correct behaviour"
   },
-  "scope_discipline": {
-    "sprint_contract_edited": false,
-    "features_json_edited": false,
-    "features_json_owner": "instance 1",
-    "production_code_generated_or_fixed": false,
-    "files_written": [
-      "specs/reviews/evaluator-report-instance2.md",
-      "specs/reviews/evaluator-evidence-instance2.json",
-      ".claude/state/g3eval2_probe.py",
-      ".claude/state/g3eval2-*.log",
-      ".claude/state/g3eval2-*.txt"
-    ],
-    "probe_harness": {
-      "path": ".claude/state/g3eval2_probe.py",
-      "is_production_code": false,
-      "composition": "create_app(build_fastapi_app() + throwaway routes) - the same composition the production path uses",
-      "why_needed": "group A has no route that can produce a 422 or an unhandled 500, and none that emits more than one log line, so the error envelope and the multi-line denominator could not be exercised against the production app alone",
-      "cleanup_required": true,
-      "cleanup_note": "delete .claude/state/g3eval2_probe.py and the g3eval2-* artefacts after the gate; retained now only so the F-2A counterfactual is reproducible"
-    },
-    "server_killed": true,
-    "ports_touched": [8001],
-    "ports_not_touched": [8000, 8002]
+  "accessibility": {
+    "verdict": "not_applicable",
+    "reason": "the frozen contract declares no accessibility_checks and there is no frontend route to audit"
   },
-  "reading_scope": [
-    "specs/reviews/review-context-pack.md",
-    "sprint-contracts/A.json",
-    "specs/stories/E15-S1.md",
-    "specs/stories/E9-S1.md",
-    "specs/stories/E11-S1.md",
-    "backend/src/config/logging.py",
-    "backend/src/config/settings.py",
-    "backend/src/config/delinquency.py",
-    "backend/src/types/money.py",
-    "backend/src/types/delinquency.py",
-    "backend/src/api/app.py",
-    "backend/src/api/middleware.py",
-    "backend/src/api/errors.py",
-    "backend/src/api/platform/routes.py",
-    "backend/tests/architecture/test_no_float_money.py",
-    "backend/.venv/Lib/site-packages/uvicorn/protocols/http/httptools_impl.py:470-500"
+  "playwright": {
+    "verdict": "not_applicable",
+    "reason": "the frozen contract declares no playwright_checks or design_checks; nothing was recorded as passed that I could not execute"
+  },
+  "untested": [
+    { "item": "E15-S1-AC1 end-to-end", "reason": "no endpoint in group A accepts an application payload; POST /applications belongs to group E. Verified at the substrate and flagged F-1." },
+    { "item": "E9-S1-AC1 at the schedule layer", "reason": "no schedule generator exists (group E). Flagged F-5." },
+    { "item": "SAST and secrets tiers", "reason": "gitleaks, semgrep and pip-audit are unprovisioned per the pack — unscanned, not passed" },
+    { "item": "route_label behind a proxy with root_path", "reason": "not exercised; no deployment to test against" }
   ],
-  "reading_scope_excluded": [
-    "the build transcript",
-    "prior verdict files treated as authority",
-    ".claude/state/uvicorn.log (36 MB)",
-    "unrelated repo source"
-  ]
+  "artifacts": [
+    ".claude/state/g3eval2i2-uvicorn-8032.log",
+    ".claude/state/g3eval2i2-uvicorn-8232-h11.log",
+    "specs/reviews/evaluator-report-instance2.md"
+  ],
+  "features_json_modified": false,
+  "features_json_note": "instance 1 owns features.json; not touched"
 }

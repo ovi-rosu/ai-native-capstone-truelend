@@ -55,6 +55,136 @@ the chain instead of re-rendering:
   5. re-record the spec and test receipts, contract-freeze.js, plan-seal.js write
 Check the same hazard before running any *-render-write.js mid-build.
 
+=== Session 6 ===
+date: 2026-09-14T13:40:00.000Z
+mode: /gate --group A (round 3, on-demand pre-merge)
+groups_completed: []
+groups_remaining: [A (GATE = BLOCK, 1 finding), B, C, D, E, F, G, H, I, J, K, L, M]
+current_group: A (gated, not merged)
+current_stories: [E15-S1, E9-S1, E11-S1, E15-S4 (new)]
+sprint_contract: sprint-contracts/A.json (re-frozen after E15-S4 appended; 13/13 hashes verified)
+last_commit: ba457bf "fix(spec): put the redaction call sites in the Operations that introduce PII"
+features_passing: 14 / 109 (F108/F109 added and passing; 0 drift outside group A)
+coverage: backend 104 tests pass (was 88), frontend 18 pass, ruff/mypy/eslint/tsc clean
+learned_rules: 0
+blocked_stories: none
+
+GATE VERDICT: BLOCK -- on ONE finding. Full record in
+.claude/state/handoff/gate-group-A.md; vote trail in specs/reviews/reverify-votes.json.
+
+Both voted axes FLIPPED to PASS from round 2:
+  security    PASS, unanimous 3/3, 0 BLOCK  (round 2: BLOCK 3/3)
+  functional  PASS, unanimous 3/3           (round 2: FAIL 2/3)
+  code-review BLOCK (single instance, outside the vote, sufficient alone)
+
+Round-2 BLOCKs: B-1 CLOSED, B-3 CLOSED, B-2 HALF-CLOSED, B-4 OPEN (downgraded).
+
+THE ONE OPEN BLOCK -- CR-301 (backend/src/api/middleware.py): the "method" label is
+unbounded. f1367f5 bounded the ROUTE dimension (verified to 60k paths: 3 route values,
++376 KB) but method still flows into the keys of _request_counts and the NEW
+_duration_counts/_duration_totals, process-global and never evicted, behind an
+unauthenticated /metrics. Under --http h11: 3,000 methods -> 2,998+2,998 series /
+3.5 MB body; 22,003 methods -> 25.3 MB retained. Refuted for the SHIPPED config
+(uvicorn[standard] + uv.lock -> httptools/llhttp answers 400 to unknown methods below
+ASGI; ceiling is llhttp's ~35-method table). Held BLOCK because nothing documents, tests
+or pins that parser, middleware.py is deliberately server-agnostic, and no Dockerfile
+exists yet. FIX = 3 lines mirroring _UNMATCHED_ROUTE; also closes CR-302.
+
+B-4 (money.ts:78 quadratic regex) is UNTOUCHED by all six remediation commits and was
+reproduced at full magnitude by 5 instances: format() 4,088-4,301 ms from 8 bytes,
+421,224-429,464 ms (~7 min) from 9 bytes. Round 2's refutation is now EXPLAINED: it timed
+toFixed(), a LINEAR sink at 0.6-3.2 ms, 1,260-7,000x cheaper than the real one. Downgraded
+BLOCK -> WARN by 4 independent reachability analyses (format()'s only caller is MoneyText,
+whose only callers are tests; backend Money._quantize rejects past 28 digits). eval-3
+dissents toward high because MoneyText.tsx:10-15 declares the prop as Money-or-string and
+calls fromWire(prop).format() with no bound. One-line fix -- take it now rather than carry
+it a third round.
+
+NEW, MUST NOT BE LOST:
+  1. V-0/CR-303 (major): the whole B-1 escaping fix has ZERO coverage. Mutating
+     _escape_label to the identity function leaves all 104 tests GREEN; both
+     "labels cannot be injected from a request path" tests actually pass via
+     route_label's cardinality bound. Found independently by eval-3 and code-review.
+     A refactor reopens the injection silently.
+  2. F-1/V-1 (major): redaction is INERT -- ZERO register_sensitive call sites in
+     backend/src. eval-2 logged live raw PAN + Aadhaar from a request path and from
+     X-Request-ID. f5a5ace's SEC-103 fix is correct but scrub_text is
+     registration-driven, so an AppError context still egressed aadhaar_int, a
+     "pan-..." KEY, and an absolute path. ba457bf put the call sites in
+     specs/bundles/*.json -- the SPECS, not the code. E15-S1-AC1 therefore passes only
+     as a SURROGATE. With values registered, dotted/underscored/slashed/NBSP/
+     soft-hyphen/zero-width/fullwidth forms ALL still bypass; normalize-then-match is
+     still required before group B/E logs applicant data.
+  3. SEC3-003 (WARN, nobody assigned it): unauthenticated VOLUME DILUTION masks an SLO
+     breach -- the twin of B-1's injection. errorRate() is 5xx over LIFETIME counters
+     that never reset and /metrics is anonymous and unrated. A genuine 50.00% outage
+     reads 0.0100% (PASSING the 1% budget) with 1e6 404s; a genuine 9,525 ms p95 reads
+     4.8 ms. The fix belongs in slo-check.js: exclude the unmatched-route label it
+     already emits.
+  4. CR-306 (WARN): MoneyField's declared pattern is UNENFORCED -- POST principal
+     "12.3" returns 200 "12.30" though the schema and test_no_float_money.py:342 both
+     call 1dp invalid. A real defect in a807678.
+  5. CR-302/F-3 (WARN): _escape_label passes raw CR, TAB, NUL, BEL, ESC, DEL.
+     _histogram_lines() emitted 14 lines carrying a raw CR, contradicting E15-S4-AC2's
+     own "no raw control character". Unreachable under httptools; same root cause as
+     CR-301.
+  6. Disputes SETTLED: Money.multiply leaks bare decimal.Overflow in 0.0 ms -- there is
+     NO DoS; it is a 500-instead-of-422 contract break (neither round-2 timing was
+     right). "AC2 passes by construction" is PARTIALLY REFUTED -- the root-only mutant
+     kills both AC2 tests, so "vacuous" overstated it.
+
+E15-S4 DELIVERED ITS POINT: the buckets are verified genuinely cumulative (proved with a
+700 ms observation), eval-2 recovered p95 884.62 ms against 934.22 ms empirical truth and
+correctly flagged a 500 ms breach, and slo-check.js now reports p95_ms 4.75 where it was
+permanently null. The declared runtime SLO is measurable for the first time.
+
+quality-card reads 7 pass / 3 fail, but only code_review is a REAL failing row. The
+"evaluator" row is a parser artifact (GI-008: md_verdict regexes the whole document and
+takes the FAIL branch because the words BLOCK/FAIL appear in DISCUSSION at lines 26, 338,
+649, while line 12 declares FUNCTIONAL VERDICT: PASS). The "ownership" row is covered by
+a ratified waiver naming backend/src/__init__.py exactly (expires 2026-10-15).
+
+HARNESS DEFECTS. Reconfirmed: GI-001 security-scan.js with --all --staged --boundary-only
+scans ZERO files and self-reports a clean pass, and runDeps() probes only the repo root so
+npm audit never reaches frontend/ -- always pass explicit --files. GI-002 the registry
+invokes regression-gate.js with only --replay, never --exclude-group, so it grades the
+UNBUILT groups B-M as prior baselines; correctly scoped it PASSES. GI-003 canvas-sync has
+no harness-state exclusion and blocks on .claude/state/red-phase-presnap.json; product
+scope is clean (13 files, 0 missing).
+New: GI-004 the skill's documented "npm run sensor-waivers" ENOENTs because there is no
+root package.json -- the real validator is .claude/scripts/validate-sensor-waivers.js
+(pass, 5 waivers, none expired). GI-005 (HIGHEST PRIORITY) concurrent 3-instance
+re-verification in ONE shared working tree is UNSAFE: instances mutation-test production
+files simultaneously, 3 of 7 agents reported seeing a sibling's live MUTANT edit to
+middleware.py/routes.py, and the canonical security instance had to git-checkout two live
+mutants before it could re-derive its verdicts; npm test transiently read 20 tests instead
+of 18 and repo-wide ruff transiently failed on a sibling scratch dir. Fix: give each
+instance its own git worktree, not merely its own port. GI-007 evidence-integrity passes
+with applicable:false, which is honest but VACUOUS for group A -- do not read it as
+browser-backed verification. GI-008 quality-card's md_verdict parser cannot separate a
+report's verdict from its content. GI-009 security-scan.json carries no pass field so the
+card scores it unknown, and it lists only gitleaks+semgrep as missing while pip-audit is
+absent too.
+
+finalize-task-evidence correctly BLOCKED: signed_approvals 0/2, threat_model stale,
+sast/dependency_scan unprovisioned. The unit/acceptance/integration "failed" entries all
+resolve to gate-checks.json, which is pass:false only because of the three registry BLOCKs
+above -- NOT because tests fail (104 backend + 18 frontend pass). Lifecycle left ACTIVE,
+deliberately NOT sealed.
+UNSCANNED, NOT PASSED: semgrep (SAST), gitleaks (secrets) and pip-audit (Python CVE) are
+all unprovisioned. Three inferential security instances were the only real coverage for
+the injection/authz/PII classes this round.
+
+next_action: Fix CR-301 (3 lines -- clamp the method label to a known-method set with one
+  "other" bucket) and B-4 (1 line -- bound the digit count before the separator regex),
+  add the two mutation-killing tests (V-0/CR-303 for _escape_label, W-5 for the
+  non-cumulative-bucket p95 test), then re-run /gate --group A, ideally with one git
+  worktree per instance (GI-005). Do NOT build group B until CR-301 is closed. Before
+  group B also: normalize-then-match redaction (F-1), slo-check.js excluding the
+  unmatched-route label (SEC3-003), CR-306's unenforced MoneyField pattern, and PIN
+  --http httptools when E15-S2 writes the Dockerfile or CR-301 goes live regardless of
+  the app-level fix.
+
 === Session 5 ===
 date: 2026-09-14T12:20:00.000Z
 mode: /gate --group A (round 2, on-demand pre-merge)

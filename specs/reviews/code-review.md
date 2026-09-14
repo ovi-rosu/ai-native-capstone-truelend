@@ -1,284 +1,405 @@
-# Code Review — /gate --group A (round 2, fresh context)
+# Code Review — `/gate --group A`, round 3
 
-**Range:** `14e9487..9112495` · **Branch:** `feat/harness-scaffold-and-planning`
-**Stories:** E15-S1 (platform logging + health), E9-S1 (Money), E11-S1 (delinquency bucket)
-**Verdict:** **BLOCK** — 2 BLOCK, 16 WARN, 8 INFO
-**Method:** every finding below was reproduced by executing the code at HEAD
-(`uv run python` probes against `src.api.app:create_app()` under `TestClient`).
-No code comment, commit message or prior verdict file was accepted as evidence.
+**Range:** `14e9487..ba457bf` · **Branch:** `feat/harness-scaffold-and-planning`
+**Scope:** production source + tests listed in `review-context-pack.md` §5, plus the files they call into
+**Verdict:** **BLOCK** — 1 BLOCK, 12 WARN, 5 INFO
+**Method:** every claim below was re-derived by execution at HEAD. Stored verdict files were
+not treated as authority. Production files were mutated only to prove a finding and restored
+(`git diff -- backend/src frontend/src` is empty).
 
 ---
 
-## 1. Prior BLOCK re-verification
+## Disposition of the two round-2 findings I was asked to re-judge
 
-### CR-001 — frozen error envelope applied only to `AppError` → **CLOSED**
+### B-3 — `HTTPException.headers` discarded — **CLOSED**
 
-`backend/src/api/errors.py:131-136` registers four handlers. Verified by probing a
-live app with injected routes for each status; every non-2xx body came back as the
-exact frozen shape `{"error","detail","context"}` with `content-type:
-application/json`:
+Verified by request, not by reading. A throwaway app was mounted on the real
+`create_app()` and driven across every envelope path:
 
-| probe | status | body |
-|---|---|---|
-| unknown path | 404 | `{"error":"NotFound","detail":"Not Found","context":{}}` |
-| `POST /health` | 405 | `{"error":"HTTPError","detail":"Method Not Allowed","context":{}}` |
-| `HTTPException(401)` | 401 | `{"error":"Unauthorized","detail":"no token","context":{}}` |
-| `HTTPException(403)` | 403 | `{"error":"Forbidden","detail":"wrong role","context":{}}` |
-| `HTTPException(409)` | 409 | `{"error":"Conflict","detail":"illegal transition","context":{}}` |
-| body validation | 422 | `{"error":"ValidationError","detail":"request validation failed","context":{"field":"body.n"}}` |
-| `AppError` subclass | 422 | `{"error":"PolicyViolationException","detail":"nope","context":{"threshold_kind":"min_income"}}` |
-| `raise RuntimeError` | 500 | `{"error":"InternalServerError","detail":"internal server error","context":{}}` |
+| Request | Status | Headers on the response | Envelope |
+|---|---|---|---|
+| `POST /only-get` | 405 | `allow: GET` | `{"error":"HTTPError","detail":"Method Not Allowed","context":{}}` |
+| `HEAD /health` | 405 | `allow: GET` | — |
+| `GET /guarded` | 401 | `www-authenticate: Bearer realm="truelend"` | `{"error":"Unauthorized",...}` |
+| `GET /retry` | 429 | `retry-after: 42` | `{"error":"HTTPError",...}` |
+| `GET /nope` | 404 | — | `{"error":"NotFound","detail":"Not Found","context":{}}` |
+| `POST /echo` (bad body) | 422 | — | `{"error":"ValidationError","detail":"request validation failed","context":{"field":"body.n"}}` |
+| `GET /boom` | 500 | — | `{"error":"InternalServerError","detail":"internal server error","context":{}}` |
+| `GET /health` | 200 | — | contract shape `{status,database,version}` |
 
-Key names and nesting match `specs/design/api-contracts.md:26-27` exactly. The 500
-leaks neither the exception message, the absolute path nor the SQL it carried. The
-`<ErrorName>` slot correctly carries the *name* (`AppError.error` →
-`type(self).__name__`), not the message.
+`Allow` and `WWW-Authenticate` are both restored, arbitrary `HTTPException` headers
+(`Retry-After`) survive too, and nothing regressed while the `headers` parameter was threaded
+through `_envelope`: the three envelope keys, `content-type: application/json` and the
+`X-Request-ID` stamp are intact on all eight paths, including 404/422/500. A regression test
+exists and is real (`test_error_envelope.py:189`).
 
-Residual, not the original finding: the same handler that closed CR-001 **drops
-`exc.headers`** — see `CR2-002` below.
+### B-4 — quadratic thousands-separator regex — **CONFIRMED as a defect, WARN on reachability**
 
-### CR-002 — registered PII leaked unredacted with an empty `request_id` → **CLOSED**
+Round 2's dispute is resolved: evaluator 3 timed the wrong sink. Measured through the real
+class (`npx tsx`, `frontend/src/types/money.ts` unmodified):
 
-Design at HEAD: `logging.py:44` holds a **mutable set** in the contextvar,
-`register_sensitive` (`logging.py:74-81`) mutates it in place, and
-`middleware.py:89/96-102` opens the scope and logs the exception *before*
-re-raising, without unwinding.
+```
+input="1e10000"  (7 bytes) -> toWire length  10004 | fromWire 0.0 ms | toWire 0.2 ms | format   38.6 ms
+input="1e50000"  (7 bytes) -> toWire length  50004 | fromWire 0.0 ms | toWire 0.7 ms | format 1035.9 ms
+input="1e100000" (8 bytes) -> toWire length 100004 | fromWire 0.0 ms | toWire 2.5 ms | format 4167.8 ms
+```
 
-I specifically tested the FastAPI sync-handler-in-threadpool case the comment
-claims to handle (`def` handler → `run_in_threadpool` → `anyio` worker thread runs
-on a *copy* of the context). Registering `ABCDE1234F` / `123456789012` in a sync
-handler and raising:
+The cost is isolated to line 78; `fromWire` and `toWire` are both free. Raw-regex scaling
+confirms it is quadratic (1000→0.4 ms, 2000→1.4 ms, 4000→5.4 ms, 8000→22.8 ms, 16000→99.5 ms,
+32000→430 ms, 64000→1759 ms — 4× per doubling).
 
-- `middleware.py:95` traceback frame chain confirms the real threadpool path was
-  taken (`anyio/_backends/_asyncio.py:1100 result = context.run(func, *args)`).
-- Emitted line: `RuntimeError: boom pan=[REDACTED] aadhaar=[REDACTED]`,
-  `"request_id": "rid-sync_fail"`.
-- 0 leaking lines and 0 lines with a wrong/empty `request_id` across sync-fail,
-  async-fail and sync-success paths.
+**Neither the constructor nor `toWire()` bounds the input.** `Money.fromWire` accepts anything
+`decimal.js` parses, so an 8-byte string reaches `format()` as 100,004 digits.
+Filed as **WARN**, not BLOCK: the only caller of `format()` is `MoneyText`, and the only
+callers of `MoneyText` are its own tests — the frontend at HEAD (`src/` is two files) has no
+fetch layer and no input control, so there is no untrusted path to it and the impact is a
+client-side tab stall, not server availability. See **CR-304** for the fix.
 
-The in-place mutation genuinely survives the context copy, so the claim in the
-comment holds. Both halves of the original finding (unredacted PII **and** empty
-`request_id`) are gone.
+---
 
-### CR-003 — per-line money-guard exemption muted every float category → **CLOSED**
+## BLOCK
 
-`backend/tests/architecture/test_no_float_money.py:82-86`:
+### CR-301 — the `method` label is unbounded; B-2 is only half-closed
+`backend/src/api/middleware.py:50,72-73,132,141-143` · **spec** · confidence **high**
+
+`f1367f5` bounded the *route* dimension (`route_label()` → matched template or one
+`<unmatched>` bucket, with a 4-line comment explaining why). The *method* dimension of the
+same keys got no bound, and the new E15-S4 histogram inherited the gap:
 
 ```python
-if is_division and getattr(node, "lineno", None) in exempt:
-    continue
-if is_float_call or is_math_attr or is_float_literal or is_division:
-    count += 1
+_request_counts:  Counter[tuple[str, str, int]]              # (method, route, status)
+_duration_counts: dict[tuple[str, str], list[int]]           # (method, route) -> 12 ints
+_duration_totals: dict[tuple[str, str], tuple[int, float]]
 ```
 
-The `continue` is now gated on `is_division`, so the marker exempts exactly one
-category. `test_division_exemption_does_not_silence_other_float_categories`
-(:272-297) is a real regression test — it asserts `> 0` for a marked line carrying
-`float(...)`, a marked line carrying `+ 0.5`, and a marked `import math`. All three
-would have returned 0 under the pre-fix whole-line `continue`.
+`method` comes straight from `scope["method"]` with no allow-list. Measured against a **real
+uvicorn server over raw sockets** with `http="h11"` — uvicorn's own pure-Python parser and its
+fallback when `httptools` is unavailable:
+
+```
+=== h11: 3000 distinct method tokens on ONE keep-alive connection ===
+   accepted: 3000 in 0.7s
+   counter series: 2998
+   histogram series: 2998
+   retained metric-state bytes (lower bound): 2,522,096
+   distinct method label values in exposition: 3000
+   /metrics response size: 3,553,759 bytes
+```
+
+Per-method series confirmed in the exposition:
+
+```
+http_requests_total{method="FOO!#$%&'*+-.^_`|~9",route="/health",status="405"} 1
+http_requests_total{method="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",route="/health",status="405"} 1
+```
+
+The histogram is worse per series than the counter it copied (a 12-element bucket list plus a
+tuple per key), the state is never evicted, and `/metrics` is unauthenticated — so this is also
+a response-amplification vector. Extrapolated to round 2's 60,000-request figure: ~50 MB
+retained and a ~71 MB exposition body.
+
+**Refutation attempted and partially succeeded — read this before deciding.** With the parser
+the project actually declares (`uvicorn[standard]`, `httptools` pinned in `backend/uv.lock:229`)
+the same probe is rejected upstream:
+
+```
+httptools: method='XPROBE1' -> 400 Bad Request ; method='PROPFIND' -> 405 (counted, bounded)
+h11:       method='XPROBE1' -> 405 Method Not Allowed (counted, unbounded)
+```
+
+I am still filing BLOCK because:
+1. the only thing holding the bound is an **optional C extension's method allow-list** —
+   nothing in this repository documents, tests or pins it, and `uvicorn`'s `http=` is a
+   first-party knob that flips it;
+2. `middleware.py` is deliberately written as a **server-agnostic pure ASGI** middleware
+   (module docstring lines 9-23), so it cannot rely on one server's parser for a bound it
+   accepted responsibility for on the sibling label;
+3. no `Dockerfile`/`docker-compose.yml` exists yet, so no committed artefact pins the parser;
+4. round 2's B-2 would otherwise be recorded as closed when one of its two dimensions is open.
+
+**Fix (3 lines, mirrors the existing in-file pattern):** add
+`_KNOWN_METHODS = frozenset({"GET","HEAD","POST","PUT","PATCH","DELETE","OPTIONS","TRACE"})`
+and a `method_label(scope)` that returns the method when it is in the set and a single
+`"<other>"` bucket otherwise; call it from `_stamping_send` and `_observe` in place of
+`str(scope.get("method", "-"))`. Add the h11 cardinality test as the regression guard.
 
 ---
 
-## 2. Your four hypotheses — verified or refuted
+## WARN
 
-**(a) `_install_redaction_filter_everywhere` iterates `loggerDict` once → later
-loggers get no filter.** *Partially real, narrow.* Refuted for the common case:
-handler-level filters apply to every record reaching that handler, so the
-`RedactionFilter` on the root `StreamHandler` (`logging.py:199`) covers any
-logger created later that propagates. I confirmed this — a `logging.getLogger("biz")`
-created *inside* a request handler after `configure_logging` had its PAN scrubbed
-on the root handler's output. Confirmed real only for a logger created after
-startup that sets `propagate = False` **and** installs its own handler: probe
-`logging.getLogger("late.thirdparty")` has `RedactionFilter` on neither the logger
-nor its handler. → `CR2-W02` (WARN), plus the test-honesty consequence `CR2-W03`.
-
-**(b) `middleware.py:102` leaks both contextvars on the failure path.**
-**Refuted.** Uvicorn and `TestClient` both run each request cycle in its own task,
-so per-PEP-567 the `set()` lives in that task's context copy and dies with it. Probed
-directly: after a 500 that registered a PAN, the next request saw
-`{"vals": [], "rid": "<fresh id>"}` and the module-level contextvar read back
-`None` / `""`. No cross-request bleed, and the non-unwind is what keeps the
-server's own traceback line scrubbed. → `CR2-I01` (INFO).
-
-**(c) module-level globals in `platform/routes.py` + the `Counter` in
-`middleware.py`.** *Partly a defect.* The `Counter` is a genuine BLOCK, but for
-its **label**, not its globalness — see `CR2-001`. The globalness itself is a
-testability/isolation WARN (`CR2-W07`): state is shared across every `create_app()`
-in a process, which is why `test_health_probe.py` has to call `reset_database_probe()`
-inline. Thread-safety is not a live issue: `_request_counts[k] += 1` runs only on the
-event-loop thread.
-
-**(d) bare `assert isinstance(...)` for narrowing in `errors.py`.** **Refuted.**
-Under `python -O` the asserts vanish, but the handler bodies then only read
-attributes (`exc.status_code`, `exc.error`, `exc.message`, `exc.context`,
-`exc.errors()`), and Starlette only ever dispatches a matching exception type to
-each handler. Stripping the assert removes the type narrowing, not a guard. →
-`CR2-I02` (INFO).
-
-**(e) `get_health` constructs `Settings()` per request.** Measured: 0.073 ms per
-construction (1000 in 73 ms), against a 500 ms p95 SLO, and `SettingsConfigDict`
-names no `env_file` so there is no per-request disk read. Not a defect. →
-`CR2-I03` (INFO).
-
-**(f) the three `reset_*` functions exist only for tests.** Confirmed — production
-surface shaped by test needs. → `CR2-W07` (WARN).
-
----
-
-## 3. BLOCK findings
-
-### CR2-001 — `/metrics` `route` label is the raw request path: unbounded cardinality
-
-`backend/src/api/middleware.py:75` (path captured at `:91` from `scope.get("path")`)
-
-The RED counter is keyed on the **literal request path**, not the matched route
-template, and the `Counter` at `middleware.py:49` has no bound and no eviction.
-Probed against the real app:
+### CR-302 — `_escape_label` passes raw control characters other than LF into a label
+`backend/src/api/platform/routes.py:78-83` · **spec** · confidence **high**
 
 ```
-500 requests to /random-path-0 .. /random-path-499
-  -> counter series: 500
-  -> GET /metrics body: 36,980 bytes, 502 lines
+backslash    -> 'a\\\\b'    escaped=True
+quote        -> 'a\\"b'     escaped=True
+LF           -> 'a\\nb'     escaped=True
+CR           -> 'a\rb'      escaped=False
+NUL          -> 'a\x00b'    escaped=False
+ESC          -> 'a\x1bb'    escaped=False
+LS U+2028    -> 'a b'  escaped=False
 ```
 
-Two reachable consequences:
+With a CR in a label value, `_histogram_lines()` emits **14 lines containing a raw CR**:
 
-1. **Unbounded growth from unauthenticated input.** Any client can add a new
-   permanent counter series per unique URL. Memory and the `/metrics` response both
-   grow without limit; nothing ever evicts. `GET /metrics` is itself public.
-2. **The label breaks the contract's aggregation.** `specs/design/api-contracts.md:315`
-   requires "RED metrics labelled `method`, `route`, `status`", and
-   `routes.py:72` promises the same. Once a path-param route lands
-   (`/applications/{application_id}` — E8-S1, next group), every application id
-   becomes its own series and the runtime-SLO sensor can no longer compute a p95 or
-   an error rate per route. The defect is latent for group A only because group A
-   has no path params; the 404 case above already triggers it today.
+```
+'http_request_duration_seconds_bucket{method="GET\r999",route="/t",le="0.005"} 0'
+```
 
-**Remediation (minimal):** label from the matched route template instead of the raw
-path, resolved lazily inside `send_with_correlation_id` (the router has populated
-`scope["route"]` by the time `http.response.start` is sent — verified:
-`path=/apps/123 → route=/apps/{app_id}`), and collapse unmatched paths to one
-constant series:
+E15-S4-AC2 states: *given* attacker-supplied text containing control characters *reaching a
+metrics label*, *then* the output has *no raw control character*. Under the AC's own stated
+precondition the renderer fails it. Not a BLOCK: the Prometheus exposition format itself only
+*requires* `\`, `"` and `\n` to be escaped, so the docstring's "per the Prometheus exposition
+format" is accurate and the official client libraries do exactly this much; and with CR-301
+fixed neither label source can carry a control character. **Fix:** extend `_LABEL_ESCAPES` to
+map `\r` (and, cheaply, the remaining C0 range) to their escaped forms, so the renderer
+satisfies AC2 independently of which labels happen to exist.
+
+### CR-303 — the label-escaping fix has zero test coverage; the tests named for it bite on something else
+`backend/tests/architecture/test_observability_contract.py:90-103`, `backend/tests/unit/test_health_probe.py:93-118` · **standards** · confidence **high**
+
+Mutation-proved. Reducing `_escape_label` to `return value` — deleting the entire B-1
+remediation — leaves the suite green:
+
+```
+MUTANT A: _escape_label identity  -> 104 passed
+```
+
+Mutating `route_label` to the raw path instead fails four tests, including both
+"…labels cannot be injected from a request path":
+
+```
+MUTANT C: route_label -> raw path -> 4 failed, 100 passed
+  test_observability_contract.py::test_histogram_labels_cannot_be_injected_from_a_request_path
+  test_observability_contract.py::test_histogram_cardinality_is_bounded_by_route_template
+  test_health_probe.py::test_metrics_labels_cannot_be_injected_from_a_request_path
+  test_health_probe.py::test_metrics_cardinality_is_bounded_by_route_not_path
+```
+
+So both injection tests actually assert the *cardinality bound*; the escaping layer is
+unguarded and a future refactor can drop it silently. (The cumulative-bucket logic, by
+contrast, **is** covered — `running = count` fails
+`test_histogram_buckets_are_cumulative_and_carry_count_and_sum`.)
+**Fix:** assert the renderer's escaping directly at the exposition boundary — after
+`observe_duration('GET"x\\y', '/t', 0.01)`, `_histogram_lines()` must contain
+`method="GET\\"x\\\\y"` and no unescaped quote. The exposition text is the public contract, so
+this is a public-interface assertion, not a private-helper one.
+
+### CR-304 — `Money.fromWire` does not bound the input its own docstring describes
+`frontend/src/types/money.ts:24-35,45-48,78` · **spec** · confidence **high**
+
+Evidence in the B-4 section above. `fromWire`'s docstring says "Parse the quoted 2dp wire
+string", but `toQuantizedDecimal` accepts anything `decimal.js` parses, including `"1e100000"`,
+so the documented bound does not exist and `format()` pays 4,168 ms for an 8-byte input.
+**Fix:** in `toQuantizedDecimal`, reject a `string` that does not match the wire form the
+backend declares (`/^-?\d+\.\d{2}$/` — `backend/src/api/serializers.py:24`) or at minimum cap
+the integer digit count, throwing `InvalidMoneyAmountError`. That closes the cliff at the
+boundary and makes the docstring true. Note the existing tests
+(`money.test.ts:22,49`) rely on tolerant parsing of `"1234.5"` / `"42"`, so pick one tolerance
+and apply it on both sides of the wire — see CR-306.
+
+### CR-305 — both stated reasons for disabling `uvicorn.access` are false or overstated
+`backend/src/config/logging.py:217-223` · **standards** · confidence **high**
+
+Claim (a): *"`request_id_var` is already reset by the time it emits (it logs after the response
+completes, outside the middleware scope), so it could only ever render request_id: ''"*.
+**False at HEAD.** uvicorn emits the access line *inside its own `send()`*, in the
+`http.response.start` branch (`uvicorn/protocols/http/httptools_impl.py:484`,
+`h11_impl.py:481`) — and that `send` is the one `CorrelationIdMiddleware` wraps, so it fires
+inside the middleware's `try` block while both contextvars are still bound. Replaying that
+exact ordering with a stand-in for uvicorn's send:
+
+```
+request_id_var as seen at uvicorn's access-log call site: ['req-42']
+after the request completes: ''
+```
+
+The claim was true of the `BaseHTTPMiddleware` version CR-003 deleted; it is stale.
+
+Claim (b): *"its AccessFormatter reads record.args, which RedactionFilter clears, raising
+ValueError and dropping the line entirely."* **Overstated** — `RedactionFilter.filter` clears
+`record.args` only when a redaction actually changed the message:
+
+```
+with NO registered values      -> record.args = ('a', 'b')
+with a MATCHING registered value -> record.args = ()
+```
+
+so the breakage is conditional on registered PII appearing in the access line, not inherent.
+The third sentence — `CorrelationIdMiddleware` already emits an equivalent JSON line — is true
+and is the real justification. **Fix:** delete the two false sentences; keep the third.
+
+### CR-306 — `MoneyField`'s declared schema is not the contract the validator enforces
+`backend/src/api/serializers.py:24,75-83` and `backend/tests/architecture/test_no_float_money.py:342` · **spec** · confidence **high**
+
+The new JSON-schema hook works as its docstring claims — `model_json_schema()` renders, and
+both a response model and a **request-body** model appear in `components.schemas` with the
+`requestBody` `$ref` intact (verified against a live `/openapi.json`). But the declared
+`pattern` is documentation only: `no_info_plain_validator_function` bypasses schema validation,
+so the server accepts input the document calls invalid.
+
+```
+POST /quote {"principal": "1234.50"} -> 200 {"principal":"1234.50"}
+POST /quote {"principal": 12.3}      -> 422   (float correctly rejected)
+POST /quote {"principal": "12.3"}    -> 200 {"principal":"12.30"}   <-- schema says invalid
+```
+
+The docstring states the pattern exists *"so a generated client cannot send `12.3` or a JSON
+number and still look contract-conformant"*; half of that is enforced. `test_no_float_money.py:342`
+asserts `not re.fullmatch(field["pattern"], "1234.5")` — it locks in the documented contract
+while nothing checks the enforced one. **Fix:** match a `str` input against `_WIRE_PATTERN` in
+`_validate_money` before constructing `Money`, or narrow the pattern and the docstring to the
+tolerance actually implemented. Pick the same answer as CR-304 so both sides of the wire agree.
+
+### CR-307 — `sanitise_context` drops context values silently, with no marker and no log
+`backend/src/api/errors.py:50-63,76,85-101` · **standards** · confidence **high**
+
+Measured on live requests:
+
+```
+context={"note": "A"*300, "kept": "short"} -> {"kept":"short"}
+context={"ratio": 0.5, "flag": None}       -> {}
+```
+
+A value over `_MAX_CONTEXT_VALUE_CHARS` is dropped rather than truncated, and floats, `None`,
+lists and nested mappings vanish without trace. `context` is the machine-readable half of the
+frozen envelope and `src/types/errors.py:20` records that E4-S4-AC2 depends on reading
+`threshold_kind` / `configured_value` out of it, so a caller cannot distinguish "the service
+did not set this" from "the sanitiser removed it". `_scalar`'s docstring says "Anything
+structured is dropped", which under-describes what actually goes. **Fix:** substitute a marker
+(`"<omitted>"`) for the dropped key instead of deleting it, and truncate over-long strings to
+`_MAX_CONTEXT_VALUE_CHARS` rather than discarding them.
+
+### CR-308 — `detail` bypasses the guards applied to `context` values
+`backend/src/api/errors.py:115` · **spec** · confidence **medium**
+
+`_sanitise_value` drops any context value matching `_CREDENTIAL_URI` or exceeding 200 chars.
+`detail` gets `scrub_text()` only, which is a no-op unless the exact value was registered:
+
+```
+GET /dsn-in-detail  -> 500 {"error":"AppError","detail":"could not connect: postgresql://truelend_app:S3cr3tPass@db.internal:5432/truelend","context":{}}
+GET /dsn-in-context -> 500 {"error":"AppError","detail":"could not connect","context":{}}
+```
+
+The identical string is blocked in one field of the same envelope and egressed verbatim in the
+other. Medium confidence because `detail` is developer-authored and `handle_unexpected` already
+pins a constant, so reaching this needs someone to interpolate a DSN into an `AppError` message
+— but that is the likeliest carrier, which is why the guard exists. **Fix:** run `detail`
+through the same `_CREDENTIAL_URI` / length check inside `_envelope`. (The PII half of this is
+the security-reviewer's call, not mine.)
+
+### CR-309 — `_database_status` swallows the probe's failure reason
+`backend/src/api/platform/routes.py:57-60` · **standards** · confidence **high**
 
 ```python
-route = getattr(scope.get("route"), "path", None) or "<unmatched>"
+except Exception:  # noqa: BLE001 - a probe must never break the probe
+    return "down"
 ```
 
-Keep the raw `path` for the access-log line if the operator wants it; it is the
-*counter key* that must be bounded.
+The *failure* does reach the caller (`"database":"down"`, `"status":"degraded"`), so this is
+not a hidden error — but the reason is discarded entirely, and `/health` is the only signal an
+operator has. A misconfigured probe and a dead database are indistinguishable, with nothing in
+the logs. **Fix:** `logging.getLogger("truelend.access").warning("database probe failed",
+exc_info=True)` before returning `"down"` — the traceback is already redaction-filtered.
 
-### CR2-002 — the new `HTTPException` handler discards `exc.headers`
+### CR-310 — avoidable `# type: ignore` in production code
+`backend/src/config/logging.py:84-91` · **standards** · confidence **high**
 
-`backend/src/api/errors.py:103-107`
+`begin_redaction_scope() -> object` throws away the `Token` type that `ContextVar.set` returns,
+which then needs `# type: ignore[arg-type]` on the `reset`. CLAUDE.md requires static typing
+everywhere. Verified the fix is clean: typing them as `contextvars.Token[set[str] | None]` and
+deleting the ignore gives `mypy src/` → `Success: no issues found in 12 source files` and
+`104 passed`. (Applied, verified, reverted.)
 
-`handle_http_error` builds the envelope with `_envelope(...)` and never forwards
-`exc.headers`. FastAPI's default `http_exception_handler` — the one this handler
-replaces — does `headers=getattr(exc, "headers", None)`. So the diff *regressed*
-header behaviour while fixing the body. Probed:
+### CR-311 — both AC2 "every logger has the filter" tests still pass by construction
+`backend/tests/unit/test_log_redaction.py:43-64,190-220` · **standards** · confidence **high**
 
-```
-POST /health        -> 405, headers: {content-length, content-type, x-request-id}
-                       Allow: None                       <-- RFC 9110 §15.5.6 requires it
-HTTPException(401, headers={"WWW-Authenticate": "Bearer"})
-                    -> 401, WWW-Authenticate: None       <-- challenge silently dropped
-```
+Round 2's finding, unfixed at HEAD. Both tests build their logger list by iterating
+`logging.root.manager.loggerDict` — the same collection
+`_install_redaction_filter_everywhere()` (`logging.py:241-251`) had just iterated — so any
+logger created *after* `configure_logging` runs is invisible to the assertion by construction.
+The `unregistered-probe-logger` control proves the predicate function works, not that the
+enumeration is complete. The real guarantee comes from the `RedactionFilter` on the **root
+handler** (`logging.py:199`), which covers every propagating logger and is what
+`test_sensitive_application_values_never_appear_in_any_log_line` actually exercises.
+**Fix:** add one case that creates a logger *after* `configure_logging`, gives it its own
+handler with `propagate=False`, and asserts a registered value is still redacted — the case the
+enumeration cannot see.
 
-Reachable today: every wrong-method request returns a 405 with no `Allow`, so a
-conformant client cannot discover the allowed methods. Reachable next group: **D-F**
-makes `require_roles` the single auth enforcement point and
-`api-contracts.md:26-29` specifies `401 no or invalid token`; a Bearer challenge
-raised as `HTTPException(401, headers=...)` will be swallowed by this handler, and
-no test would notice because every current test asserts only on the body.
-
-**Remediation (one line):**
+### CR-312 — the p95 assertion cannot fail on latency, and the comment above it says otherwise
+`backend/tests/architecture/test_observability_contract.py:86-87` · **spec** · confidence **high**
 
 ```python
-def _envelope(status_code, error, detail, context=None, headers=None) -> JSONResponse:
-    return JSONResponse(status_code=status_code, headers=headers, content={...})
-
-# handle_http_error:
-return _envelope(exc.status_code, name, str(exc.detail),
-                 headers=getattr(exc, "headers", None))
+# A no-I/O health probe must land far under the 500 ms budget.
+assert p95_bound == "+Inf" or float(p95_bound) <= 0.5
 ```
 
-Add one assertion that `POST /health` returns a 405 carrying `Allow`.
+`"+Inf"` is the unbounded bucket: the disjunct makes the assertion pass when p95 exceeds every
+declared bound, which is the exact opposite of the stated requirement. E15-S4-AC1's purpose is
+that the 500 ms SLO becomes measurable; this test proves p95 is *computable* but asserts
+nothing about its value. **Fix:** `assert p95_bound != "+Inf" and float(p95_bound) <= 0.5`.
+
+### CR-313 — process-global metric state has no enforced test isolation
+`backend/src/api/middleware.py:50,72-73,108-112`, `backend/tests/conftest.py` · **standards** · confidence **medium**
+
+`_request_counts` / `_duration_counts` / `_duration_totals` are module-global and never
+evicted. Isolation holds today only because every count-asserting test remembers to call
+`reset_request_counters()` first — verified across three orderings (file alone: 6 passed; file
+last after the whole suite: 104 passed; reordered: 8 passed). One future test that forgets it
+silently inherits another test's counts. `reset_request_counters()` is also production API
+whose docstring says it exists "For tests". **Fix:** an autouse fixture in
+`backend/tests/conftest.py` that calls `reset_request_counters()`, so isolation is structural
+rather than conventional.
 
 ---
 
-## 4. WARN findings
+## INFO
 
-| id | file:line | finding |
-|---|---|---|
-| CR2-W01 | `src/api/platform/routes.py:55-56` | `except Exception: return "down"` swallows the probe's cause entirely — no log line, no `exc_info`. Returning `"down"` is correct, but this is the observability story and an operator gets no way to tell a connection refusal from a permission error. Log at WARNING with `exc_info=True` before returning. |
-| CR2-W02 | `src/config/logging.py:241-250` | The filter is installed on `loggerDict` **once**, at configure time. A logger created afterwards that sets `propagate=False` and installs its own handler is covered by neither the logger filter nor the root handler filter (probed: `late.thirdparty` → `False`/`False`). The function name promises "everywhere" and cannot deliver it. Either rely solely on the root-handler filter and rename/delete this function, or install the filter on the handler class/`logging.setLogRecordFactory` so late loggers are covered. |
-| CR2-W03 | `tests/unit/test_log_redaction.py:43-65`, `:190-220` | Both AC2 tests call `create_app()` / `configure_logging()` and *then* enumerate `loggerDict` — so they pass by construction and restate the implementation of `_install_redaction_filter_everywhere` rather than asserting a durable property. The `pytest.raises(AssertionError)` on a hand-built `logging.Logger` (:63-65) proves the helper, not the system. Assert the behaviour instead: create a logger *after* configure and assert a registered value is scrubbed from its output. |
-| CR2-W04 | `tests/unit/test_log_redaction.py:205`, `tests/unit/test_correlation_id.py:62` | Both apply `logging.config.dictConfig(uvicorn.config.LOGGING_CONFIG)` globally with **no teardown**, mutating process-wide logging for the remainder of the session and making the suite order-dependent. The two blocks are also near-duplicates. Extract one fixture that restores the prior config in `finally`. |
-| CR2-W05 | `tests/unit/test_health_probe.py:58-68` | Mutates the `_database_probe` module global and resets it on the last line, not in `try/finally`. A failing assertion mid-test leaves `lambda: False` registered and silently changes `/health` for every later test. Use a fixture with `finally`. |
-| CR2-W06 | `src/api/middleware.py:86-87` | Inbound `X-Request-ID` is reflected into the response header and every log line with no validation and no length cap. Probed: a 5,000-character header is echoed back verbatim at 5,000 characters, and lands in every JSON log line for that request. `json.dumps` prevents log injection, but this is unbounded attacker-controlled log volume. Cap the length and reject/regenerate on non-token characters. |
-| CR2-W07 | `src/api/platform/routes.py:35,38-47`; `src/api/middleware.py:49,57-59` | Two module-level globals with `global` statements plus three `reset_*` functions that exist only so tests can undo them — production API shaped by test needs, and state shared across every `create_app()` in one process. Hold the probe and the counters on the app instance (`app.state`) or in an injected registry object so each app is isolated and the `reset_*` functions can be deleted. |
-| CR2-W08 | `src/api/app.py:52` | Module-level `app = create_app()` runs `Settings()` and `configure_logging()` — including `root.handlers.clear()` (`logging.py:202`) — as an **import side effect**. Merely importing `src.api.app` destroys the host's logging handlers. `tests/conftest.py:36-39` has to make `log_capture` depend on `client` to work around exactly this. Build `app` behind a factory call in the ASGI entrypoint, or guard the module-level construction. |
-| CR2-W09 | `src/config/logging.py:102` | `@lru_cache(maxsize=256)` on `_redaction_pattern` is keyed by the **raw sensitive value**, so up to 256 PANs/Aadhaars stay resident in a process-global cache long after the request scope that registered them ended — the opposite of the request-scoped design the rest of the module is built on. Cache on a digest, or move the compiled-pattern cache into the request-scoped set. |
-| CR2-W10 | `src/config/logging.py:122-128` | Values shorter than `_MIN_REDACTABLE_LENGTH = 6` are silently skipped. `register_sensitive("12345")` returns normally and the caller has no way to learn the value will never be redacted. The threshold is sound; the silence is not — log once at WARNING, or expose a return value. |
-| CR2-W11 | `src/api/serializers.py` (whole file) | `MoneyField` has **zero behavioural tests**. The only reference from the suite is `test_no_float_money.py:26,100`, which reads the file as text for the AST float scan. `specs/design/architecture.md` decision D-G names this "the ONE module" converting `Money` to the wire, and every later money field depends on it. I probed it and it is correct (`"100.00"` round-trips; `100`, `100.5`, `"abc"`, `null` each give a 422, not a 500 — because `InvalidMoneyAmountError` subclasses `ValueError`). That correctness is currently unguarded by any test. Add a round-trip test through a real route. |
-| CR2-W12 | `src/api/platform/routes.py:62-67` | `/health` returns `database: "unconfigured"` and can return `status: "degraded"`. Neither value appears in the frozen `api-contracts.md:314` (`{"status":"ok","database":"ok","version":"..."}`), and `specs/design/amendments/group-a-gate-remediation.md` states the contract is deliberately **not** amended because "it is the authoritative frozen side, so the code changes to match it". The code therefore still does not match the side the amendment calls authoritative. Separately, `status:"degraded"` is served with HTTP **200**, so an orchestrator probing on status code alone never sees the degradation. Either amend the contract to enumerate the three `database` values, or return a non-2xx for `degraded`. |
-| CR2-W13 | `src/config/logging.py`, `src/api/middleware.py`, `src/api/errors.py`, `src/api/platform/routes.py`, and 5 test files | ~14 production docstrings/comments narrate the *history* of prior defects rather than the current design: "It previously returned `{"status": "ok"}` alone" (`routes.py:7`), "The gate measured 0.58 -> 314 ms" (`test_log_redaction.py:236`), "Five reviewers found this independently and it was demonstrated live" (`:262`), "the code is the stale side" (`test_health_probe.py:33`), "went unreported" (`test_no_float_money.py:85`). This is commit-log content in source: it will be stale within one story and it tells a future reader about a bug that no longer exists instead of about the invariant. Keep the *rationale* ("separator-bearing values are matched literally to avoid quantifier/literal ambiguity"), delete the gate archaeology. |
-| CR2-W14 | `frontend/package-lock.json` (untracked), `.gitignore:49` | The lockfile exists on disk (157 KB) but `.gitignore:49` excludes it, so `npm install` on another machine or in CI resolves fresh semver ranges — `frontend/package.json:13-31` is all `^`. For an application (not a published library) the lockfile belongs in git. Remove the `.gitignore` entry and commit it. |
-| CR2-W15 | `frontend/src/types/money.ts:64-66` | `multiply` builds `new Decimal(scalar)` outside `toQuantizedDecimal`, so an invalid numeric string throws a raw `DecimalError` rather than the module's own `InvalidMoneyAmountError` — inconsistent with `fromWire` (`:46`), which is the module's documented contract. Route the scalar through the same guard. |
-| CR2-W16 | `src/config/logging.py:44`, `_current_values()` at `:47-53` | `_current_values()` silently creates and `set()`s a scope-less set when none is bound. Inside a threadpool copy that `set()` is discarded, so `register_sensitive` called with no middleware scope open is a **silent no-op** — the exact failure mode CR-002 was about, minus the middleware. Every production path opens the scope today, so this is latent. Raise, or log, when no scope is bound. |
-
----
-
-## 5. INFO findings
-
-| id | file:line | note |
-|---|---|---|
-| CR2-I01 | `src/api/middleware.py:96-102` | The deliberate non-unwind on the failure path is **sound** — verified no cross-request bleed. Worth one line in the docstring stating the assumption it rests on (one task context per request cycle), because that is what a future reader would need to re-check if the mount point changes. |
-| CR2-I02 | `src/api/errors.py:99,105,116` | `assert isinstance(...)` narrowing is safe under `python -O`; the bodies read attributes only and Starlette dispatches by type. `cast()` would express the intent without relying on a statement that can be compiled out. |
-| CR2-I03 | `src/api/platform/routes.py:66` | `Settings()` per request measured 0.073 ms; no `env_file`, so no disk read. Still redundant — the factory already builds one at `app.py:33`. |
-| CR2-I04 | `src/api/errors.py:117-119` | The 422 envelope reports only `errors[0]`'s location. Fine for the contract as written; E4/E5 form submissions will likely want every field. |
-| CR2-I05 | `src/api/errors.py:106` | 405 maps to error name `"HTTPError"`, which is outside the contract's enumerated vocabulary (`api-contracts.md:28-29`). Harmless, but a client switching on `error` sees an undocumented value. |
-| CR2-I06 | `tests/unit/test_correlation_id.py:29-30,44-45,75-76,108-109`; `test_error_envelope.py:31-32,62-63`; `test_log_redaction.py:42-43,65-66,97-98` | Top-level `def`s with no blank line between them, unlike every production module in the diff. `ruff` does not select E301/E302 here, so this is drift the gate cannot see. |
-| CR2-I07 | `backend/` (out of diff scope) | `pytest-cov` is not installed — `pytest --cov` errors out. `CLAUDE.md` states a 100% meaningful-coverage target and an 80% floor; neither is currently measurable. Noted because `CR2-W11` (untested `serializers.py`) is exactly what a coverage floor would have caught. |
-| CR2-I08 | `frontend/src/types/money.ts` vs `backend/src/types/money.py` | `decimal.js` defaults to 20 significant digits for `times`/`plus`; Python's default context is 28. Rounding mode matches (`ROUND_HALF_UP` is away-from-zero on both — I verified `-45.005 → -45.01` on both sides). The precision gap can only bite at magnitudes far beyond any loan principal, but it is an unstated cross-runtime assumption behind D-G. |
+- **CR-314** — `middleware.py:132-134`: the counter is incremented *before* `await send(message)`,
+  so a response that fails mid-send is still recorded as served. Probe: with a `send` that
+  raises at `http.response.start`, `request_counter_snapshot()` shows
+  `{('GET','/health',200): 1}`. Minor over-count of successes in the SLO signal.
+- **CR-315** — `middleware.py:98-100`: `latency_bucket_bounds()` is a single-use getter returning
+  a module constant that `routes.py` could import directly. Borderline shallow wrapper
+  (code-gen §8), kept only to preserve the leading-underscore convention.
+- **CR-316** — `middleware.py:159,161`: `_observe` is called on both the success and exception
+  branches rather than once in a `finally`. Duplicated call site, and if `_observe` itself
+  raised inside the `try`, the `except` would record a second observation.
+- **CR-317** — **Refuted, recorded for coverage.** `zip(..., strict=True)` at `routes.py:115` is
+  safe: both sequence lengths derive from `_LATENCY_BUCKETS`, a module-level tuple, and
+  `observe_duration` sizes the list from the same constant. The linear bucket scan
+  (`middleware.py:80-83`) is also not a perf concern — 11 comparisons per request, below
+  measurement noise, and faster than `bisect` at this size. Bucket `le` semantics verified
+  correct (0.005 → bucket 0, 0.0050001 → bucket 1, 0.5 → bucket 6, 11.0 and NaN → `+Inf`).
+  The exception path was verified to record both a duration and a counter, with
+  `X-Request-ID` present on the 500.
+- **CR-318** — `middleware.py:25-31`: a 7-line paragraph justifies deliberately not unwinding two
+  contextvars on the failure path. The decision is sound and the reason is real, but this is the
+  shape the code-gen paragraph rule warns about; a one-line comment plus the story reference
+  would carry the same information.
 
 ---
 
-## 6. What is clean
+## Checks run
 
-- **E11-S1** (`types/delinquency.py`, `config/delinquency.py`, `test_bucket_ladder.py`)
-  is the strongest part of the diff. `classify_by_days_past_due` is a correct
-  last-floor-wins scan, negatives are rejected, and `test_bucket_ladder.py:14-24`
-  uses an **independent oracle** written from D-B's literal ranges rather than the
-  production floor table — so the 0..400 sweep actually cross-checks the
-  implementation instead of restating it. AC1/AC2/AC3/AC4 all have real assertions.
-  (The story's Operation 2 names `types/delinquency.py` for the classifier while
-  HEAD puts it in `config/delinquency.py`; that is layering-correct — Types may not
-  import Config — and `component-map.md:33,131` authorises the file, so it is not a
-  deviation.)
-- **`Money`** (`types/money.py`) rejects `float`, `bool`, non-numeric strings and —
-  notably — `NaN`/`sNaN`/`±Infinity`, which is an edge case most implementations
-  miss. `__slots__`, no `float` anywhere, every operation re-quantizes.
-- **The E9-S1 float guards** on both sides are real oracles, not decoration. The
-  backend AST scan catches `/`, `//`, `float()`, float literals, `**0.5`,
-  `import math` and `from math import`; the frontend regex scan strips comments and
-  string literals first (so a `"1,234.50"` example does not force the checks to be
-  weakened) and has seven positive-control cases.
-- **No file over 300 lines, no function over 24 lines.** Largest file is
-  `test_log_redaction.py` at 304; largest production file `logging.py` at 251.
-- **Layering holds.** `api → config`, `api → types`, `config → types`. No Types
-  module imports anything above it.
-- **SEC-001 spot-check.** `test_log_redaction.py:229-258` asserts the *structural*
-  property (`"]*" not in pattern.pattern`) with a timing check only as a backstop —
-  the right way round, since a stopwatch threshold passes or fails on machine speed.
-  I did not find a different backtracking shape.
+| Check | Result |
+|---|---|
+| `uv run pytest -q` at HEAD | 104 passed |
+| `uv run mypy src/` at HEAD and with the CR-310 fix | clean, 12 files |
+| Mutant A — `_escape_label` → identity | **104 passed** (escaping unguarded) |
+| Mutant B — buckets non-cumulative | 1 failed (correctly caught) |
+| Mutant C — `route_label` → raw path | 4 failed (correctly caught) |
+| Mutant D — proper `Token` typing | mypy clean, 104 passed |
+| Envelope headers, 8 paths, live requests | `Allow` / `WWW-Authenticate` / `Retry-After` all present |
+| `money.ts` regex timing, 7 sizes + per-sink isolation | quadratic, cost isolated to line 78 |
+| Real uvicorn + raw sockets, `httptools` vs `h11` | method label bounded only by the parser |
+| Method-cardinality flood, h11, 3000 tokens | 2998+2998 series, 3.55 MB body, ~2.5 MB retained |
+| uvicorn access-log ordering, in-process replay | `request_id` bound, not empty |
+| Test isolation, 3 orderings | no order dependence at HEAD |
+| `git diff -- backend/src frontend/src` after all mutations | empty (restored) |
 
----
-
-## 7. Gate implication
-
-`pass: false` on 2 BLOCK findings. Both fixes are surgical and local — one label
-expression in `middleware.py`, one `headers=` parameter in `errors.py` — plus one
-assertion each. Neither requires a design change or an amendment. The 16 WARNs are
-logged for the next sprint; `CR2-W02`/`W03`, `CR2-W07`/`W08` and `CR2-W12` are the
-ones with the shortest fuse, because group B's first story (E1-S1) registers the
-real database probe, adds the first path-param route and raises the first 401.
+Files, function lengths and typing were checked mechanically: largest changed source file is
+`backend/src/config/logging.py` at 251 lines (under the 300 limit, over the 200 warning
+threshold); no changed function exceeds 30 lines; the only typing escapes in changed source are
+`serializers.py:50` (`Any`, required by Pydantic's `__get_pydantic_core_schema__` protocol —
+acceptable), `routes.py:59` (see CR-309) and `logging.py:91` (see CR-310).

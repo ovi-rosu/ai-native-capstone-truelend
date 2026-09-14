@@ -73,6 +73,35 @@ _duration_counts: dict[tuple[str, str], list[int]] = {}
 _duration_totals: dict[tuple[str, str], tuple[int, float]] = {}
 
 
+# Bounded method label. `method` came straight from the request and flowed
+# into the keys of three process-global dicts behind an unauthenticated
+# /metrics, never evicted (CR-301): 3,000 distinct methods produced ~6,000
+# series, 22,003 produced 25.3 MB retained. It only looked safe because
+# `uvicorn[standard]`'s httptools rejects unknown methods at 400 below the ASGI
+# layer -- an optional C extension that nothing here documents, tests or pins,
+# under a middleware deliberately written to be server-agnostic.
+_KNOWN_METHODS = frozenset(
+    {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "TRACE", "CONNECT"}
+)
+_OTHER_METHOD = "<other>"
+
+
+def method_label(method: str) -> str:
+    """The request method if it is a real one, else one shared bucket."""
+    upper = method.upper()
+    return upper if upper in _KNOWN_METHODS else _OTHER_METHOD
+
+
+def record_request(method: str, route: str, status: int, seconds: float) -> None:
+    """Record one served request: the RED counter and the duration observation.
+
+    Single entry point so the method label is bounded once, for both series.
+    """
+    label = method_label(method)
+    _request_counts[label, route, status] += 1
+    observe_duration(label, route, seconds)
+
+
 def observe_duration(method: str, route: str, seconds: float) -> None:
     """Record one request duration against (method, route template)."""
     key = (method, route)
@@ -119,27 +148,37 @@ class CorrelationIdMiddleware:
         self.app = app
 
     @staticmethod
-    def _stamping_send(send: Send, request_id: str, scope: Scope) -> Send:
-        """Wrap `send` so the response start carries the id and is counted."""
+    def _stamping_send(
+        send: Send, request_id: str, scope: Scope, seen: list[int]
+    ) -> Send:
+        """Wrap `send` so the response start carries the id and is logged."""
         method = str(scope.get("method", "-"))
         path = str(scope.get("path", "-"))
 
         async def send_with_correlation_id(message: Message) -> None:
             if message["type"] == "http.response.start":
                 MutableHeaders(scope=message)[_REQUEST_ID_HEADER] = request_id
-                # Read at response time, not call time: the router has run by
-                # now, so the matched template is available.
-                _request_counts[method, route_label(scope), int(message["status"])] += 1
-                _access_logger.info("%s %s -> %s", method, path, message["status"])
+                status = int(message["status"])
+                seen.append(status)
+                _access_logger.info("%s %s -> %s", method, path, status)
             await send(message)
 
         return send_with_correlation_id
 
     @staticmethod
-    def _observe(scope: Scope, started: float) -> None:
-        """Record the elapsed duration under the matched route template."""
-        observe_duration(
-            str(scope.get("method", "-")), route_label(scope), time.perf_counter() - started
+    def _observe(scope: Scope, started: float, seen: list[int]) -> None:
+        """Record the request once, under the matched route template.
+
+        Recorded here rather than at `http.response.start` because the duration
+        is only known once the call returns; the status is carried over from the
+        response-start message, defaulting to 500 when the app raised before
+        sending one.
+        """
+        record_request(
+            str(scope.get("method", "-")),
+            route_label(scope),
+            seen[0] if seen else 500,
+            time.perf_counter() - started,
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
@@ -152,13 +191,14 @@ class CorrelationIdMiddleware:
         request_id = inbound or uuid4().hex
         token = request_id_var.set(request_id)
         redaction_token = begin_redaction_scope()
-        wrapped_send = self._stamping_send(send, request_id, scope)
+        seen: list[int] = []
+        wrapped_send = self._stamping_send(send, request_id, scope, seen)
 
         try:
             await self.app(scope, receive, wrapped_send)
-            self._observe(scope, started)
+            self._observe(scope, started, seen)
         except BaseException:
-            self._observe(scope, started)
+            self._observe(scope, started, seen)
             # Logged here, while the redaction set and the id are still bound,
             # so the traceback is scrubbed and correlated. Relying on the
             # server's own logger left it unscrubbed and with an empty id --

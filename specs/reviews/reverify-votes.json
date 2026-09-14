@@ -1,185 +1,171 @@
 {
   "gate": "gate-reverify",
   "trigger": "security-boundary",
-  "commit": "9112495",
-  "range": "14e9487..HEAD",
+  "round": 3,
   "group": "A",
-  "round": 2,
+  "head": "ba457bf",
+  "base": "14e9487",
   "security": {
-    "votes": ["fail", "fail", "fail"],
-    "majority": "fail",
+    "votes": ["pass", "pass", "pass"],
+    "majority": "pass",
     "fail_safe_triggered": false,
-    "unanimous": true,
     "instances": [
       {
         "instance": 1,
-        "artifact": "specs/reviews/security-verdict.json",
-        "verdict": "block",
-        "counts": { "block": 3, "warn": 9, "info": 10 },
-        "block_ids": ["SEC-101", "SEC-102", "SEC-103"]
+        "role": "canonical",
+        "verdict": "pass",
+        "block": 0,
+        "warn": 6,
+        "info": 4,
+        "outputs": ["specs/reviews/security-review.md", "specs/reviews/security-verdict.json"]
       },
       {
         "instance": 2,
-        "artifact": "specs/reviews/security-verdict-instance2.json",
-        "verdict": "block",
-        "counts": { "block": 2, "warn": 13, "info": 7 },
-        "block_ids": ["SEC2-B01", "SEC2-B02"]
+        "verdict": "pass",
+        "block": 0,
+        "warn": 11,
+        "info": 9,
+        "outputs": ["specs/reviews/security-review-instance2.md", "specs/reviews/security-verdict-instance2.json"]
       },
       {
         "instance": 3,
-        "artifact": "specs/reviews/security-verdict-instance3.json",
-        "verdict": "block",
-        "counts": { "block": 3, "warn": 10, "info": 4 },
-        "block_ids": ["SEC3-001", "SEC3-002", "SEC3-003"]
+        "verdict": "pass",
+        "block": 0,
+        "warn": 11,
+        "info": 7,
+        "outputs": ["specs/reviews/security-review-instance3.md", "specs/reviews/security-verdict-instance3.json"]
       }
-    ],
-    "convergence_note": "All three instances independently converged on the same two HTTP-reachable BLOCKs in the newly shipped GET /metrics surface: (1) Prometheus exposition injection via the unescaped, percent-decoded path label, and (2) unbounded metric cardinality keyed on the raw path in a never-evicted process-global Counter. Both were introduced by remediation commit 9112495 — the fix for the previous round's BLOCKs created this round's. The orchestrator independently reproduced both (see independent_confirmation).",
-    "process_improvement": "Last round instances 2 and 3 voted pass on vectors they had never probed, while instance 1 found a real ReDoS. This round all three were required to either probe each vector and report the observation, or record it as NOT PROBED. All three complied: instance 2 recorded 8 not-probed vectors, instance 3 recorded 8, each with a reason. No instance returned a clean verdict on an untested vector."
+    ]
   },
   "functional": {
-    "votes": ["fail", "pass", "fail"],
-    "majority": "fail",
+    "votes": ["pass", "pass", "pass"],
+    "majority": "pass",
     "fail_safe_triggered": false,
-    "unanimous": false,
     "instances": [
       {
         "instance": 1,
-        "artifact": "specs/reviews/evaluator-report.md",
-        "verdict": "fail",
-        "failure_layer": "security",
-        "contract_checks": "3/3 pass",
-        "story_acs": "12/12 pass"
+        "role": "canonical",
+        "verdict": "pass",
+        "frozen_api_checks": "3/3",
+        "story_acs": "14/14",
+        "gate_recommendation": "not a gate clearance",
+        "outputs": ["specs/reviews/evaluator-report.md", "specs/reviews/evaluator-evidence.json"]
       },
       {
         "instance": 2,
-        "artifact": "specs/reviews/evaluator-report-instance2.md",
         "verdict": "pass",
-        "scope_caveat": "explicitly functional-only; instance 2 declined to clear the security gate and filed F-2I (no security verdict existed for 9112495 at the time it ran)",
-        "contract_checks": "3/3 pass",
-        "story_acs": "12/12 pass"
+        "frozen_api_checks": "3/3",
+        "story_acs": "16/16",
+        "gate_recommendation": "block",
+        "outputs": ["specs/reviews/evaluator-report-instance2.md", "specs/reviews/evaluator-evidence-instance2.json"]
       },
       {
         "instance": 3,
-        "artifact": "specs/reviews/evaluator-report-instance3.md",
-        "verdict": "fail",
-        "failure_driver": "G3-F1 high, /metrics exposition injection",
-        "contract_checks": "3/3 pass",
-        "story_acs": "12/12 pass"
+        "verdict": "pass",
+        "frozen_api_checks": "3/3",
+        "story_acs": "15/15",
+        "gate_recommendation": "block",
+        "outputs": ["specs/reviews/evaluator-report-instance3.md", "specs/reviews/evaluator-evidence-instance3.json"]
       }
     ],
-    "agreement_note": "The functional disagreement is about SCOPE, not evidence. All three instances agree the frozen contract passes 3/3 and all 12 story ACs pass on live evidence. Instances 1 and 3 returned FAIL because they counted the /metrics defect against the group; instance 2 returned PASS scoped to functional behaviour only and routed the same class of defect to the security axis (its own F-2B records the /metrics cardinality finding). There is no instance that examined the /metrics surface and considered it acceptable.",
-    "contract_status": "QA-VM-003, QA-VM-004 and QA-VM-005 pass live in all three instances against independently booted servers on ports 8000/8001/8002, corroborated by the orchestrator's own live regression-gate run on port 8020 (0 findings)."
+    "note": "All three instances voted functional PASS on the axis they were asked to judge (do the acceptance criteria and the frozen contract hold). Two of the three independently added a gate-level BLOCK recommendation on grounds outside the AC set, observing that the frozen contract for group A is three GET /health checks and therefore too narrow to carry the merge decision on its own."
   },
   "code_review": {
-    "axis_type": "single-instance, outside the majority vote",
-    "artifact": "specs/reviews/code-review-verdict.json",
+    "in_vote": false,
     "verdict": "block",
-    "counts": { "block": 2, "warn": 16, "info": 8 },
-    "block_ids": ["CR2-001", "CR2-002"],
-    "note": "Canonical gate semantics place this axis outside the 2-of-3 vote. Its BLOCK alone is sufficient to fail the gate."
+    "block": 1,
+    "warn": 12,
+    "info": 5,
+    "sufficient_alone": true,
+    "block_ids": ["CR-301"],
+    "outputs": ["specs/reviews/code-review.md", "specs/reviews/code-review-verdict.json"]
   },
-  "prior_blocks_closed": {
-    "CR-001": "CLOSED — verified by the code-reviewer under TestClient across 404/405/401/403/409/422/AppError/500, and independently by the orchestrator (curl: framework 404 and 405 both return the frozen {error,detail,context} envelope) and by evaluator instances 1 and 2.",
-    "CR-002": "CLOSED — verified on both the async and the def/threadpool (context-copy) path by the code-reviewer, evaluator 1, evaluator 3 and security instance 3. Traceback frames confirm the real run_in_threadpool path was exercised; PAN/Aadhaar render as [REDACTED] with a correct request_id.",
-    "CR-003": "CLOSED — the exemption is now gated on is_division (test_no_float_money.py:82-83) with a regression test at :272-297. Evaluator 1 additionally mutation-tested the guard by appending float(x) * 1.5 to production money.py: 2 tests fired, then restored via git. Orchestrator verified the working tree is pristine.",
-    "SEC-001": "CLOSED — independently confirmed by the orchestrator (the original 199,326 ms probe drops to 0.03 ms, growth flat) and re-attacked with NEW shapes by all three security instances and evaluators 2 and 3. Instances 1 and 2 both identified the structural reason no ReDoS shape exists on this design: the tolerant branch's alphabets are disjoint, so the separator partition is unique and there is nothing to backtrack over.",
-    "SEC-002": "CLOSED — verified by execution on the async and threadpool paths by security instances 1, 2 and 3. Residual: redact_values is still exported carrying the identical original leak (security-1 SEC-109)."
+  "gate_verdict": "BLOCK",
+  "gate_verdict_basis": "Both voted axes returned a unanimous PASS majority, so no fail-safe was triggered. The gate is BLOCK on the single-instance code-review axis (CR-301), which sits outside the vote and is sufficient alone, and is corroborated by evaluator instances 2 and 3 (F-2, MAJOR) and by security instances 2 and 3 (SEC2-W1, SEC3-001) as the same underlying defect at a lower severity.",
+  "round_2_block_disposition": {
+    "B-1": {
+      "status": "closed",
+      "confirmed_by": ["eval-1", "eval-2", "eval-3", "sec-1", "sec-2", "sec-3"],
+      "note": "Route label now derives from the matched route template, so the raw path is no longer a label channel. slo-check.js reports error_rate_pct 0 where round 2 measured a forged 99.90%. Residual: _escape_label still omits CR and ~29 other C0 characters, unreachable under the shipped httptools parser."
+    },
+    "B-2": {
+      "status": "half-closed",
+      "note": "Route dimension bounded and verified by measurement up to 60,000 distinct paths. The method dimension is still unbounded in application code; see CR-301. Bounded to llhttp's method table under the shipped uvicorn[standard]/httptools parser, unbounded under the pure-Python h11 fallback."
+    },
+    "B-3": {
+      "status": "closed",
+      "confirmed_by": ["eval-1", "eval-2", "eval-3", "sec-2", "code-review"],
+      "note": "Verified by live request: 405 keeps Allow, 401 keeps WWW-Authenticate, 409/429 keep custom headers; 404/422/500 envelopes intact. A real regression test exists at backend/tests/unit/test_error_envelope.py:189."
+    },
+    "B-4": {
+      "status": "open",
+      "severity_round_2": "block",
+      "severity_round_3": "warn",
+      "downgrade_basis": "Untouched by all six remediation commits and reproduced at full magnitude by four instances (format() 4,088-4,168 ms from the 8-byte input; 421,224-429,464 ms from the 9-byte input; quadratic at ~4x per doubling across three or more doublings). Round 2's refutation is now positively explained: it timed toFixed(), a linear sink measuring 0.6-3.2 ms, roughly 1,260-7,000x cheaper than the real one. Downgraded from BLOCK to WARN by four independent reachability analyses agreeing that format()'s only caller is MoneyText, whose only callers are tests: frontend/src holds two files with no entry point or fetch layer, and the backend cannot emit such a value because Money._quantize rejects beyond 28-digit precision. Escalates to BLOCK/high on the first commit that mounts MoneyText against non-backend input.",
+      "filed_as": ["SEC-206", "CR-304", "SEC2-W10", "V-4"]
+    }
   },
-  "resolved_disagreements": [
+  "cross_instance_disputes_resolved": [
     {
-      "topic": "frontend Money DoS (prior SEC-009)",
-      "positions": "Evaluator instance 3 REFUTED it, measuring 1e1000000.toFixed(2) at 40 ms and linear. Security instance 3 CONFIRMED it as a BLOCK, measuring Money.format() at 4,152 ms for 1e100000 and non-completion in 100 s for 1e1000000.",
-      "resolution": "Security instance 3 is correct and evaluator 3 probed the wrong sink. The cost is not in toFixed but in the quadratic thousands-separator lookahead /\\B(?=(\\d{3})+(?!\\d))/g at frontend/src/types/money.ts:78; security 3 explicitly measured toWire() as cheap (0.3 ms) to isolate the regex as the whole cost. This is the clearest single case in this gate where running three instances changed the outcome: the finding would have been recorded as refuted on a single-instance run.",
-      "status": "upheld as BLOCK (latent — no frontend entry point exists at HEAD)"
+      "item": "B-4 sink isolation",
+      "resolution": "Settled. The regex is the cost, not toFixed(). Round 2's evaluator-3 refutation timed the wrong sink; security-3 was right. Reconfirmed independently by eval-1, eval-2, eval-3, sec-3 and code-review with consistent quadratic curves."
     },
     {
-      "topic": "backend Money DoS (prior SEC-008)",
-      "positions": "Evaluator instance 3 measured a 9,708 ms blocking-CPU shape on the integer-scalar path. Security instance 3 REFUTED the DoS, measuring a 109 ms worst case for a 10-million-digit input with every pathological exponent rejected in under 0.1 ms.",
-      "resolution": "Not reconciled by shared evidence; the two instances probed different shapes and neither re-ran the other's. Both agree on the residual defect that matters: a bare decimal.Overflow escapes Money.multiply at money.py:101 because _quantize catches only InvalidOperation. Recorded as an open WARN with the timing claim marked disputed rather than silently resolving it in either direction.",
-      "status": "WARN, timing disputed"
+      "item": "Money.multiply timing (round 2: 9,708 ms vs 109 ms, unresolved)",
+      "resolution": "Settled: neither figure was right. decimal.Overflow escapes in 0.0 ms. There is no denial of service; it is a contract break (bare ArithmeticError instead of InvalidMoneyAmountError, so 500 rather than 422). money.py catches only InvalidOperation. Filed SEC3-011 / F-6."
     },
     {
-      "topic": "uvicorn.access silencing",
-      "positions": "Evaluator instance 2 filed F-2A (MAJOR): the two justifications in logging.py:217-223 are demonstrably false.",
-      "resolution": "Instance 2 proved it by counterfactual rather than argument — it re-enabled uvicorn.access two ways against the real production factory. Native emits plain text (so the AC3 hazard is real), but routing it through the JSON root handler — the treatment uvicorn.error already receives — yields valid JSON carrying the correct request_id, and preserves client address, HTTP version and query string. The claim that request_id_var is already reset is disproven empirically and against uvicorn source (httptools_impl.py:484 emits synchronously inside the middleware's await send(message)). AC3 passes on its merits; the comment misrepresents why, and disabled = True is broader than the problem.",
-      "status": "WARN — no contract failure, but the stated rationale is false and should be corrected rather than inherited by later stories"
+      "item": "method-label cardinality magnitude",
+      "resolution": "Not a contradiction; parser-dependent. httptools/llhttp admits only its fixed method table (~35), giving a bounded constant; h11 admits arbitrary tchar tokens, giving unbounded growth (measured 20,000-22,003 distinct values, 25.3 MB retained, 330,064 exposition lines). The shipped config resolves to httptools via uvicorn[standard] and uv.lock, which is why severity splits between the axes."
+    },
+    {
+      "item": "E15-S1-AC2 'passes by construction' (round 2 finding)",
+      "resolution": "Partially refuted. Installing the filter on root only kills both AC2 tests, so 'vacuous' overstates it. The real defects, both executed: the property holds only at the instant configure_logging() returns, and the docstring's non-vacuity claim is empirically false because a constructor-built probe logger never enters loggerDict. AC2 passes; recorded as WARN."
     }
   ],
-  "independent_confirmation": {
-    "metrics_exposition_injection": {
-      "status": "confirmed by orchestrator",
-      "method": "Live server on port 8020, percent-encoded path via curl --path-as-is (uvicorn URL-decodes scope['path']): GET /hx%22%2Cstatus%3D%22500%22%7D%20424242%0A%23",
-      "observed": "http_requests_total{method=\"GET\",route=\"/hx\",status=\"500\"} 424242 appeared verbatim in unauthenticated /metrics, and the genuine 404 sample was swallowed into a comment line (#\",status=\"404\"} 1).",
-      "slo_sensor_impact": "Ran the project's own sensor against the poisoned endpoint: node .claude/scripts/slo-check.js --url http://127.0.0.1:8020 returned {\"verdict\":\"fail\",\"error_rate_pct\":99.90250932519498,\"breaches\":[\"error_rate\"]} against a budget of 1. One unauthenticated request flipped the runtime-SLO sensor. Evaluator instance 1 independently measured 99.995% and additionally demonstrated the inverse: inflating the 200 counter to MASK a real breach.",
-      "artifacts": ["specs/reviews/metrics-forgery-evidence.txt", "specs/reviews/slo-verdict-poisoned-evidence.json"]
-    },
-    "metrics_cardinality": {
-      "status": "confirmed by orchestrator and all three security instances",
-      "orchestrator_measurement": "400 unique unauthenticated bogus paths grew /metrics from 6 lines / 367 B to 406 lines / 29,295 B, linear, no eviction.",
-      "instance_measurements": "security-1: 100,000 paths in 18.6 s -> 9.08 MB, 191 B/key by tracemalloc. security-2: 60,000 paths from ONE keep-alive connection in 11.9 s -> +28.2 MB RSS permanently retained, ~142 MB/min, /metrics body 45.6 MB / 124,012 series. security-3: 30,000 paths -> RSS 64.2->78.7 MB, /metrics 1.1->8.74 MB. evaluator-2: 150 paths -> 154 series. code-reviewer: 500 paths -> 36,980 B."
-    },
-    "http_exception_headers_dropped": {
-      "status": "confirmed by orchestrator",
-      "method": "TestClient against create_app() with a route raising HTTPException(401, headers={'WWW-Authenticate': 'Bearer'}), plus POST /health for the 405",
-      "observed": "401 WWW-Authenticate: None; 405 Allow: None. errors.py:107 never forwards exc.headers, which the FastAPI default handler it replaced did. Violates RFC 9110 15.5.2 and 15.5.6."
-    },
-    "open_redirect_and_exposure": {
-      "status": "confirmed by orchestrator",
-      "method": "curl -H 'Host: evil.example' --path-as-is http://127.0.0.1:8021/health/",
-      "observed": "307 with location: http://evil.example/health (host-header-reflected open redirect). /docs and /openapi.json both return 200 unauthenticated. No security response headers on any route. HEAD /health returns 405, corroborating evaluator-3 G3-F7."
-    },
-    "lockfile_not_versioned": {
-      "status": "confirmed by orchestrator",
-      "method": "git check-ignore -v frontend/package-lock.json; git ls-files | grep -i lock",
-      "observed": ".gitignore:48 (*.lock) and :49 (package-lock.json) ignore dependency lockfiles repo-wide, so NEITHER frontend/package-lock.json NOR backend/uv.lock is under version control, although both exist on disk. The patterns sit under a 'Generated / large files Claude should skip' comment, conflating 'do not read this large file' with 'do not version it'. No dependency pinning exists in VCS for either stack."
-    }
+  "unscanned_tiers": {
+    "sast": "semgrep unprovisioned - UNSCANNED, not passed",
+    "secrets": "gitleaks unprovisioned - UNSCANNED, not passed",
+    "python_dependency_cve": "pip-audit unprovisioned - UNSCANNED, not passed",
+    "js_dependency_cve": "npm audit ran: 1 critical (vitest) + 1 high (vite) + 3 moderate, all devDependency-only and absent from any production image",
+    "note": "Inferential security review by three instances was the only real coverage for the injection, authz and PII classes this round. Run with explicit --files per round 2's GI-001; the skill-documented '--all --staged --boundary-only' scans zero files and self-reports a clean pass."
   },
   "gate_integrity_findings": [
     {
       "id": "GI-001",
-      "severity": "BLOCK",
-      "target": ".claude/scripts/security-scan.js",
-      "finding": "The computational security scan reported a clean pass having scanned ZERO files. The /gate skill's documented invocation is `--all --staged --boundary-only`; the staging area was empty, so files=[] and runSastDetail returned {ran: true, hadTargets: false} — self-reporting as having run while emitting no skip warning for semgrep. Re-running with explicit file arguments correctly revealed that gitleaks, semgrep AND pip-audit are all absent from this environment. Separately, runDeps(cwd) only probes the repo ROOT for package.json; this project's only manifest is frontend/package.json, so npm audit was never invoked at all and its absence was never reported.",
-      "impact": "security-scan.json with total:0, blocking:0 was vacuous on all three tiers. Manual npm audit found 5 vulnerabilities including 1 critical (vitest <=4.1.10, CVSS 9.8, GHSA-5xrq-8626-4rwp) and 1 high (vite <=6.4.2, CVSS 7.5, GHSA-fx2h-pf6j-xcff, a server.fs.deny bypass on Windows alternate paths — directly applicable on this win32 host). All three security instances independently downgraded these to WARN on the grounds that they are devDependency-only and @vitest/ui is never invoked, which is sound; the defect is that the gate's own sensor never measured them.",
-      "recommendation": "Make runSastDetail distinguish 'no targets' from 'ran clean' in the report, and have runDeps discover manifests recursively rather than root-only."
+      "status": "reconfirmed from round 2",
+      "detail": "security-scan.js with --all --staged --boundary-only yields files=[] when nothing is staged and reports a clean pass having scanned zero files. runDeps() probes only the repo root for package.json, so npm audit never runs against frontend/. Always pass explicit --files."
     },
     {
       "id": "GI-002",
-      "severity": "WARN",
-      "target": ".claude/scripts/regression-gate.js",
-      "finding": "regression-suite-full BLOCKed with 54 findings, every one 'expected status N, got 0', across contracts A.json through M.json. discoverPriorContracts() treats every file in sprint-contracts/ as a prior baseline unless --exclude-group is passed, and the gate-checks registry passes none — so it graded 12 groups whose endpoints do not exist yet, against no running server.",
-      "resolution": "Re-ran correctly against a live server. Group A's own contract: pass, 0 findings (specs/reviews/regression-gate-verdict-groupA-live.json). True baseline with all groups excluded: 'no prior contracts to re-validate' — correct, since groups_completed is empty and A is the first group. The regression axis is genuinely clean.",
-      "recommendation": "The registry entry cannot know the current group. Either pass the current group through from the lane, or have the gate read groups_completed from claude-progress.txt."
+      "status": "reconfirmed from round 2",
+      "detail": "The gate-checks registry invokes regression-gate.js with only --replay, never --exclude-group, so discoverPriorContracts() grades the unbuilt groups B-M as prior baselines and emits 404 findings. Re-run with B-M excluded: regression-gate pass. Blocking verdict from the registry invocation is an artifact."
     },
     {
       "id": "GI-003",
-      "severity": "WARN",
-      "target": ".claude/scripts/canvas-sync-check.js",
-      "finding": "canvas-sync BLOCKed on a single entry: .claude/state/red-phase-presnap.json, a harness state file modified in the working tree. changedFiles() is `git diff --name-only HEAD` with no exclusion filter, so harness control-plane state is graded as design-governed product surface.",
-      "resolution": "Re-ran scoped to the 13 production source files: 0 issues, fully synchronized (specs/reviews/canvas-sync-check-productscope.md). No product file is unsynced.",
-      "recommendation": "Exclude .claude/state/** from the canvas-sync changed set."
+      "status": "reconfirmed from round 2",
+      "detail": "canvas-sync-check.js changedFiles() has no exclusion filter for harness state, so it blocks on .claude/state/red-phase-presnap.json. Product-scope re-run is synchronized (13 files, 0 missing)."
     },
     {
       "id": "GI-004",
-      "severity": "INFO",
-      "target": ".claude/scripts/slo-check.js",
-      "finding": "The script ignores --out and always writes specs/reviews/slo-verdict.json. The orchestrator's deliberately-poisoned probe therefore overwrote the canonical artifact with verdict:fail / error_rate_pct:99.9. Detected and repaired: the poisoned reading was preserved as slo-verdict-poisoned-evidence.json and slo-verdict.json was regenerated against a clean server (verdict:pass, error_rate_pct:0).",
-      "note": "Consistent with the known harness pattern that pipeline scripts ignore unrecognised flags rather than rejecting them."
+      "status": "new this round",
+      "detail": "The gate skill documents 'npm run sensor-waivers', but this project has no root package.json, so that command fails with ENOENT. The actual validator is .claude/scripts/validate-sensor-waivers.js, which passes (5 waivers, none expired)."
     },
     {
       "id": "GI-005",
-      "severity": "INFO",
-      "target": "run-gate-checks.js waiver application",
-      "finding": "As the ownership-check waiver itself records, run-gate-checks.js has no waiver-application path — waivers apply at pre-commit only. None of the four active waivers covers canvas-sync or regression-suite-full, so neither registry BLOCK was suppressed; both were resolved by scoped re-runs instead."
+      "status": "new this round, highest priority",
+      "detail": "Concurrent 3-instance re-verification in a single shared working tree is not safe. Instances mutation-test production files simultaneously; three of the seven agents reported observing a sibling's live '# MUTANT' edit to backend/src/api/middleware.py or platform/routes.py, and the canonical security instance had to git-checkout two live mutants before it could re-derive its verdicts. Transient collateral: npm test reported 20 tests instead of 18 while a sibling probe file sat in frontend/tests/unit/, repo-wide ruff failed on a sibling scratch directory, and a shared slo-verdict.json was overwritten mid-run. Fix: give each instance its own git worktree, not merely its own port. All instances bracketed their measurements with git diff checks and the final tree is verified clean, but no instance can fully vouch for another's in-tree measurements this round."
     },
     {
       "id": "GI-006",
-      "severity": "INFO",
-      "target": "reviewer scratch-file hygiene",
-      "finding": "A concurrent security instance wrote 17 untracked backend/_probe_* scratch files (including a 29 MB log) mid-gate, which made `ruff check .` — the command in CLAUDE.md's quick reference — report 41-92 errors. Evaluator instances 1 and 2 both caught that the context pack's 'lint clean' claim did not reproduce, and both correctly localised it to untracked scratch rather than product code. The instance removed its own files on completion; the orchestrator re-verified afterwards: ruff check . / pytest / mypy all clean, 88 tests passing, product working tree pristine."
+      "status": "known, recorded in the waiver itself",
+      "detail": "run-gate-checks.js has no waiver-application path (waivers apply at pre-commit only), so ownership-check will keep reporting as blocked even when a ratified waiver covers the exact file."
+    },
+    {
+      "id": "GI-007",
+      "status": "new this round",
+      "detail": "evidence-integrity (G39) passes with applicable:false because no sprint contract declares playwright checks. The pass is honest but vacuous for group A - it verifies no browser claim because none was made. Do not read it as evidence of browser-backed verification."
     }
   ],
-  "verdict": "BLOCK",
-  "verdict_basis": "All three axes fail independently: security majority fail (unanimous 3/3), functional majority fail (2/3), and the out-of-vote code-review axis BLOCK. Canonical gate semantics forbid merging while any BLOCK finding is open. Not merged, no PR opened, task lifecycle deliberately NOT transitioned to completed.",
-  "timestamp": "2026-09-14T12:05:00.000Z"
+  "timestamp": "2026-09-14T13:37:00.000Z"
 }

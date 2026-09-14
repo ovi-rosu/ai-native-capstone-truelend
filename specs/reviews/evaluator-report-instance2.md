@@ -1,225 +1,293 @@
-# Evaluator Report — group A, instance 2 of 3
+# Evaluator report — instance 2 of 3 · `/gate --group A` round 3
 
-**Lane:** `/gate --group A` (re-run, round 2) · **HEAD:** `9112495` · **Base:** `14e9487`
-**Verification mode:** `local` (Docker not installed) · **Port owned:** 8001
-**Boot:** `cd backend && uv run uvicorn src.api.app:app --port 8001`
-**Date:** 2026-09-14 · **Instance:** 2 (worked alone; no contact with instances 1 or 3)
-
-## VERDICT: PASS (functional) — with one blocking process item not in my gift to clear
-
-All three frozen `api_checks` (QA-VM-003 / 004 / 005) pass live against a booted
-app, on **non-vacuous denominators**. All acceptance criteria for E15-S1, E9-S1
-and E11-S1 are satisfied. Both prior high-severity BLOCKs I could re-test
-(SEC-001, SEC-002) are independently confirmed fixed against HEAD, as is CR-001
-and CR-003.
-
-I did **not** clear the security gate. `specs/reviews/security-verdict.json`
-self-reports commit `f4abd41` — two commits behind HEAD — and reports
-`pass: false`. It is a snapshot of a superseded tree (see F-2I). My PASS is a
-**functional** verdict only; the overall `/gate` verdict still needs a security
-verdict regenerated against `9112495`.
+**HEAD:** `ba457bf` · **verification mode:** `local` (Docker absent) · **port:** 8032 (httptools),
+8232 (a second boot with `--http h11`, for the cardinality question only)
+**Boot:** `cd backend && uv run uvicorn src.api.app:app --host 127.0.0.1 --port 8032`
+**Both servers killed; `git status --short` carries no change of mine; `sprint-contracts/` untouched
+(`A.json` sha256 `a0625d4b…e99a7` still matches `specs/reviews/contract-freeze.json`).**
 
 ---
 
-## 1. Frozen contract results (`sprint-contracts/A.json`, never edited)
+## Verdict
 
-| Check | Matrix | Status | Denominator | Result |
-|---|---|---|---|---|
-| QA-VM-003 | VM-003 | **PASS** | 1 line / 1 JSON / 1 correct id | 200; `X-Request-ID: req-abc` echoed; 1/1 log lines parsed as JSON, `request_id == "req-abc"` |
-| QA-VM-004 | VM-004 | **PASS** | 1 line / 1 JSON / 1 correct id | 200; generated id `85daf79199cf475faee136cb7965f0d7`; log line and response header carry the **same** non-empty id |
-| QA-VM-005 | VM-005 | **PASS** | 60 samples | 200; `content-type: application/json`; body `{status,database,version}` parses; max **1.89 ms**, p95 **1.57 ms** (budget 1 s) |
+**FUNCTIONAL: PASS** — scoped exactly as instructed to *whether the acceptance criteria and the
+frozen contract hold*. All **3/3** frozen `api_checks` pass and all **16/16** story acceptance
+criteria across E15-S1, E9-S1, E11-S1 and E15-S4 verify by execution. Nothing in the AC set or the
+contract is broken at `ba457bf`.
 
-### QA-VM-003 — the denominator question, answered directly
+**GATE RECOMMENDATION: BLOCK.** The functional PASS is narrow and I want it read narrowly. The
+frozen contract is three `GET /health` checks — a near-vacuous safety net, as the pack says — and
+two independent BLOCK-class defects survive at HEAD that no AC happens to name:
 
-The task asks me to report the exact denominator and to refuse a vacuous pass.
-`GET /health` emits **exactly one** log line, so the literal denominator for
-QA-VM-003 is **1**. One line is thin evidence on its own, so I did not accept it
-on its own. I corroborated with three independent, larger denominators:
+- **B-4 is STILL OPEN and reproduced at full magnitude.** A 9-byte wire string costs **421 s** of
+  main-thread CPU through `Money.fromWire(...).format()`.
+- **SEC-103's claimed fix is empirically inert.** `f5a5ace` plumbed `scrub_text` into the int and
+  key paths of `sanitise_context`, but `scrub_text` is registration-driven and there are **zero
+  `register_sensitive` call sites in `backend/src/`**, so a 12-digit Aadhaar arriving as an `int`
+  and a PAN carried in a context *key* still egress whole on the wire. Measured below.
 
-| Probe | Lines | JSON | Carried the right `request_id` |
+I am the functional axis, so the BLOCK recommendation is advisory; the AC/contract verdict above is
+the one I am accountable for.
+
+---
+
+## 1. Frozen contract — 3/3 PASS
+
+| Check | Matrix | Result | Evidence |
 |---|---|---|---|
-| `GET /health`, `X-Request-ID: req-abc` | 1 | 1/1 | 1/1 (`req-abc`) |
-| `GET /probe/chatty` — handler emits 2 extra lines | **3** | 3/3 | 3/3 (`req-abc`) |
-| `GET /probe/boom` — unhandled 500 | **3** | 3/3 | 3/3 (`err-500`), incl. uvicorn's own `Exception in ASGI application` |
-| 12 concurrent requests, distinct ids | **12** | 12/12 | 12/12, zero cross-contamination |
-| Whole server lifetime | **180** | **180/180** | 176 request-scoped all non-empty; the only 4 empty-id lines are the pre-request `uvicorn.error` startup lines |
+| QA-VM-003 | VM-003 | **PASS** | `GET /health` + `X-Request-ID: req-abc` → 200, `x-request-id: req-abc` echoed. Exactly 1 log line emitted while serving; it parses as JSON and carries `"request_id": "req-abc"`. 1/1 = 100%. |
+| QA-VM-004 | VM-004 | **PASS** | `GET /health` with no header → 200, `x-request-id: 6e2e8d01cd9e4de9bd6b021c809f5feb`; the single request-scoped line carries the identical non-empty id. |
+| QA-VM-005 | VM-005 | **PASS** | 5 consecutive runs, all 200, `content-type: application/json`, body `{"status":"ok","database":"unconfigured","version":"0.1.0"}` parsed by `json.load`. `time_total` 0.001336–0.001597 s — three orders of magnitude under the 1 s budget. |
 
-The correlation is **genuine**, not an artefact of a denominator of 1: when a
-handler emits three lines, all three carry the id; when the request fails, the
-server's *own* error line carries it too. The denominator for `/health` is 1
-because `/health` genuinely causes one line, not because lines were hidden.
+Stub-mode caveat does not apply; this was a real uvicorn process.
 
 ---
 
-## 2. The `uvicorn.access` question — judged explicitly
+## 2. Story acceptance criteria — 16/16 PASS
 
-The task asks whether disabling `uvicorn.access`
-(`src/config/logging.py:224`, `_SILENCED_LOGGERS`) makes "100% of log lines are
-JSON" easier to satisfy than E15-S1-AC3 intends — correlation, or silencing.
+| AC | Verdict | How it was verified (execution only) |
+|---|---|---|
+| **E15-S1-AC1** | PASS *(surrogate — see F-1)* | The literal *Given* ("an application payload") has no endpoint in group A; `POST /applications` was retargeted to group E. Verified at the substrate: with values registered, `scrub_text` returns `[REDACTED]` for the exact PAN, Aadhaar and salary-document strings, in-sentence and with a trailing dash. **Caveat F-1 is MAJOR.** |
+| **E15-S1-AC2** | **PASS** | Independent enumeration under the *real* boot order (`import src.api.app`): **11/11** live loggers carry a `RedactionFilter` — root, asyncio, concurrent.futures, dotenv.main, fastapi, gunicorn.error, pydantic_settings, truelend.access, uvicorn, uvicorn.access, uvicorn.error. Empty miss-list. (A partial import that loads only `src.config.logging` shows `truelend.access` filterless; that is my import order, not a defect — `src/api/app.py` imports the middleware before `configure_logging` runs.) |
+| **E15-S1-AC3** | **PASS** | = QA-VM-003. 100% JSON, 100% correct `request_id`. `uvicorn.access` is `disabled=True`, so no non-JSON line competes. |
+| **E15-S1-AC4** | **PASS** | = QA-VM-004. Also holds on the failure path: a forced `RuntimeError` produced a 500 that still carried `x-request-id: 1a6a9f67e41a4f3ba8e6b36fcd0ad7aa` and a correlated `ERROR` line with the same id — CR-003 stays closed. |
+| **E15-S1-AC5** | **PASS** | = QA-VM-005. |
+| **E9-S1-AC1** | PASS *(scope-limited — see F-5)* | No schedule generator exists in group A; `tests/architecture/test_no_float_money.py:8` says so itself. Verified at the Money layer instead: **3,000** random principal/rate triples × 4 operations (construct, multiply, add, subtract) = 12,000 results, **0** that were not a `Decimal` with `exponent == -2`. `float`, `bool` and a `float` scalar are all rejected with `InvalidMoneyAmountError`. |
+| **E9-S1-AC2** | **PASS** | `uv run pytest tests/architecture/test_no_float_money.py -q` → **42 passed**. Full suite 104 passed; ruff clean; mypy clean over 12 files. |
+| **E9-S1-AC3** | **PASS** | `frontend/src/types/money.ts` and `MoneyText.tsx` contain no `Number(`, `parseFloat`, `parseInt`, `Math.*`, `toNumber`, `valueOf` or `+=`. The static check carries negative controls (it flags planted `toNumber` / float-literal / `parseFloat` / `Number()` snippets). `npm test` 18 passed, lint clean, typecheck clean. |
+| **E11-S1-AC1** | **PASS** | `classify_by_days_past_due(35)` → `DPD_30`. Floors confirmed at 0/30/60/90/180. |
+| **E11-S1-AC2** | **PASS** | Exhaustive sweep 0…400 = 401 values: every result a `DelinquencyBucket`; ranges `CURRENT 0-29`, `DPD_30 30-59`, `DPD_60 60-89`, `DPD_90 90-179`, `NPA 180-400`; each contiguous and adjacent — **no gap, no overlap**. `-1` raises `ValueError`. |
+| **E11-S1-AC3** | **PASS** | `classify(due=today+1d, as_of=today)` → `CURRENT`; `classify(due=today, as_of=today)` → `CURRENT`; `classify(due=today-35d, as_of=today)` → `DPD_30`. |
+| **E11-S1-AC4** | **PASS** | The result is a bare `StrEnum` member. No attribute matching fee / interest / charge / penal. Five members, no sixth bucket, no orthogonal NPA flag. |
+| **E15-S4-AC1** | **PASS** *(strong)* | See §3 — p95 computed by me from the cumulative buckets tracks empirical truth. |
+| **E15-S4-AC2** | **PASS** *(reachable-vector complete; latent gap F-3)* | See §4. |
 
-I ran the counterfactual rather than reasoning about it. A probe harness wrapping
-the **real** production factory re-enabled `uvicorn.access` in two modes:
+---
 
-| Mode | Emitted line | Parses as JSON? | `request_id` |
+## 3. E15-S4-AC1 — the histogram, verified by computing p95 myself
+
+I did **not** grep for the metric name. I served real traffic (9 × `/health`, 60 × `/openapi.json`,
+20 × unrouted, `/docs`, `/metrics`), scraped `/metrics`, parsed the exposition and ran the
+Prometheus `histogram_quantile` interpolation in my own code.
+
+Live scrape: 3 histogram series, bounds
+`0.005 0.01 0.025 0.05 0.1 0.25 0.5 1 2.5 5 10 +Inf` — **`0.5` is a boundary**, so the declared
+500 ms SLO sits exactly on a bucket edge. For every series: cumulative **monotonic = True**,
+**`+Inf` bucket == `_count`**, `_count` and `_sum` both present, labelled `method` and `route`.
+
+Because everything real was sub-millisecond, I also fed a known distribution through
+`observe_duration` (940 samples uniform 1–20 ms plus a 60-sample 0.5–3.0 s tail) and rendered it,
+then compared my histogram-derived quantiles against the empirical truth of the same samples:
+
+| q | computed from the exposition | empirical truth | |
 |---|---|---|---|
-| `silenced` (production) | *nothing* | n/a | n/a |
-| `native` (uvicorn's own `AccessFormatter`) | `INFO:     127.0.0.1:53135 - "GET /health HTTP/1.1" 200` | **NO — plain text** | none |
-| `routed` (propagated through the JSON root handler, the exact treatment `uvicorn.error` already gets) | `{"...","logger": "uvicorn.access", "message": "127.0.0.1:63273 - \"GET /health HTTP/1.1\" 200", "request_id": "req-abc"}` | **YES** | **`req-abc` — correct** |
+| 0.50 | 11.98 ms | 11.32 ms | |
+| 0.90 | 23.82 ms | 19.29 ms | |
+| **0.95** | **884.62 ms** | **934.22 ms** | correctly reports a breach of the 500 ms budget |
+| 0.99 | 3076.92 ms | 2561.63 ms | |
 
-**Findings from the counterfactual:**
+p95 is genuinely computable and the result is sane — within normal bucket-interpolation error and
+correct about the SLO. **The project's own sensor agrees:** `node .claude/scripts/slo-check.js`
+now returns `{"verdict":"pass","error_rate_pct":0,"p95_ms":4.787,…}`. `p95_ms` was permanently
+`null` before this story; the business value E15-S4 claims is delivered. AC1 **PASS**.
 
-1. The hazard is real. Left native, `uvicorn.access` emits a plain-text line that
-   *would* break AC3's "100% parse as JSON". Something had to be done.
-2. **Both stated reasons for disabling are factually false.**
-   - Claim: *"`request_id_var` is already reset by the time it emits (it logs
-     after the response completes, outside the middleware scope)."* False. The
-     routed run printed `request_id: "req-abc"`. Confirmed in uvicorn's source:
-     `.venv/Lib/site-packages/uvicorn/protocols/http/httptools_impl.py:484-492`
-     emits `self.access_logger.info(...)` inside `RequestResponseCycle.send()`
-     at `http.response.start` — i.e. synchronously inside the `await send(message)`
-     that `CorrelationIdMiddleware._stamping_send` makes, while the contextvar is
-     still bound.
-   - Claim: *"its `AccessFormatter` reads `record.args`, which `RedactionFilter`
-     clears, raising `ValueError` and dropping the line entirely."* Moot under the
-     routed treatment (`AccessFormatter` is never invoked), and not reproducible
-     even in `native` mode with redaction actively firing — the line printed fine,
-     because `RedactionFilter` only clears `args` when the scrub *changes* the
-     message, and an access record contains no PII.
-3. **Routing would have satisfied AC3 *and* preserved the data.** `disabled = True`
-   is broader than the problem: it permanently drops client address, HTTP version
-   and the query string from the operational record, and suppresses any future
-   `uvicorn.access` WARNING/ERROR.
-
-**My judgement: honest compliance in substance, dishonest in its stated reason.**
-It is not gaming the denominator — I proved the denominator non-trivially three
-separate ways, and the middleware's replacement line genuinely covers every
-request including 4xx and 5xx. But the justification in the code comment is
-wrong, a strictly better option exists and was rejected on a false premise, and
-the next maintainer reading that comment will be misled. Recorded as **F-2A
-(MAJOR)** — a defect against maintainability and operational completeness, **not**
-a failure of QA-VM-003/004 or of E15-S1-AC3/AC4, which pass on their own terms.
+One accuracy defect, not an AC failure (**F-4**): `/openapi.json`, `/docs` and `/redoc` are real
+routed endpoints but label as `route="<unmatched>"` — 61 successful 200s landed in the same bucket
+as 20 garbage-path 404s. `route_label()` reads `scope["route"].path`, which FastAPI's `APIRoute`
+populates and the plain Starlette routes FastAPI mounts for its docs do not. `/health` and
+`/metrics` — the SLO-relevant routes — label correctly, so AC1 stands.
 
 ---
 
-## 3. Story acceptance criteria
+## 4. E15-S4-AC2 — hostile input, every reachable vector
 
-### E15-S1 — logging, correlation, redaction, health
+**Log side — PASS, decisively.** Each payload below produced exactly **one** physical line, valid
+JSON, **zero** raw control characters, and the canonical key set with no injected key:
 
-| AC | Status | Live evidence |
-|---|---|---|
-| AC1 — 0 occurrences of PAN/Aadhaar/salary content in the captured buffer | **PASS** | `GET /probe/pii` → `"applicant pan=[REDACTED] aadhaar=[REDACTED] lower=[REDACTED]"`. Spaced and lowercase forms both caught. `GET /probe/piiboom` (PII inside an **escaping** exception) → `grep -c ABCDE1234F` = **0**, `grep -c 123456789012` = **0** across all 3 lines |
-| AC2 — redaction filter on 100% of configured loggers | **PASS (with caveat F-2E)** | 9 loggers enumerated at `configure_logging` time, **0** without a `RedactionFilter` |
-| AC3 — 100% JSON, `request_id == req-abc` | **PASS** | see §1; 180/180 JSON over the server's lifetime |
-| AC4 — generated id shared by every request-scoped line and echoed | **PASS** | §1; `x-request-id: 85daf791...` matched the log line exactly |
-| AC5 — 200, JSON body, < 1 s | **PASS** | 60 samples, max 1.89 ms |
-
-### E9-S1 — Money value type
-
-| AC | Status | Evidence |
-|---|---|---|
-| AC1 — every money field a Decimal quantized to exactly 2 dp | **PASS (by proxy, F-2G)** | 200 random principal/rate/tenure triples; every result has `as_tuple().exponent == -2`. No schedule exists in group A; the test file discloses the substitution |
-| AC2 — static check reports 0 float ops in money paths | **PASS** | 39 tests in `tests/architecture/test_no_float_money.py`; guard reports 0 for `money.py` and `serializers.py`; catches true/floor division, `math` import/attr, `float()`, float literals, `** 0.5` |
-| AC3 — frontend value held as decimal, never float | **PASS** | `npm test` 18/18; `npm run lint` clean; `npm run typecheck` clean |
-
-### E11-S1 — delinquency bucket ladder
-
-Verified by execution against an oracle I wrote myself, not by reading the tests.
-
-| AC | Status | Evidence |
-|---|---|---|
-| AC1 — dpd 35 → DPD-30 | **PASS** | `classify_by_days_past_due(35)` → `DPD-30` |
-| AC2 — 0..400, exactly one bucket, no gap/overlap | **PASS** | 401 values, **0 mismatches** vs an independent oracle; all 5 buckets observed; boundaries exact at 0/29/30/59/60/89/90/179/180/400; negative dpd rejected with `ValueError` |
-| AC3 — nothing past due → CURRENT | **PASS** | due 2026-09-20 as-of 2026-09-14 → CURRENT; due == as-of → CURRENT |
-| AC4 — bucket only, no fee/interest/charge | **PASS** | `StrEnum` with 5 members; 0 public attributes matching fee/interest/charge/penal/amount/money |
-
----
-
-## 4. Prior BLOCK findings re-tested against HEAD
-
-| ID | Claim | Re-test | Verdict |
-|---|---|---|---|
-| CR-001 | envelope applied only to `AppError`; framework 404/422 and unhandled 500 bypass it | live 404 → `{"error":"NotFound","detail":"Not Found","context":{}}`; 405 → `{"error":"HTTPError",...}`; 422 → `{"error":"ValidationError","detail":"request validation failed","context":{"field":"body.amount"}}`; unhandled 500 → `{"error":"InternalServerError","detail":"internal server error","context":{}}`. All four carried `x-request-id` | **FIXED** |
-| CR-002 / SEC-002 | PII in an escaping exception logged unredacted with an empty `request_id` | `GET /probe/piiboom` with PAN+Aadhaar in the `RuntimeError` message → 3 log lines, **0** PAN occurrences, **0** Aadhaar occurrences, all 3 carrying `request_id: "pii-2"`, including uvicorn's own traceback line | **FIXED** |
-| CR-003 | per-line money-guard exemption silenced every float category | `test_division_exemption_does_not_silence_other_float_categories` present with 3 cases; guard source exempts only `is_division`; 39/39 pass | **FIXED** |
-| SEC-001 | catastrophic regex backtracking (ReDoS), 199,326 ms at length 40 | Re-attacked with **four shapes of my own construction**, not the recorded probe: (A) long no-separator value vs a 4-separator-packed near-miss haystack, lengths 10→60: 0.111→0.404 ms; (B) repeated-char value vs separator-dense haystack, 10→40: 0.084→0.287 ms; (C) repeated-prefix ×3 + 500-char tail: ≤0.213 ms; (D) 4998-char pure-separator haystack: ≤0.383 ms. Growth linear. Structural reason: the separator class and the literal characters are disjoint (a value *containing* a separator takes the `re.escape` literal branch), so the run length at each position is forced by the input — no ambiguity to backtrack through | **FIXED** |
-| SEC-003 | `context` an unfiltered outbound channel | 422 returns only `{"field":"body.amount"}` — never the rejected value; 500 returns `context: {}`; `sanitise_context` drops non-scalars, credential URIs and >200-char values, and scrubs registered PII | **FIXED** |
-
-Additionally verified not exploitable:
-- **Log forging** via `X-Request-ID: x","level":"CRITICAL","message":"forged` — `json.dumps` escaped it correctly; the forged `CRITICAL` line did **not** appear (`forged CRITICAL line present: false`).
-- **CRLF response splitting** via a raw socket with an embedded `\r\nX-Injected: yes` — blocked at the protocol layer; the app saw `X-Request-ID: a`.
-
----
-
-## 5. Findings
-
-| ID | Severity | Finding |
-|---|---|---|
-| F-2A | **MAJOR** | `uvicorn.access` is disabled (`src/config/logging.py:217-238`) on **two factually false premises**, when routing it through the JSON root handler — the treatment `uvicorn.error` already gets — demonstrably yields a valid JSON line carrying the correct `request_id`. `disabled = True` permanently drops client address, HTTP version and query string from the operational record and suppresses any future `uvicorn.access` WARNING/ERROR. See §2. Fix: move `"uvicorn.access"` from `_SILENCED_LOGGERS` to `_JSON_ROUTED_LOGGERS` and correct the comment. |
-| F-2B | **MEDIUM** | `/metrics` labels the RED counter with the **raw request path**, not the matched route template (`middleware.py:75`, `scope.get("path")`), and `_request_counts` is a module-level `Counter` that never evicts. Measured: 150 unauthenticated requests to distinct nonexistent paths → **154 series**, a **10,302-byte** `/metrics` response. Unbounded attacker-driven memory growth and metric-cardinality explosion on an unauthenticated endpoint that the runtime-SLO sensor scrapes. Fix: label with the matched route (`scope["route"].path`) or bucket unmatched paths to a single `__unmatched__` label. |
-| F-2C | **MEDIUM** | Inbound `X-Request-ID` is accepted with **no length or charset validation** (`middleware.py:86-87`). Measured: an 8,000-character value was reflected verbatim into the response header **and** written at full length into every log line for that request; `<script>alert(1)</script>` was reflected verbatim. Not injection — log forging and CRLF splitting both verified blocked — but unbounded attacker-controlled data written to the log sink E15-S1 exists to protect. Fix: accept the inbound id only if it matches an opaque-token shape (e.g. `^[A-Za-z0-9._-]{1,128}$`), else generate one. |
-| F-2D | **MINOR** | `register_sensitive` **silently** ignores any value shorter than `_MIN_REDACTABLE_LENGTH` (6). Measured: `_scrub('secret=AB123 here', ['AB123'])` returns the string unchanged. A silent no-op in a PII control — a caller registering a short identifier gets no signal that it is unprotected. Fix: log a warning, or raise, when a registered value is below the threshold. |
-| F-2E | **MINOR** | E15-S1-AC2's oracle is a snapshot that decays. Measured: **9/9** loggers carry a `RedactionFilter` at `configure_logging` time, but two loggers created **afterwards** (`truelend.service.underwriting`, `truelend.repository.loan` — the shape every later story will use) carry **0**. Redaction still holds because the root *handler* carries the filter (verified: `pan=[REDACTED]`), so AC1 is safe today. The forward risk: a later story adding `propagate = False` plus its own handler — exactly what uvicorn does — bypasses the only filter that is actually load-bearing. Fix: install the filter in a `logging.setLoggerClass` hook or assert the invariant at request time, not once at boot. |
-| F-2F | **MINOR** | `_scrub` is O(registered values × text length) per log line. Measured: **200** registered values against a 4,000-char line costs **23.7 ms** of CPU for one line. No group-A caller registers anything, but the project SLO is `p95_ms: 500`, so a later story registering per-applicant values at volume has a real budget to watch. |
-| F-2G | **MINOR** | E9-S1-AC1's literal subject — *"when a schedule is computed from each triple"* — does not exist in group A. It is verified by proxy on `Money` arithmetic over 200 random triples. The test file discloses this explicitly, and it parallels the contract retargeting recorded in the context pack §3, so it is a defensible narrowing — but AC1 is not closed as worded until the schedule generator lands. |
-| F-2H | **INFO** | Working-tree pollution breaks a documented gate command. `backend/` contains 7 untracked `_probe_*.py` files (from a sibling instance or an earlier session), so `cd backend && uv run ruff check .` now returns **41 errors** and does not reproduce the context pack §5 claim "All checks passed". `uv run ruff check src/ tests/` is clean — no product source is affected. Fix: delete `backend/_probe_*`. |
-| F-2I | **BLOCKING (process, not product)** | `specs/reviews/security-verdict.json` **self-reports commit `f4abd41`**, two commits behind HEAD `9112495`, and reports `pass: false`. Its only two blocking findings are SEC-001 and SEC-002, both of which I re-tested live against HEAD and found fixed. The file is a snapshot of a superseded tree and must not be read as the current verdict — but a fresh verdict for `9112495` does not exist on disk, so the security gate is **unresolved, not cleared**. I have no authority to clear it. The `security-reviewer` running alongside me in this round must regenerate it. |
-
-## 6. Performance and SLO
-
-| Measure | Value | Verdict |
-|---|---|---|
-| `GET /health` p50 | 1.27 ms | — |
-| `GET /health` p95 | 1.57 ms | WITHIN `slo.p95_ms: 500` |
-| `GET /health` max (60 samples) | 1.89 ms | WITHIN the AC5 1 s budget |
-| Perf baseline | **none on disk** | **WARN, not FAIL** — first/greenfield build, no baseline to regress against |
-| 5xx error rate | 0 (excluding the deliberate `/probe/boom` negative test, which ran on a probe harness, not the production app) | WITHIN `slo.error_rate_pct: 1` |
-
-## 7. Deterministic suites at HEAD
-
-| Check | Result |
+| Vector | Result |
 |---|---|
-| `cd backend && uv run pytest -q` | **88 passed**, 2 warnings, 0.15 s |
-| `uv run ruff check src/ tests/` | All checks passed |
-| `uv run ruff check .` | 41 errors — all in untracked `_probe_*.py`, see F-2H |
-| `uv run mypy src/` | Success, no issues in 12 source files |
-| `cd frontend && npm test` | **18 passed** (1 file) |
-| `npm run lint` / `npm run typecheck` | clean / clean |
+| `%0D %09 %00 %07 %7F %22 %5C %1B[31m` in the path | one line; rendered `\r \t \u0000 \u0007 \u007f \" \\ \u001b[31m` |
+| `%0A` + a complete forged JSON log record in the path | one line; the forged record is escaped **as data** inside `message`; no line with `"level": "CRITICAL"` was created |
+| `%E2%80%A8 %E2%80%A9` (U+2028/U+2029) | escaped to `\u2028\u2029` |
+| `X-Request-ID: a"b\c}d{e` | one line; `"request_id": "a\"b\\c}d{e"` |
+| `X-Request-ID: x","level":"CRITICAL","message":"FORGED` | one line; the whole string contained inside the `request_id` **value**; `"level"` remains `"INFO"` |
 
-## 8. Method, scope and honesty notes
+Raw CR, ESC/DEL in a header value, and `"` or `\` in the method token are all rejected at the
+parser with 400 — they never reach a log call.
 
-- Read only: the context pack, `sprint-contracts/A.json`, the three story files,
-  the production source the pack lists, and uvicorn's own source at
-  `httptools_impl.py:470-500`. I did not read the build transcript, the prior
-  verdict files as authority, or `.claude/state/uvicorn.log`.
-- I **did not edit** `sprint-contracts/A.json` (frozen) or `features.json`
-  (owned by instance 1). I generated and fixed no product code.
-- The three frozen `api_checks` were run against the **real** production app,
-  `src.api.app:app`, never `build_fastapi_app()`.
-- The 422 / 500 / multi-line-log / PII probes required routes group A does not
-  have. I booted an evaluator-only harness,
-  `.claude/state/g3eval2_probe.py`, which wraps the real
-  `create_app(build_fastapi_app() + throwaway routes)` — the same composition
-  the production path uses — and added no production file. **This harness should
-  be deleted after the gate**, along with the `g3eval2-*` logs. It is retained
-  now only so the F-2A counterfactual is reproducible.
-- Server on port 8001 was killed at the end of the run. Ports 8000 and 8002 were
-  never touched.
-- Model tier: Opus 5 (runtime mode).
+**Metrics side — PASS.** After every injection attempt: `"forged" in text` → **False**; zero raw
+control characters anywhere in the exposition; `"\r" in text` → **False**; the only `route` label
+values ever observed are `/health`, `/metrics`, `<unmatched>`. The round-2 B-1 vector does not
+reproduce.
 
-### Evidence artefacts
+**Latent gap F-3 (MAJOR, not an AC failure).** `_escape_label` is not a general escaper. Measured
+directly:
 
-| Path | Contents |
+| input | escaped? | raw control survives? |
+|---|---|---|
+| LF, `"`, `\` | yes | no |
+| **CR, TAB, NUL, BEL, ESC, DEL** | **no** | **yes** |
+
+AC2's "no raw control character" holds in the exposition today only because no attacker-controlled
+string can currently reach a label: `route` is the template or the single `<unmatched>` bucket, and
+`method` is constrained by the HTTP parser. The escaper itself does not provide the guarantee the AC
+states. The first story that labels a series with user-derived text (a product code, a tenant id)
+breaks AC2 with no test failing.
+
+---
+
+## 5. Round-2 BLOCKs — independent disposition
+
+### B-1 — `/metrics` exposition injection · **CLOSED**
+
+Five vectors, raw sockets so I controlled the request line:
+
+```
+method with quote        -> HTTP/1.1 400 Bad Request
+method with backslash    -> HTTP/1.1 400 Bad Request
+CR in request line       -> HTTP/1.1 400 Bad Request
+percent-encoded CRLF + forged series -> HTTP/1.1 404 Not Found
+percent-encoded quote    -> HTTP/1.1 404 Not Found
+```
+
+Subsequent scrape: `forged` absent, no raw control character, `route` label values
+`['/health', '/metrics', '<unmatched>']`. `scope["method"]` is *not* freely attacker-controlled —
+`"`, `\`, CR and LF are not `tchar`, so the parser rejects them before ASGI. The 99.90%-error-rate
+forgery does not reproduce: the sensor reads `error_rate_pct: 0`. **CLOSED**, with F-3 recorded as
+the latent residue.
+
+### B-2 — `/metrics` unbounded cardinality · **CLOSED in the shipped configuration; REPRODUCED under `--http h11`**
+
+Route dimension: bounded, measured. 20 distinct unrouted paths collapsed to the one
+`<unmatched>` bucket, and the new `_duration_counts` / `_duration_totals` dicts inherit it because
+`CorrelationIdMiddleware._observe` reuses `route_label(scope)` — the histogram showed the same three
+route values as the counters.
+
+The pack asks whether `method` re-opens it. **It does, but only under `h11`.** Under httptools
+(`--http auto` with `httptools` present) llhttp enforces a fixed method enum: `PROPFIND` and
+`MKCOL` were accepted, while `FOO`, `M0000`, `XYZZY42` and an 80-char token all drew 400 before
+reaching ASGI — 400 crafted methods on one keep-alive connection yielded **1** method label value
+and **0** byte growth. Under `--http h11`, which is a first-class uvicorn option and the fallback
+whenever `httptools` is unavailable, arbitrary tokens pass straight through:
+
+| stage | distinct `method` label values | exposition lines | `/metrics` payload |
+|---|---|---|---|
+| baseline | 1 | 46 | 3.8 KB |
+| +2,000 crafted methods, one connection | 2,003 | 30,049 | 2.38 MB |
+| +20,000 more, one connection | **22,003** | **330,064** | **25.3 MB** |
+
+Unbounded, retained for the process lifetime, from one unauthenticated keep-alive connection —
+byte-for-byte the round-2 DoS, relocated from `route` to `method`. Growth showed no sign of
+levelling.
+
+Why I still call this CLOSED rather than open: `backend/pyproject.toml` pins `uvicorn[standard]`,
+`backend/uv.lock` carries `httptools 0.8.0` with no platform marker, and
+`specs/design/deployment.md` starts uvicorn with no `--http` flag — so the shipped path is
+httptools. The app nevertheless applies **no bound of its own** to `method`; the bound is an
+accident of the parser. Recorded as **F-2 (MAJOR)**: bound `method` to a known-method allow-list in
+`route_label`'s neighbour, and the fix costs three lines.
+
+Note for the SLO axis: the polluted 25.3 MB `/metrics` still parsed in 0.57 s and still returned
+`verdict: pass`. The damage is to memory and the metrics store, not to the sensor's answer.
+
+### B-3 — `HTTPException.headers` discarded · **CLOSED**
+
+Verified by request on every envelope path:
+
+| path | status | header the RFC requires | body |
+|---|---|---|---|
+| `POST /health` (live, port 8032) | 405 | `allow: GET` ✓ | `{"error":"HTTPError","detail":"Method Not Allowed","context":{}}` |
+| `GET /probe/auth` raising `HTTPException(401, headers={"WWW-Authenticate": ...})` | 401 | `WWW-Authenticate: Bearer realm="truelend"` ✓ | `{"error":"Unauthorized",…}` |
+| `GET /no-such-route` | 404 | — | `{"error":"NotFound","detail":"Not Found","context":{}}` |
+| `POST /probe/validate` with a bad type | 422 | — | `{"error":"ValidationError","detail":"request validation failed","context":{"field":"body.amount"}}` — reports the location, never the rejected value |
+| `GET /probe/boom` raising `RuntimeError` | 500 | — | `{"error":"InternalServerError","detail":"internal server error","context":{}}`; `application/json`; `x-request-id` present |
+
+The 500 leaks nothing: `"Users" in body` False, `"postgresql" in body` False, `"SELECT" in body`
+False. The probe routes were registered on `build_fastapi_app()` **inside my own process** — no
+repository file was modified. **CLOSED.**
+
+### B-4 — quadratic thousands-separator regex · **STILL OPEN**
+
+Round 2 recorded an instance refuting this by timing `toFixed()`. I measured the regex itself and
+then each stage of the public path separately, so the sink is unambiguous.
+
+**Isolated regex** — `digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",")`, no `toFixed` involved:
+
+```
+digits=100     regex_ms=0.0
+digits=1000    regex_ms=0.4
+digits=5000    regex_ms=8.6
+digits=10000   regex_ms=37.3
+digits=20000   regex_ms=158.5    (x4.25)
+digits=40000   regex_ms=652.6    (x4.12)
+digits=80000   regex_ms=2661.2   (x4.08)
+```
+
+Doubling the input quadruples the time across three consecutive doublings. Quadratic, confirmed.
+
+**Reachability through the published public API** (`frontend/src/types/money.ts`, run under vitest,
+probe file deleted afterwards):
+
+| wire string | bytes | `fromWire` | `toWire` (`toFixed`) | integer digits | **`format()`** |
+|---|---|---|---|---|---|
+| `"1e100000"` | 8 | 0.1 ms | **0.6 ms** | 100,001 | **4,129.6 ms** |
+| `"1e1000000"` | 9 | — | **29.9 ms** | 1,000,001 | **421,223.8 ms** |
+
+The cost is entirely in `format()`. `toFixed` is 0.6 ms and 29.9 ms — round 2's refutation timed a
+sink that is ~7,000× cheaper than the real one. Both figures reproduce the round-2 measurement
+(4,152 ms; "did not finish in 100 s" — it needs 421 s).
+
+**Nothing bounds the magnitude upstream.** `Money`'s constructor is `private`; `fromWire` is the
+only door, and `toQuantizedDecimal` checks only `isFinite()` — decimal.js treats `1e1000000` as
+finite. `toDecimalPlaces(2)` constrains the *scale*, never the *exponent*. And
+`MoneyText.tsx:15` is `Money.fromWire(money).format()` on a `string` prop, so a wire value straight
+off the API reaches the regex with no intermediate validation. A 9-byte server-supplied amount
+freezes the browser main thread for seven minutes.
+
+No acceptance criterion names algorithmic complexity — E9-S1-AC3 asserts decimal-not-float, which
+holds — so this does not fail an AC. It is the reason for my BLOCK recommendation. Untouched by all
+six remediation commits; the regex is still verbatim at `money.ts:78`. **STILL OPEN.**
+
+---
+
+## 6. Regressions the frozen contract would not catch
+
+| id | sev | finding |
+|---|---|---|
+| **F-1** | MAJOR | **Redaction is inert in production.** `grep -rn register_sensitive backend/src/` finds only a docstring and the definition — **zero call sites**. Measured: with nothing registered, `scrub_text` returns every PAN, Aadhaar, salary-document name, absolute path and DSN **unchanged**. Consequence, observed live: `GET /applicants/ABCDE1234F/123412341234` logged `"message": "GET /applicants/ABCDE1234F/123412341234 -> 404"`, and `X-Request-ID: ABCDE1234F-123412341234` logged `"request_id": "ABCDE1234F-123412341234"` — raw PAN and raw Aadhaar in the log sink, on the only endpoints that exist. E15-S1-AC1 passes because its fixture registers the values itself. `ba457bf` added the call sites to the *story text* of E1-S1 and E4-S1; no code carries one. |
+| **F-1b** | MAJOR *(security axis)* | **SEC-103's fix is structurally inert.** `sanitise_context` now routes ints and keys through `scrub_text`, but `scrub_text` is registration-driven, so with nothing registered an `AppError` context egressed on the wire: `"aadhaar_int": 123412341234` (12-digit Aadhaar, whole, as an int), `"pan-ABCDE1234F": "ok"` (PAN in the key, verbatim), `"path": "C:/Users/rosuo/secret/payslip.pdf"` (absolute path). The DSN, the nested mapping and the 300-char value *were* dropped — those use pattern and length rules rather than registration. Round-2 SEC-003 is **still open**; `f5a5ace`'s commit message is not supported by behaviour. |
+| **F-1c** | MAJOR *(security axis)* | **Redaction bypass by formatting, confirmed far past the 5-dash case.** With `ABCDE1234F` / `123412341234` / `salary_slip_march.pdf` all registered: exact, spaced and dashed Aadhaar redact; **dotted, underscored, slashed, NBSP-, soft-hyphen-, zero-width- and fullwidth-separated forms all egress unchanged.** Normalize-then-match is the only real fix. |
+| **F-2** | MAJOR | `method` is an unbounded label dimension in the app's own code — see B-2. |
+| **F-3** | MAJOR | `_escape_label` leaves CR, TAB, NUL, BEL, ESC and DEL raw — see §4. |
+| **F-4** | MINOR | `/openapi.json`, `/docs`, `/redoc` mislabel as `route="<unmatched>"`, mixing 200s with 404 noise — see §3. |
+| **F-5** | MINOR *(spec)* | E9-S1-AC1's *Given* names a schedule this story never builds. The criterion is unsatisfiable end-to-end inside group A and its test is a Money-level surrogate that the test file's own docstring admits. Re-point the AC at Money, or move it to E9-S3. |
+| **F-6** | MAJOR | **`Money.multiply` lets a bare `decimal.Overflow` escape** — round 2's dispute resolved by execution. `Money(Decimal("1.00")).multiply(Decimal("1e1000000"))` raises `decimal.Overflow`, **not** the documented `InvalidMoneyAmountError`, in **0.000 s** (round 2's 9,708 ms reading was noise; the escape is instantaneous and real). `1e999999` is caught correctly; the cliff is at Emax. `Overflow` is an `ArithmeticError`, so the API boundary maps it to a generic 500 instead of a typed 4xx. `money.py:76` catches only `InvalidOperation`. |
+| **F-7** | MAJOR | **`X-Request-ID` unvalidated and unbounded — worse than round 2 recorded.** A 1 MB header value was accepted, echoed on the response, and produced a single log line of **1,048,722 bytes**. One request writes 1 MB to the log sink; the amplification is uncapped. |
+| **F-8** | MAJOR | **Host-header-reflected open redirect, still open.** `GET /health/` with `Host: evil.example` → `307` with `location: http://evil.example/health`; `Host: attacker.test:8080` → `location: http://attacker.test:8080/health`. Starlette's `redirect_slashes` builds the target from the untrusted `Host`. |
+| **F-9** | MINOR | **No security response headers** on `/health`: `Strict-Transport-Security`, `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Cache-Control` all absent. `Server: uvicorn` disclosed. |
+| **F-10** | MINOR | **`/docs` (200, 1015 B), `/redoc` (200, 897 B), `/openapi.json` (200, 738 B) and `/metrics` (200, 13,310 B) are all unauthenticated.** The `/metrics` deferral is documented in E15-S4 Scope Out and I judge it **acceptable** — auth genuinely needs the `api-contracts.md` amendment and the E1-S1 auth layer, and a bare RED counter set on a pre-production build is low-value to an attacker. F-2 raises the stakes: an unauthenticated 25.3 MB response is amplification, so the deferral should be revisited the moment F-2 is fixed rather than at E1-S1. The interactive docs surfaces carry no such documented deferral. |
+| **F-11** | MINOR | `HEAD /health` → **405**, still open. RFC 9110 §9.3.2: a server supporting GET on a resource ought to support HEAD. Container and load-balancer probes commonly use HEAD. |
+| **F-12** | MINOR | `_STATUS_ERROR_NAMES` has no entry for 405, so the envelope reads `"error":"HTTPError"` rather than a named `MethodNotAllowed`. Cosmetic against the contract's vocabulary. |
+| **F-13** | MINOR | The 500's traceback is logged with absolute filesystem paths, the DSN and the SQL text intact (`"exception": "…C:\\Users\\rosuo\\…DSN=postgresql://u:p@h/db SELECT * FROM users…"`). It stays out of the response body, correctly, but the log sink receives it unscrubbed — a direct consequence of F-1. |
+
+---
+
+## 7. Performance and SLO
+
+| gate | result |
 |---|---|
-| `.claude/state/g3eval2-server.log` | 180 lines, production app — the whole-lifetime 180/180 JSON denominator, plus QA-VM-003/004/005 |
-| `.claude/state/g3eval2-lines003.txt` | QA-VM-003 isolated log line |
-| `.claude/state/g3eval2-lines004.txt` | QA-VM-004 isolated log line |
-| `.claude/state/g3eval2-h003.txt`, `-h004.txt` | response headers for both |
-| `.claude/state/g3eval2-conc.txt` | 12-way concurrency isolation |
-| `.claude/state/g3eval2-chatty.txt` | 3-line handler denominator, all `req-abc` |
-| `.claude/state/g3eval2-500.txt` | unhandled 500 — 3 correlated JSON lines |
-| `.claude/state/g3eval2-piiboom.txt` | SEC-002 re-test — 0 PII occurrences |
-| `.claude/state/g3eval2-routed.log` | F-2A counterfactual, `uvicorn.access` routed |
-| `.claude/state/g3eval2-native.log` | F-2A counterfactual, `uvicorn.access` native (plain text) |
-| `.claude/state/g3eval2-inject.log`, `-injlines.txt` | `X-Request-ID` injection surface |
-| `.claude/state/g3eval2-perf.txt` | 60 latency samples |
-| `.claude/state/g3eval2_probe.py` | the harness (delete after gate) |
+| perf ratchet | **WARN, not FAIL.** `specs/brownfield/perf-baseline.json` does not exist, so `--compare` has nothing to regress against — a first/greenfield build, which my rules make a WARN. Measured single-shot: `/health` **p50 0.62 ms · p95 0.93 ms · p99 1.76 ms** (40 samples), far inside the 500 ms budget. Someone should capture the baseline so round 4 has a ratchet. |
+| SLO sensor | **PASS.** `{"verdict":"pass","error_rate_pct":0,"p95_ms":4.787,"budgets":{"error_rate_pct":1,"p95_ms":500},"breaches":[]}`. Counts only 5xx, so my 22 deliberate 404s and 8 405s did not trip it — correct behaviour. |
+| accessibility | **N/A** — the contract declares no `accessibility_checks` and there is no frontend route to audit. |
+| Playwright / design | **N/A** — the frozen contract declares no `playwright_checks` or `design_checks`. Nothing was recorded as passed that I could not execute. |
+
+---
+
+## 8. Could not verify
+
+| item | why |
+|---|---|
+| E15-S1-AC1 end-to-end | No endpoint in group A accepts an application payload; `POST /applications` belongs to group E. Verified at the substrate and flagged F-1. |
+| E9-S1-AC1 at the schedule layer | No schedule generator exists (group E). Flagged F-5. |
+| SAST and secrets tiers | gitleaks, semgrep and pip-audit are unprovisioned, per the pack. Unscanned, not passed. |
+| `route_label`'s behaviour behind a proxy with `root_path` | Not exercised; no deployment to test against. |

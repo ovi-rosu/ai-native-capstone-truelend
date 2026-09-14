@@ -135,3 +135,31 @@ describe("static check: zero float-arithmetic operations in src/types/money.ts",
     expect(countFloatRisks(snippet)).toBeGreaterThan(0);
   });
 });
+
+describe("format() grouping is linear, not quadratic", () => {
+  it("groups a very long integer part without quadratic blow-up", () => {
+    // The lookahead form /\B(?=(\d{3})+(?!\d))/g is quadratic: measured
+    // 41 ms at 10k digits, 1,030 ms at 50k and 4,091 ms at 100k. Reachability
+    // is currently limited to tests — MoneyText is the only caller of
+    // format() — but a linear implementation removes the question rather than
+    // relying on an argument about who calls what.
+    const digits = "9".repeat(100_001);
+    const money = Money.fromWire(`${digits}.00`);
+
+    const started = Date.now();
+    const formatted = money.format();
+    const elapsed = Date.now() - started;
+
+    expect(elapsed).toBeLessThan(250);
+    expect(formatted.endsWith(".00")).toBe(true);
+    expect(formatted.split(",").length).toBe(Math.ceil(digits.length / 3));
+  });
+
+  it("still groups ordinary amounts correctly", () => {
+    expect(Money.fromWire("1234.50").format()).toBe("1,234.50");
+    expect(Money.fromWire("999.99").format()).toBe("999.99");
+    expect(Money.fromWire("1000000.00").format()).toBe("1,000,000.00");
+    expect(Money.fromWire("-45.01").format()).toBe("-45.01");
+    expect(Money.fromWire("-1234567.89").format()).toBe("-1,234,567.89");
+  });
+});
