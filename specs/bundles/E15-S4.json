@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "story_id": "E15-S4",
+  "sprint": 1,
+  "title": "Observability contract: duration histogram and hostile-input hardening",
+  "readiness": "ready",
+  "requirements": {
+    "ac_ids": [
+      "E15-S4-AC1",
+      "E15-S4-AC2"
+    ],
+    "brd_ids": [
+      "FRD-20",
+      "FRD-23",
+      "FRD-24"
+    ],
+    "br_acceptance_ids": [
+      "FRD-63"
+    ],
+    "scope_out": [
+      "must not add authentication to /metrics (that needs an api-contracts.md amendment and an auth layer that arrives with E1-S1); must not change the /health contract; must not introduce an external metrics backend or client library"
+    ]
+  },
+  "entities": [
+    {
+      "name": "request-duration histogram",
+      "status": "new"
+    },
+    {
+      "name": "exposition label escaping",
+      "status": "existing"
+    }
+  ],
+  "approach": {
+    "program_design": "specs/design/program-design.md",
+    "canvas": "specs/design/reasons-canvas.md",
+    "amendment": null
+  },
+  "structure": {
+    "owned_files": [],
+    "layer": "Config"
+  },
+  "operations": {
+    "pending": false,
+    "files": [
+      "backend/src/api/middleware.py",
+      "backend/src/api/platform/routes.py",
+      "backend/tests/architecture/test_observability_contract.py"
+    ],
+    "text": "1. Record request duration alongside the existing RED counters in `backend/src/api/middleware.py` (owned by E15-S1, existing, authorised by the Modifies row for this pair): measure with `time.perf_counter()` around the downstream call and accumulate into fixed latency buckets keyed by (method, route template), reusing `route_label(scope)` so the histogram inherits the same bounded cardinality as the counters.\n2. Render the histogram in the exposition output in `backend/src/api/platform/routes.py` (owned by E15-S1, existing, same Modifies row): emit `http_request_duration_seconds_bucket` with a `le` label per bucket plus `_count` and `_sum`, each label value passed through the existing `_escape_label`, so p95 is computable by a scraper — covers AC1.\n3. Add `backend/tests/architecture/test_observability_contract.py` (new): assert the histogram is present with method and route-template labels and that p95 is computable from the buckets (AC1); assert a crafted percent-encoded path cannot inject a series and that unrouted paths collapse to one label value (AC2); assert a log record carrying newlines, quotes and control characters renders as exactly one line with no raw control character (AC2)."
+  },
+  "safeguards": {
+    "ids": [
+      "SG-9"
+    ],
+    "none": false
+  },
+  "tests": {
+    "matrix_ids": [
+      "VM-108",
+      "VM-109"
+    ],
+    "case_ids": [
+      "VM-108",
+      "VM-109"
+    ],
+    "layers": [
+      "unit",
+      "performance"
+    ]
+  },
+  "provenance": {
+    "story_path": "specs/stories/E15-S4.md",
+    "parents": [
+      "E15-S1"
+    ],
+    "tracker_key": null
+  }
+}

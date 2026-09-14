@@ -3,7 +3,7 @@
   "version": 1,
   "task_id": "truelend-build",
   "risk_tier": "R3",
-  "intent_hash": "c5b70e1b03a647f73f653f3eb0922dd852d0463b8f772d31884e0f409c4e7384",
+  "intent_hash": "140d0e77d15f129b3fe3c5d516e2e75bc1b8eff24b948e0d6e166964cac916ac",
   "risk_envelope_hash": "4e8d68506e2b09f73653f6811b8793472b0095d7807479d5fdaf2862477ee265",
   "allowed_paths": [
     "backend/**",
@@ -61,12 +61,12 @@
     "gate_pass",
     "no_block_findings"
   ],
-  "created_at": "2026-09-14T12:43:02.590Z",
-  "expires_at": "2026-09-15T12:43:02.590Z",
+  "created_at": "2026-09-14T11:15:44.991Z",
+  "expires_at": "2026-09-15T11:15:44.991Z",
   "previous_envelope_hash": null,
   "amendments": [],
   "integrity": {
     "algorithm": "sha256",
-    "hash": "b0a253ab010f74d11bb8d478187ee07dbd6f37f63b7637cbfd40acc8e8eff5bc"
+    "hash": "9a1142eaa81a33a48bcc68d2252eefe06fb3db52e50f19947aa449da5d909a0d"
   }
 }

@@ -59,6 +59,22 @@
       "questions_asked": 1,
       "answered": 1,
       "recordedAt": "2026-09-14T12:36:35.794Z"
+    },
+    {
+      "round": 5,
+      "verdict": "approved",
+      "feedback": [
+        "Approved adding E15-S4 to carry the two new observability criteria, appended last so no existing verification-matrix id moves."
+      ],
+      "changes": [
+        "Added story E15-S4 (2 points, group A, cluster C1, depends_on E15-S1) with E15-S4-AC1 (request-duration histogram so the 500 ms runtime SLO is measurable) and E15-S4-AC2 (log and metrics input sanitisation). Registered in stories.json, story-traces.json (appended last), acceptance-criteria.json and features.json as F108/F109, both passes:false. Verified the placement property directly: VM-001..107 are byte-identical after re-rendering and all 13 frozen sprint contracts are unchanged, because neither new criterion carries an api or e2e layer."
+      ],
+      "declined": [
+        "Did not extend E15-S1: it is first in story-traces.json and test-plan-write iterates that array unsorted, so two extra criteria there renumbered every later VM id and left test-plan.md and the frozen contracts pointing at different criteria — a frozen check would have reported PASS for a criterion it no longer tested."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T12:43:20.426Z"
     }
   ],
   "artifacts": [
@@ -72,11 +88,11 @@
     },
     {
       "path": "specs/stories/stories.json",
-      "sha256": "40756a8801316b5a76ca00e960d48ee05f637b951a7e2c5e2089155bf8d0f10b"
+      "sha256": "90c716c5e3beaf7555046163cf5c465fd4e5ef6f262ea2bfb4d4378cda62a487"
     },
     {
       "path": "features.json",
-      "sha256": "f7042c0399c9aa9fcc8a44ea0aa1bbd1feec4256d3b20fb614abd8b22497763d"
+      "sha256": "7b4e65c3e7fb16b16215be852ce72b2fbdeb89f3f30c3293b732deaeb0d68bb6"
     },
     {
       "path": "specs/decisions/spec-decisions.json",
@@ -85,7 +101,7 @@
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-14T12:36:35.794Z",
+  "approvedAt": "2026-09-14T12:43:20.426Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

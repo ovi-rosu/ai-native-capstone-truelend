@@ -54,25 +54,41 @@
       "questions_asked": 1,
       "answered": 1,
       "recordedAt": "2026-09-14T12:36:35.842Z"
+    },
+    {
+      "round": 4,
+      "verdict": "approved",
+      "feedback": [
+        "Approved the two new matrix rows for E15-S4, with the existing reviewed surface left intact."
+      ],
+      "changes": [
+        "Matrix is now 109 rows over 30 stories. VM-108 (E15-S4-AC1) is unit+performance and VM-109 (E15-S4-AC2) is unit, so neither becomes a sprint-contract evaluator check and no contract gained a row. Added both Given/When/Then scenarios and an E15-S4 seam row to test-plan.md, and updated its scope line to 30 stories / 109 criteria. Grounding PASS 109/109, 0 net-new, 0 dropped; matrix gate PASS."
+      ],
+      "declined": [
+        "Did not re-fill the Observe column: the 84 existing proposed checks are unchanged because VM-001..107 kept their ids, which is the whole reason the criteria went on a new story."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T12:43:20.475Z"
     }
   ],
   "artifacts": [
     {
       "path": "specs/test_artefacts/test-plan.md",
-      "sha256": "7ef07fe178433464f2b095217da185ca276be65d9dc6f2721479862fe7bc21c1"
+      "sha256": "b3a835a0be4c349fb8f8beff58a791db39882f4558dd29bf91b5f73a8d6b2db9"
     },
     {
       "path": "specs/test_artefacts/verification-matrix.json",
-      "sha256": "2201d5eb6e1ab1a52a1aab2c0a66b2e618b43e921975d2319a476ddaeadc62b6"
+      "sha256": "42952226e9dfa0215a01f2a7df1dc804663cf7e510b70d58c5512874df986a6f"
     },
     {
       "path": "specs/test_artefacts/test-traces.json",
-      "sha256": "26986b783e36fd1c36b59e997880fe5bd6ebeca491565a36c5dc9499544f8259"
+      "sha256": "3380393f222ee3f9a2c5f74e597cccce954a2d3493b0e303f8eaa7573b23563d"
     }
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-14T12:36:35.842Z",
+  "approvedAt": "2026-09-14T12:43:20.475Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

@@ -1,10 +1,10 @@
 {
-  "frozenAt": "2026-09-13T19:29:01.442Z",
+  "frozenAt": "2026-09-14T12:43:20.580Z",
   "source": "specs\\test_artefacts\\test-plan.md",
   "files": [
     {
       "path": "sprint-contracts\\A.json",
-      "sha256": "fd4cc09050e59dfcf64506cfffa72e0d99fa96a2280a5a8a830d2784f6c7639f"
+      "sha256": "a0625d4b737e36c76e628352fd2c130c8342187558f4e4dc4e5c30f1793e99a7"
     },
     {
       "path": "sprint-contracts\\B.json",

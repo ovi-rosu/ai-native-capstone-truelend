@@ -3,9 +3,9 @@
   "pass": true,
   "blocking": false,
   "accepted": 0,
-  "required_total": 107,
-  "required_covered": 107,
-  "downstream_total": 107,
+  "required_total": 109,
+  "required_covered": 109,
+  "downstream_total": 109,
   "scope": null,
   "net_new": [],
   "dropped": []

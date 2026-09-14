@@ -1,6 +1,6 @@
 # Test Plan
 
-Scope: 29 stories, 107 acceptance criteria.
+Scope: 30 stories, 109 acceptance criteria.
 Machine spine: `verification-matrix.json` (one row per AC). Behavior scenarios are that list in Given/When/Then — not extra cases, not Cucumber, not AT source.
 
 ## Named Seams (Ports-and-Adapters)
@@ -36,6 +36,7 @@ Machine spine: `verification-matrix.json` (one row per AC). Behavior scenarios a
 | E14-S1 | portfolio aggregation port, served from stored projections only | aggregation over stored loan bucket state | end-of-day spy asserting the run is never invoked |
 | E17-S1 | customer-facing screen registry + accessibility driver port | axe-core scan + keyboard-traversal driver over every registered screen | registry plus an unregistered customer-facing route |
 | E15-S3 | read-heavy endpoint registry + load driver port | in-process load driver measuring p95 and error rate per registered endpoint | registry plus an unregistered GET route |
+| E15-S4 | observability exposition port: duration histogram + escaped, bounded labels | perf_counter timing accumulated into fixed latency buckets keyed by (method, route template), rendered through the existing `_escape_label` | crafted percent-encoded paths and a control-character-bearing log record |
 
 ## Behavior scenarios (Given / When / Then)
 
@@ -150,6 +151,8 @@ Human-reviewed behavior spec. Implement-time ATs match this wording. Do not writ
 | E15-S3-AC1 | VM-105 | the read-heavy endpoint registry, which contains GET /products, GET /applications, GET /loans/{id} and GET /dashboard | the load run executes against every registered endpoint | the measured p95 latency is under 500 ms and the error rate is under 1% across all of them |
 | E15-S3-AC2 | VM-106 | the completed load run | the evaluation report is written | it records the measured p95 and error-rate figures for each registered endpoint |
 | E15-S3-AC3 | VM-107 | a read-heavy endpoint absent from the registry | the SLO suite runs | the suite fails, so a read surface added later is measured by the story that adds it |
+| E15-S4-AC1 | VM-108 | the observability endpoint after at least one request has been served | GET /metrics is scraped | it exposes a request-duration histogram labelled by method and route template from which p95 can be computed, so the 500 ms runtime SLO is measurable rather than always null |
+| E15-S4-AC2 | VM-109 | attacker-supplied text containing newlines, quotes and control characters reaching a log call or a metrics label | the record or the exposition line is rendered | the output is exactly one line per record with no raw control character and no injected series |
 
 ## Proposed sprint-contract checks
 

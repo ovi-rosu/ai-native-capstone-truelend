@@ -1,7 +1,7 @@
 {
   "status": "sealed",
   "waived_by": null,
-  "sealedAt": "2026-09-14T12:36:35.945Z",
+  "sealedAt": "2026-09-14T12:43:20.656Z",
   "artifacts": [
     {
       "path": "specs/brd/brd.md",
@@ -30,12 +30,12 @@
     },
     {
       "path": "specs/stories/stories.json",
-      "sha256": "40756a8801316b5a76ca00e960d48ee05f637b951a7e2c5e2089155bf8d0f10b",
+      "sha256": "90c716c5e3beaf7555046163cf5c465fd4e5ef6f262ea2bfb4d4378cda62a487",
       "phase": "spec"
     },
     {
       "path": "features.json",
-      "sha256": "f7042c0399c9aa9fcc8a44ea0aa1bbd1feec4256d3b20fb614abd8b22497763d",
+      "sha256": "7b4e65c3e7fb16b16215be852ce72b2fbdeb89f3f30c3293b732deaeb0d68bb6",
       "phase": "spec"
     },
     {
@@ -60,27 +60,27 @@
     },
     {
       "path": "specs/design/component-map.md",
-      "sha256": "f61923db8768d474ab9d14cd70bf900a71b3e21195c814bcadfb80cc9a315c49",
+      "sha256": "aaf1ee6a8f2db021a849fbad7c1f242656044cd73221c5937eec0b11dce0f903",
       "phase": "design"
     },
     {
       "path": "specs/test_artefacts/test-plan.md",
-      "sha256": "7ef07fe178433464f2b095217da185ca276be65d9dc6f2721479862fe7bc21c1",
+      "sha256": "b3a835a0be4c349fb8f8beff58a791db39882f4558dd29bf91b5f73a8d6b2db9",
       "phase": "test"
     },
     {
       "path": "specs/test_artefacts/verification-matrix.json",
-      "sha256": "2201d5eb6e1ab1a52a1aab2c0a66b2e618b43e921975d2319a476ddaeadc62b6",
+      "sha256": "42952226e9dfa0215a01f2a7df1dc804663cf7e510b70d58c5512874df986a6f",
       "phase": "test"
     },
     {
       "path": "specs/test_artefacts/test-traces.json",
-      "sha256": "26986b783e36fd1c36b59e997880fe5bd6ebeca491565a36c5dc9499544f8259",
+      "sha256": "3380393f222ee3f9a2c5f74e597cccce954a2d3493b0e303f8eaa7573b23563d",
       "phase": "test"
     },
     {
       "path": "specs\\design\\component-map.md",
-      "sha256": "f61923db8768d474ab9d14cd70bf900a71b3e21195c814bcadfb80cc9a315c49",
+      "sha256": "aaf1ee6a8f2db021a849fbad7c1f242656044cd73221c5937eec0b11dce0f903",
       "phase": null
     },
     {
@@ -95,12 +95,12 @@
     },
     {
       "path": "specs\\test_artefacts\\test-plan.md",
-      "sha256": "7ef07fe178433464f2b095217da185ca276be65d9dc6f2721479862fe7bc21c1",
+      "sha256": "b3a835a0be4c349fb8f8beff58a791db39882f4558dd29bf91b5f73a8d6b2db9",
       "phase": null
     },
     {
       "path": "specs\\test_artefacts\\verification-matrix.json",
-      "sha256": "2201d5eb6e1ab1a52a1aab2c0a66b2e618b43e921975d2319a476ddaeadc62b6",
+      "sha256": "42952226e9dfa0215a01f2a7df1dc804663cf7e510b70d58c5512874df986a6f",
       "phase": null
     },
     {
@@ -145,7 +145,7 @@
     },
     {
       "path": "specs\\bundles\\E15-S1.json",
-      "sha256": "017286ac80da008fcc33caf1364b747705174c0c86b291951f589c68f108102b",
+      "sha256": "1f553ae080b785211e1779178f361dc58a2ecafaea23118794869e74305ea95f",
       "phase": null
     },
     {
@@ -156,6 +156,11 @@
     {
       "path": "specs\\bundles\\E15-S3.json",
       "sha256": "bab7bada451fe7bf5a4334615b1462fd18c4cd9053ac2b40beedda16af38dad4",
+      "phase": null
+    },
+    {
+      "path": "specs\\bundles\\E15-S4.json",
+      "sha256": "980acce1b262d52bf80c2b715563d8b0eeb0c32761e8aab8d56c4dfb0ed3c3f9",
       "phase": null
     },
     {

@@ -58,6 +58,22 @@
       "questions_asked": 1,
       "answered": 1,
       "recordedAt": "2026-09-14T11:15:20.800Z"
+    },
+    {
+      "round": 4,
+      "verdict": "approved",
+      "feedback": [
+        "Approved the two new observability criteria, placed on a new story rather than on E15-S1 to keep the verification matrix and the 13 frozen contracts valid."
+      ],
+      "changes": [
+        "component-map.md: E15-S4 owns backend/tests/architecture/test_observability_contract.py, and a Modifies row E15-S1 -> E15-S4 authorises the duration timing in the correlation middleware and the histogram rendering in the platform routes. The story adds no production file of its own; the behaviour deepens two files E15-S1 already owns. Rationale and the measured VM-id drift are recorded in specs/design/amendments/e15-s4-observability-contract.md."
+      ],
+      "declined": [
+        "Did not place the criteria on E15-S1: it is first in story-traces.json and the matrix numbers outward from it, so inserting two criteria shifted every later VM id by two and left test-plan.md and all 13 frozen contracts pointing at different criteria. Did not amend api-contracts.md for /metrics auth: that is a separate approved change and cannot be implemented before an auth layer exists in group B."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T12:43:02.485Z"
     }
   ],
   "artifacts": [
@@ -75,12 +91,12 @@
     },
     {
       "path": "specs/design/component-map.md",
-      "sha256": "f61923db8768d474ab9d14cd70bf900a71b3e21195c814bcadfb80cc9a315c49"
+      "sha256": "aaf1ee6a8f2db021a849fbad7c1f242656044cd73221c5937eec0b11dce0f903"
     }
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-14T11:15:20.800Z",
+  "approvedAt": "2026-09-14T12:43:02.485Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

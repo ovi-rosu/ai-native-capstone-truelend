@@ -1068,5 +1068,25 @@
     "given": "a read-heavy endpoint absent from the registry",
     "when": "the SLO suite runs",
     "then": "the suite fails, so a read surface added later is measured by the story that adds it"
+  },
+  {
+    "id": "E15-S4-AC1",
+    "story": "E15-S4",
+    "traces": [
+      "FRD-63"
+    ],
+    "given": "the observability endpoint after at least one request has been served",
+    "when": "GET /metrics is scraped",
+    "then": "it exposes a request-duration histogram labelled by method and route template from which p95 can be computed, so the runtime SLO of 500 ms declared in project-manifest.json is measurable rather than always null"
+  },
+  {
+    "id": "E15-S4-AC2",
+    "story": "E15-S4",
+    "traces": [
+      "FRD-63"
+    ],
+    "given": "attacker-supplied text containing newlines, quotes and control characters reaching a log call or a metrics label",
+    "when": "the record or the exposition line is rendered",
+    "then": "the output is exactly one line per record with no raw control character and no injected series, so hostile input cannot forge a log entry or a counter"
   }
 ]

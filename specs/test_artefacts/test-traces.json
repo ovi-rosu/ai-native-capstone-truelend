@@ -1209,5 +1209,23 @@
       "FRD-65"
     ],
     "matrix_id": "VM-107"
+  },
+  {
+    "id": "VM-108",
+    "text": "it exposes a request-duration histogram labelled by method and route template from which p95 can be computed, so the runtime SLO of 500 ms declared in project-manifest.json is measurable rather than always null",
+    "traces": [
+      "E15-S4-AC1",
+      "FRD-63"
+    ],
+    "matrix_id": "VM-108"
+  },
+  {
+    "id": "VM-109",
+    "text": "the output is exactly one line per record with no raw control character and no injected series, so hostile input cannot forge a log entry or a counter",
+    "traces": [
+      "E15-S4-AC2",
+      "FRD-63"
+    ],
+    "matrix_id": "VM-109"
   }
 ]

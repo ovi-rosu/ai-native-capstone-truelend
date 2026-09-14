@@ -117,7 +117,7 @@
     "breakdown_reason": null,
     "user_story": "As a reviewer, I want the whole platform to come up from a clean checkout with one command so that I can evaluate it without bespoke setup.",
     "business_value": "Makes the capstone reproducible for graders and keeps the six-layer architecture rule mechanically enforced rather than aspirational.",
-    "description": "Defines the self-hosted stack NFR-12 names — a single Postgres, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend — with compose readiness gated on the /health probe from E15-S1. Also lands the architecture test that asserts the one-way dependency direction across Types, Config, Repository, Service, API and UI.",
+    "description": "Defines the self-hosted stack NFR-12 names \u2014 a single Postgres, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend \u2014 with compose readiness gated on the /health probe from E15-S1. Also lands the architecture test that asserts the one-way dependency direction across Types, Config, Repository, Service, API and UI.",
     "scope_in": [
       "docker-compose.yml with exactly three services and healthchecks",
       "Dockerfiles for backend and frontend",
@@ -201,7 +201,7 @@
     "breakdown_reason": null,
     "user_story": "As an underwriting lead, I want every monetary amount held in fixed-point decimal so that EMI and outstanding-principal figures never drift by rounding error.",
     "business_value": "Protects the AC-07 schedule invariants at their source, so no downstream story has to compensate for float drift in loan balances.",
-    "description": "Publishes the Money value type and the fixed-point arithmetic helpers the policy, schedule and repayment stories consume — backend decimal.Decimal quantized to 2 places, frontend a decimal-library value that is never a float. This is the interface-layer artifact behind the contract edges from E3-S1, E1-S1 and E9-S3, per the D13 criterion.",
+    "description": "Publishes the Money value type and the fixed-point arithmetic helpers the policy, schedule and repayment stories consume \u2014 backend decimal.Decimal quantized to 2 places, frontend a decimal-library value that is never a float. This is the interface-layer artifact behind the contract edges from E3-S1, E1-S1 and E9-S3, per the D13 criterion.",
     "scope_in": [
       "Money value type with 2-decimal quantization and arithmetic helpers",
       "Static check reporting float arithmetic in money code paths",
@@ -286,8 +286,8 @@
       "Threshold save that writes and activates a new policy version"
     ],
     "scope_out": [
-      "must not implement the full authorization matrix — that is E1-S2",
-      "must not implement the full three-product catalog rule sets — that is E2-S1",
+      "must not implement the full authorization matrix \u2014 that is E1-S2",
+      "must not implement the full three-product catalog rule sets \u2014 that is E2-S1",
       "must not verify applicant PAN or Aadhaar against any external registry"
     ],
     "safeguards": [
@@ -763,7 +763,7 @@
     "breakdown_reason": null,
     "user_story": "As an architecture reviewer, I want every named invariant to have a test and every production commit to carry agent provenance so that the capstone's structural claims are checkable rather than narrated.",
     "business_value": "Converts the architecture rules and the no-manual-coding constraint from prose into a suite that fails when either is broken.",
-    "description": "Registers the named invariants — policy-version immutability, the EMI principal/rate/tenure invariant, and the six-layer one-way dependency rule — and fails the suite when a registered invariant has no test. Also records the D7 and D23 governance control: NFR-11 has no product story, and the pre-commit gate set plus the /gate attestation record is its evidence.",
+    "description": "Registers the named invariants \u2014 policy-version immutability, the EMI principal/rate/tenure invariant, and the six-layer one-way dependency rule \u2014 and fails the suite when a registered invariant has no test. Also records the D7 and D23 governance control: NFR-11 has no product story, and the pre-commit gate set plus the /gate attestation record is its evidence.",
     "scope_in": [
       "Invariant registry and orphan-detection assertion",
       "One or more tests per registered invariant",
@@ -771,7 +771,7 @@
     ],
     "scope_out": [
       "must not loosen an invariant's assertion to make a failing test pass",
-      "must not implement product behavior — this story adds no loan-platform capability",
+      "must not implement product behavior \u2014 this story adds no loan-platform capability",
       "must not remove or weaken a pre-commit gate to clear the provenance check"
     ],
     "safeguards": [
@@ -869,7 +869,7 @@
       "Shallow score and decision response"
     ],
     "scope_out": [
-      "must not implement the full document checklist — that is E4-S2",
+      "must not implement the full document checklist \u2014 that is E4-S2",
       "must not call an external credit bureau or payment rail",
       "must not accept a co-applicant or guarantor on the application"
     ],
@@ -1685,7 +1685,7 @@
     "breakdown_reason": null,
     "user_story": "As a customer, I want to track my application's status, outstanding documents and decision so that I do not have to be notified or call to find out where it stands.",
     "business_value": "Replaces outbound notifications with a pull surface, which is why the deny-list can forbid email and SMS entirely.",
-    "description": "The FR-11 tracking view: current application status, every still-unverified checklist item, and — once decided — the decision with its reason codes. This is one of the three screens NFR-10 holds to WCAG 2.1 AA.",
+    "description": "The FR-11 tracking view: current application status, every still-unverified checklist item, and \u2014 once decided \u2014 the decision with its reason codes. This is one of the three screens NFR-10 holds to WCAG 2.1 AA.",
     "scope_in": [
       "Tracking screen showing current application status",
       "List of unverified required documents",
@@ -1797,7 +1797,7 @@
     ],
     "scope_out": [
       "must not compute or charge a late fee, penal interest or any lateness charge",
-      "must not read or write loan state — the classifier stays pure",
+      "must not read or write loan state \u2014 the classifier stays pure",
       "must not introduce a sixth bucket or an orthogonal NPA flag, per D3"
     ],
     "safeguards": [
@@ -1883,7 +1883,7 @@
       "Disbursement and a first repayment posting"
     ],
     "scope_out": [
-      "must not implement the full EMI and residual rules — that is E9-S3",
+      "must not implement the full EMI and residual rules \u2014 that is E9-S3",
       "must not call a real payment rail or move real money",
       "must not offer an early settlement, foreclosure or prepayment quote"
     ],
@@ -2726,5 +2726,64 @@
     ],
     "cluster": "C3",
     "group": "E"
+  },
+  {
+    "id": "E15-S4",
+    "title": "Observability contract: duration histogram and hostile-input hardening",
+    "epic": "E15",
+    "layer": "Config",
+    "story_points": 2,
+    "estimation_confidence": "high",
+    "estimation_drivers": {
+      "functional_scope": 2,
+      "technical_complexity": 2,
+      "data_state_impact": 0,
+      "integration_surface": 2,
+      "uncertainty_risk": 2,
+      "total": 8,
+      "evidence": "Four platform concerns (log format, correlation id, redaction, health) wired into every handler; retrofit-hostile per D12."
+    },
+    "readiness": "ready",
+    "breakdown_reason": null,
+    "user_story": "As a platform operator, I want the metrics endpoint to expose request duration and to be unforgeable, so that the declared runtime SLO is measurable and an unauthenticated caller cannot rewrite the observability data plane.",
+    "business_value": "project-manifest.json declares a p95 of 500 ms and E15-S3 registers a load harness against it, but with counters alone slo.p95_ms is always null. The /gate review of group A also found a crafted path forged counter series, driving this project's own SLO sensor to 99.90% error rate against a 1% budget.",
+    "description": "Deepens E15-S1's observability surface rather than re-opening it. Carried separately because E15-S1 is first in the matrix: adding criteria there renumbers every later VM id and invalidates all 13 frozen contracts.",
+    "scope_in": "a request-duration histogram on GET /metrics labelled by method and route template; escaping and cardinality bounds for every exposition label; single-line control-character-free rendering for log records and metrics lines",
+    "scope_out": "must not add authentication to /metrics; must not change the /health contract; must not introduce an external metrics backend",
+    "safeguards": [
+      "SG-9"
+    ],
+    "depends_on": [
+      "E15-S1"
+    ],
+    "traces": [
+      "FRD-20",
+      "FRD-23",
+      "FRD-24"
+    ],
+    "invest": {
+      "independent": true,
+      "negotiable": true,
+      "valuable": true,
+      "estimable": true,
+      "small": true,
+      "testable": true
+    },
+    "acceptance_criteria": [
+      {
+        "id": "E15-S4-AC1",
+        "given": "the observability endpoint after at least one request has been served",
+        "when": "GET /metrics is scraped",
+        "then": "it exposes a request-duration histogram labelled by method and route template from which p95 can be computed, so the runtime SLO of 500 ms declared in project-manifest.json is measurable rather than always null"
+      },
+      {
+        "id": "E15-S4-AC2",
+        "given": "attacker-supplied text containing newlines, quotes and control characters reaching a log call or a metrics label",
+        "when": "the record or the exposition line is rendered",
+        "then": "the output is exactly one line per record with no raw control character and no injected series, so hostile input cannot forge a log entry or a counter"
+      }
+    ],
+    "cluster": "C1",
+    "group": "A"
   }
 ]
