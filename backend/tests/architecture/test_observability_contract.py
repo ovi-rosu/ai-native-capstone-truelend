@@ -199,3 +199,27 @@ def test_known_methods_keep_their_own_label() -> None:
 
     methods = {method for method, _, _ in request_counter_snapshot()}
     assert methods == {"GET", "POST", "PUT", "PATCH", "DELETE"}
+
+
+def test_metrics_scrapes_do_not_count_toward_the_error_rate_denominator() -> None:
+    """SEC3-003, partially: a scraper must not dilute its own signal.
+
+    `errorRate` in the harness's prom-parse sums every `http_requests_total`
+    series globally, so every request to any route inflates the denominator.
+    A frequent scraper therefore dilutes the business error rate purely by
+    observing: the reviewers showed a real 50% outage reading 0.0100% and
+    passing the 1% budget.
+
+    Excluding the observability endpoint from its own counters removes the
+    self-observation component. It does NOT close the finding — any public
+    route still contributes, and the real fix is per-route aggregation in
+    `.claude/hooks/lib/prom-parse.js`, which is harness machinery.
+    """
+    from src.api.middleware import request_counter_snapshot
+
+    body = _scrape(["/health", "/health"])
+
+    routes = {route for _, route, _ in request_counter_snapshot()}
+    assert "/metrics" not in routes, "the scrape counted itself into the denominator"
+    assert "/health" in routes, "real traffic must still be counted"
+    assert 'route="/metrics"' not in body

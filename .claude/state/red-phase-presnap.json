@@ -1,1 +1,1 @@
-{"command":"cd /c/Users/rosuo/WORK/ai-native-capstone-truelend/backend && uv run pytest -q 2>&1 | tail -2 && uv run ruff check . 2>&1 | tail -1 && uv run mypy src/ 2>&1 | tail -1","hashes":{}}
+{"command":"uv run pytest -q 2>&1 | tail -3 && uv run ruff check . 2>&1 | tail -1 && uv run mypy src/ 2>&1 | tail -1","hashes":{}}
