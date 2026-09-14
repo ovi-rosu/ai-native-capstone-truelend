@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "type": "task_completion",
+  "task_id": "truelend-build",
+  "task_envelope_hash": "fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404",
+  "run_id": "run-a5737b1b-fdbe-4023-b908-cbabca4e9fd8",
+  "generated_at": "2026-09-14T06:56:31.470Z",
+  "pass": false,
+  "evidence": [
+    {
+      "kind": "unit",
+      "path": "specs/reviews/gate-checks.json",
+      "sha256": "2ebccd46fce03d6513c69c8a59f3debcdfad20ecabf55878c78b24ecfb980031",
+      "current": true,
+      "pass": false
+    },
+    {
+      "kind": "acceptance",
+      "path": "specs/reviews/gate-checks.json",
+      "sha256": "2ebccd46fce03d6513c69c8a59f3debcdfad20ecabf55878c78b24ecfb980031",
+      "current": true,
+      "pass": false
+    },
+    {
+      "kind": "independent_review",
+      "path": "specs/reviews/code-review-verdict.json",
+      "sha256": "e313150272a26943bdd132bc2b6b43babe9d9088033ca3a5135767a922ac2d6f",
+      "current": true,
+      "pass": false
+    },
+    {
+      "kind": "integration",
+      "path": "specs/reviews/gate-checks.json",
+      "sha256": "2ebccd46fce03d6513c69c8a59f3debcdfad20ecabf55878c78b24ecfb980031",
+      "current": true,
+      "pass": false
+    },
+    {
+      "kind": "sast",
+      "path": "specs/reviews/security-scan.json",
+      "sha256": "44101276ac1e3ce924e644fe2d346afe141b05f10219ac456e08d9b89450ee4a",
+      "current": true,
+      "pass": false
+    },
+    {
+      "kind": "dependency_scan",
+      "path": "specs/reviews/security-scan.json",
+      "sha256": "44101276ac1e3ce924e644fe2d346afe141b05f10219ac456e08d9b89450ee4a",
+      "current": true,
+      "pass": false
+    },
+    {
+      "kind": "security_review",
+      "path": "specs/reviews/security-verdict.json",
+      "sha256": "ec52e17795257fd73d3599addefc6702fdcb276817f55f67d0cbe4a5e148f131",
+      "current": true,
+      "pass": false
+    },
+    {
+      "kind": "threat_model",
+      "path": ".claude/claude-security-guidance.md",
+      "sha256": "ac763488748f86999f14023ceeaea621291a86cc406f597d3012da2a9d0317ea",
+      "current": false,
+      "pass": true
+    }
+  ],
+  "approval_receipt_ids": [],
+  "execution_receipt_ids": [],
+  "distinct_approvers": [],
+  "findings": {
+    "missing": [
+      "signed_approvals:0/2"
+    ],
+    "stale": [
+      "threat_model"
+    ],
+    "failed": [
+      "unit",
+      "acceptance",
+      "independent_review",
+      "integration",
+      "sast",
+      "dependency_scan",
+      "security_review",
+      "gate_pass"
+    ]
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "hash": "995babf7880e0192ff4fbd2cd8c62ae04110075542772c662434fe3dde72e92f"
+  }
+}

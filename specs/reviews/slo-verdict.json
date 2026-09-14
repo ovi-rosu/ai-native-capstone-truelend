@@ -1,0 +1,7 @@
+{
+  "verdict": "unreachable",
+  "error_rate_pct": null,
+  "p95_ms": null,
+  "scraped": "http://localhost:8000/metrics",
+  "breaches": []
+}

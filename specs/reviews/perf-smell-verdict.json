@@ -1,0 +1,10 @@
+{
+  "gate": "perf-smell",
+  "pass": true,
+  "checked": 13,
+  "summary": {
+    "block": 0,
+    "warn": 0
+  },
+  "findings": []
+}

@@ -1,0 +1,168 @@
+{
+  "gate": "quality-card",
+  "pass": false,
+  "generated_at": "2026-09-14T06:56:16.487Z",
+  "range": "14e9487..HEAD",
+  "checks": [
+    {
+      "key": "evaluator",
+      "file": "evaluator-report.md",
+      "status": "fail",
+      "pass": false,
+      "optional": false,
+      "detail": null,
+      "summary": null
+    },
+    {
+      "key": "code_review",
+      "file": "code-review-verdict.json",
+      "status": "fail",
+      "pass": false,
+      "optional": false,
+      "detail": {
+        "block": 4,
+        "warn": 14,
+        "info": 9
+      },
+      "summary": {
+        "block": 4,
+        "warn": 14,
+        "info": 9
+      }
+    },
+    {
+      "key": "security",
+      "file": "security-verdict.json",
+      "status": "fail",
+      "pass": false,
+      "optional": true,
+      "detail": {
+        "block": 1,
+        "warn": 7,
+        "info": 6
+      },
+      "summary": null
+    },
+    {
+      "key": "security_scan",
+      "file": "security-scan.json",
+      "status": "unknown",
+      "pass": false,
+      "optional": true,
+      "detail": null,
+      "summary": null
+    },
+    {
+      "key": "ownership",
+      "file": "ownership-check.json",
+      "status": "fail",
+      "pass": false,
+      "optional": true,
+      "detail": null,
+      "summary": null
+    },
+    {
+      "key": "regression",
+      "file": "regression-gate-verdict.json",
+      "status": "fail",
+      "pass": false,
+      "optional": true,
+      "detail": "blocked",
+      "summary": null
+    },
+    {
+      "key": "contract_drift",
+      "file": "contract-drift-verdict.json",
+      "status": "skipped",
+      "pass": true,
+      "optional": true,
+      "detail": "not present"
+    },
+    {
+      "key": "approved_fixtures",
+      "file": "approved-fixtures-verdict.json",
+      "status": "skipped",
+      "pass": true,
+      "optional": true,
+      "detail": "not present"
+    },
+    {
+      "key": "verification_matrix",
+      "file": "verification-matrix-verdict.json",
+      "status": "pass",
+      "pass": true,
+      "optional": true,
+      "detail": null,
+      "summary": null
+    },
+    {
+      "key": "evidence_integrity",
+      "file": "evidence-integrity-verdict.json",
+      "status": "pass",
+      "pass": true,
+      "optional": true,
+      "detail": "no sprint contract declares playwright checks — nothing to verify",
+      "summary": null
+    },
+    {
+      "key": "observability",
+      "file": "observability-verdict.json",
+      "status": "pass",
+      "pass": true,
+      "optional": true,
+      "detail": {
+        "block": 0,
+        "warn": 4
+      },
+      "summary": null
+    },
+    {
+      "key": "perf_smell",
+      "file": "perf-smell-verdict.json",
+      "status": "pass",
+      "pass": true,
+      "optional": true,
+      "detail": {
+        "block": 0,
+        "warn": 0
+      },
+      "summary": null
+    },
+    {
+      "key": "slo",
+      "file": "slo-verdict.json",
+      "status": "unknown",
+      "pass": false,
+      "optional": true,
+      "detail": "unreachable",
+      "summary": null
+    },
+    {
+      "key": "mutation",
+      "file": "mutation-gate-verdict.json",
+      "status": "skipped",
+      "pass": true,
+      "optional": true,
+      "detail": "not present"
+    },
+    {
+      "key": "deep_mutation",
+      "file": "deep-mutation-verdict.json",
+      "status": "skipped",
+      "pass": true,
+      "optional": true,
+      "detail": "not present"
+    }
+  ],
+  "wiki": [
+    "specs/brownfield/wiki/WIKI.md",
+    "specs/brownfield/symbol-map.md",
+    "specs/reviews/walkthrough.md"
+  ],
+  "summary": {
+    "pass": 4,
+    "fail": 5,
+    "missing": 0,
+    "skipped": 4
+  }
+}

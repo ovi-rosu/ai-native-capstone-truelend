@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "lane": "gate",
+  "summary": {
+    "pass": false,
+    "passed": 7,
+    "blocked": 2,
+    "warn": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "id": "canvas-sync",
+      "pack": "planning",
+      "blocking": true,
+      "status": "blocked",
+      "detail": "Update the Canvas first (fix-the-prompt-first), then rerun. A valid specs/reviews/sensor-waivers.json entry can cover a deliberate mismatch."
+    },
+    {
+      "id": "canvas-semantic",
+      "pack": "planning",
+      "blocking": false,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "ownership-check",
+      "pack": "planning",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "regression-suite-full",
+      "pack": "verification",
+      "blocking": true,
+      "status": "blocked",
+      "detail": "A previously-passing e2e spec or prior contract check now fails — this is a regression, not a flake (quarantined flakes are excluded). Fix the regression."
+    },
+    {
+      "id": "evidence-integrity",
+      "pack": "verification",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "observability-gate",
+      "pack": "verification",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "perf-smell",
+      "pack": "verification",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "sensor-waivers",
+      "pack": "telemetry",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "dead-path",
+      "pack": "maintainability",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    }
+  ]
+}

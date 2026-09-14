@@ -1,0 +1,319 @@
+{
+  "gate": "code-review",
+  "verdict": "block",
+  "pass": false,
+  "range": "14e9487..d0b5c94+worktree",
+  "branch": "feat/harness-scaffold-and-planning",
+  "reviewed_at": "2026-09-14",
+  "scope": {
+    "production_files": 13,
+    "test_files": 5,
+    "includes_uncommitted_worktree": true
+  },
+  "summary": {
+    "block": 4,
+    "warn": 14,
+    "info": 9
+  },
+  "verified_clean": [
+    "layering: zero one-way dependency violations; types/ imports stdlib only, config/delinquency.py imports types (Config->Types), api imports config+types, ui imports types",
+    "function length: max 14 lines (limit 30)",
+    "file length: max 149 lines (limit 300)",
+    "typing: zero any, zero type-ignore/ts-ignore in backend/src and frontend/src",
+    "delinquency bucket boundaries correct at 0/29/30/59/60/89/90/179/180/400; negative DPD rejected; zero DPD -> CURRENT",
+    "float and JSON-number money rejected at the wire boundary (float/int/bool all raise ValidationError)",
+    "MoneyText.tsx free of Number()/parseFloat coercion",
+    "no god functions, no god files, no swallowed exceptions, no pass-through modules",
+    "reproduced evidence: pytest 42 passed, mypy clean (12 files), ruff clean, npm test 11 passed, tsc clean, eslint clean"
+  ],
+  "findings": [
+    {
+      "id": "CR-001",
+      "level": "BLOCK",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/types/money.py",
+      "line": 59,
+      "description": "Money accepts quiet NaN: Decimal('NaN').quantize() propagates instead of raising, so Money('NaN'), Money('nan') and Money(Decimal('NaN')) all construct. Reachable through the D-G wire boundary via _validate_money, which accepts any str: MoneyField serializes to {\"amount\":\"NaN\"}, violating D-G's quoted-2dp-string contract. The TypeScript side does guard with isFinite() (money.ts:31), so Python emits a payload the frontend rejects at render time. Also breaks equality/hash: Money('NaN') == Money('NaN') is False while hash() succeeds.",
+      "fix": "In Money.__init__, after the Decimal conversion, add `if not decimal_amount.is_finite(): raise InvalidMoneyAmountError(...)` to mirror the TS isFinite guard, plus a Money('NaN') rejection test."
+    },
+    {
+      "id": "CR-002",
+      "level": "BLOCK",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/tests/architecture/test_no_float_money.py",
+      "line": 29,
+      "description": "E9-S1-AC2/AC3 require a check reporting 0 float ARITHMETIC operations; neither check inspects arithmetic. _count_float_usages counts only float() Name-calls and float literals. Executed against realistic leaks it missed 7/7: `3 / 2` true division, `a / 100 * (7/3)`, `round(x/12, 2)`, `(1+r) ** -12`, math.fsum, np.float64, and an aliased float constructor (control float literal caught). The frontend regex at frontend/tests/unit/money.test.ts:76 misses Decimal.toNumber() (decimal.js's one float escape hatch), unary +, Math.round(x*100)/100, .valueOf()*2, and even a bare float-literal expression `0.1 + 0.2`. Both checks also hardcode their target paths so coverage will not grow with the money code.",
+      "fix": "Backend: walk ast.BinOp for Div/Pow, flag float Constants and calls to float/round/math.*, and glob the money paths instead of listing two literals. Frontend: enforce via eslint no-restricted-properties (toNumber/valueOf) and no-restricted-syntax (unary +, float literals) scoped to src/types/money.ts."
+    },
+    {
+      "id": "CR-003",
+      "level": "BLOCK",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/api/middleware.py",
+      "line": 34,
+      "description": "The response-header write (line 36) and the access-log emit (line 37) both sit after `await call_next(request)` inside the same try, with only request_id_var.reset in the finally. An unhandled exception propagates and runs neither. Confirmed by execution: GET /_boom with X-Request-ID: req-trace-me returns 500 with X-Request-ID absent (None) and zero truelend.access log lines. E15-S1-AC4 requires the response to echo the id, and the 500 path is the one case an operator needs it. AppError is unaffected (mapped inside call_next).",
+      "fix": "Emit the access line from a finally (or an `except BaseException:` branch that logs status 500 and re-raises) and stamp the header on the error response too; add a test asserting a 500 carries X-Request-ID."
+    },
+    {
+      "id": "CR-004",
+      "level": "BLOCK",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/config/logging.py",
+      "line": 71,
+      "description": "configure_logging clears and replaces only the ROOT logger's handlers. Uvicorn's uvicorn/uvicorn.error/uvicorn.access loggers carry their own handlers with propagate=False, so they never reach JSONLogFormatter and stay plain text. The project's own .claude/state/uvicorn.log proves it, interleaving `INFO:     127.0.0.1:50224 - \"GET /health HTTP/1.1\" 200 OK` (no request_id) with the JSON truelend.access lines, plus plain-text startup and ERROR bind-failure lines. E15-S1-AC3 and sprint-contract QA-VM-003 require 100% of lines to parse as JSON and carry request_id; at the real sink roughly half do not. The tests cannot see this: TestClient never starts uvicorn's loggers and conftest.log_capture attaches to root only, additionally silencing httpx (conftest.py:51-53).",
+      "fix": "In configure_logging, for each of ('uvicorn','uvicorn.error','uvicorn.access') clear .handlers and set propagate=True so they render through the root JSON handler; add a test over a live-server log capture asserting every non-blank line is json.loads-able."
+    },
+    {
+      "id": "CR-005",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/config/logging.py",
+      "line": 32,
+      "description": "PII redaction is opt-in exact-value marking via redact_values(), which has ZERO call sites in backend/src or frontend/src (only its own definition and docstring). No key-based redaction (pan/aadhaar/salary_doc) and no format-based redaction, so any future handler logging a PAN without wrapping itself leaks it verbatim. This inverts E15-S1's stated business value ('Removes the retrofit pass that would otherwise have to revisit every handler'). The docstring at lines 9-13 claims the module 'does not know PAN/Aadhaar formats in advance ... the only sound approach', but PAN is [A-Z]{5}[0-9]{4}[A-Z] and Aadhaar is 12 digits, both fixed and both named in the story. WARN not BLOCK because no business endpoint exists yet; must-fix before the first origination endpoint.",
+      "fix": "Add defence in depth inside RedactionFilter: a key allow-list over record.__dict__ extras plus PAN/Aadhaar regex substitution on the rendered message, keeping redact_values for salary-document blobs that cannot be pattern-matched."
+    },
+    {
+      "id": "CR-006",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "backend/src/config/logging.py",
+      "line": 60,
+      "description": "JSONLogFormatter.format emits a fixed five-key payload and never reads record.exc_info, record.stack_info or any extra= field, so logger.exception('failed') emits {\"message\":\"failed\"} with the traceback silently discarded. Combined with CR-003 (no log line at all for an unhandled 500) an unhandled error is invisible in the log stream this story exists to install.",
+      "fix": "Add an \"exception\" key from self.formatException(record.exc_info) when present and copy whitelisted extra keys, routing both through redaction (CR-007) in the same change."
+    },
+    {
+      "id": "CR-007",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "backend/src/config/logging.py",
+      "line": 45,
+      "description": "RedactionFilter.filter rewrites only record.msg from getMessage() and clears record.args; it never touches exc_info, stack_info or extra attributes. Nothing leaks today only because JSONLogFormatter happens to emit the message alone, making redaction correctness a property of the formatter rather than the filter. Adding exc_info/extras (CR-006), or attaching a second handler with a different formatter (conftest.py:47 already does; a file handler is the obvious next step), routes unredacted values to that sink.",
+      "fix": "Scrub in the filter: rewrite record.exc_text / stringified exc_info and iterate whitelisted extra keys inside RedactionFilter.filter so any downstream formatter is safe by construction."
+    },
+    {
+      "id": "CR-008",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "specs/stories/E11-S1.md",
+      "line": 42,
+      "description": "The sealed generation contract for all three stories was authored inside the range under review: E9-S1.md, E11-S1.md and E15-S1.md each changed '### Operations' from '- pending' to a concrete numbered list, with matching Entities additions and specs/bundles/E{9,11,15}-S1.json changes. plan-seal.js check exits 1 naming exactly these artifacts. An implementation cannot be checked for spec divergence against a contract written in the same commit range, and concretely it failed to: the contract text still contradicts the shipped code (CR-009) and the project's architecture rules (CR-010).",
+      "fix": "No source change. Either revert the story-file edits and carry operation lists in the bundles only, or re-seal with a ratified amendment recording the operation text as post-hoc; regenerate Operations from the ACs via /spec before group B."
+    },
+    {
+      "id": "CR-009",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/config/delinquency.py",
+      "line": 47,
+      "description": "E11-S1 Operation 2 specifies classify(days_past_due: int) -> DelinquencyBucket in backend/src/types/delinquency.py. Shipped instead: classify(oldest_unpaid_due_date: date, as_of_date: date) plus classify_by_days_past_due(days_past_due: int), both in backend/src/config/delinquency.py. The name `classify` is reused with an incompatible signature, so a consumer generated against the contract (component-map.md:209-210 names E11-S2 and E12-S1 as consuming 'classifier from E11-S1') calling classify(35) gets a TypeError. Not a live break since neither consumer exists yet; the two-function split itself is good design.",
+      "fix": "Rename to remove the collision (classify_by_days_past_due and classify_as_of) and correct the bundle/contract text to the shipped names and location so E11-S2 and E12-S1 are generated against the real surface."
+    },
+    {
+      "id": "CR-011",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "spec",
+      "file": "backend/src/api/middleware.py",
+      "line": 32,
+      "description": "The caller-supplied X-Request-ID is bound and reflected unvalidated. Confirmed: a 4000-character header is echoed verbatim on the response and embedded in every JSON log line for the request (len echoed: 4000); a whitespace-only '  ' header is accepted as the correlation id because the `or uuid4().hex` fallback fires only on empty/absent, so AC4's 'non-empty' holds only literally. Injection is largely already mitigated and not the issue: json.dumps escapes CR/LF and quotes, the ASGI server rejects CR/LF in raw header values, and latin-1 header decoding makes the echo round-trip safe. What remains is unbounded log-volume amplification and a useless-but-accepted id.",
+      "fix": "Strip the header and accept it only if it matches [A-Za-z0-9._-]{1,128}, else generate; put the length bound and pattern in Settings rather than inline."
+    },
+    {
+      "id": "CR-012",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "spec",
+      "file": "backend/src/types/money.py",
+      "line": 56,
+      "description": "Python's Decimal() accepts underscore separators, surrounding whitespace, scientific notation and over-precise input, all of which round-trip through the serializer: '1_000.50' -> \"1000.50\", '  12.34  ' -> \"12.34\", '1e3' -> \"1000.00\", '12.345' -> \"12.35\" (3dp silently rounded, not rejected). new Decimal(\"1_000.50\") throws on the TS side, so the frontend rejects values the backend accepted and re-emitted: one wire contract with two different accepted-input sets.",
+      "fix": "Validate the string against ^-?\\d+(\\.\\d{1,2})?$ in _validate_money before constructing Money, so the boundary accepts exactly what D-G specifies and over-precise values are rejected rather than rounded."
+    },
+    {
+      "id": "CR-013",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "spec",
+      "file": "backend/src/types/money.py",
+      "line": 53,
+      "description": "D-G fixes storage at NUMERIC(14,2) (max 999999999999.99) but Money accepts anything the default 28-digit decimal context can quantize, so Money(Decimal('9'*20)) constructs and fails only at the database insert in a later story, far from the input boundary and with a driver-level rather than typed error. No persistence in this diff, so not yet reachable.",
+      "fix": "Add _MAX_AMOUNT: Final[Decimal] = Decimal('999999999999.99') beside _TWO_PLACES and range-check in _quantize, raising InvalidMoneyAmountError outside the bound."
+    },
+    {
+      "id": "CR-016",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "backend/src/config/logging.py",
+      "line": 85,
+      "description": "_install_redaction_filter_everywhere is dead weight. The RedactionFilter on the handler (line 75) already sees every record routed to it, and logger-level filters are not consulted for records propagated from descendant loggers (Logger.callHandlers walks ancestors' handlers, not their filters), so the copies pinned to root and every loggerDict entry do nothing on the normal path. Their only real effect is to make test_redaction_filter_installed_on_every_configured_logger (E15-S1-AC2) pass by enumeration, i.e. production shape driven by the AC's literal phrasing. It is also a one-shot snapshot: any logger created after configure_logging gets no filter, so AC2's '100%' property decays silently once group B lands.",
+      "fix": "Delete the function, keep the single handler-level filter as the enforcement point, and satisfy AC2 behaviourally: log a marked value through several differently-named loggers inside redact_values and assert it is absent from the captured sink."
+    },
+    {
+      "id": "CR-017",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "backend/tests/unit/test_log_redaction.py",
+      "line": 45,
+      "description": "The AC2 test asserts isinstance(f, RedactionFilter) over each logger's .filters - implementation structure, not behaviour. It would still pass with RedactionFilter.filter reduced to `return True` and its body deleted, which is the exact bug it must catch. Its self-declared anti-vacuity check (lines 65-67) builds a bare logging.Logger with a trivially empty .filters list, proving only that the helper reads a list. The test also calls create_app() with no teardown, and configure_logging does root.handlers.clear(), leaking global logging state into the rest of the session.",
+      "fix": "Make the primary assertion behavioural (marked value in, [REDACTED] out, raw value absent) and keep the structural check secondary; wrap create_app() in a fixture that saves and restores root handlers."
+    },
+    {
+      "id": "CR-018",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "backend/tests/architecture/test_no_float_money.py",
+      "line": 128,
+      "description": "E9-S1-AC1 requires that when a SCHEDULE is computed from each triple, every money field is a Decimal quantized to 2dp. The test computes three ad-hoc expressions (multiply/subtract/add-multiply), not a schedule, then asserts Decimal with exponent -2 - true by construction because Money.__init__ quantizes unconditionally and every helper returns Money. The assertion cannot fail for any input, so the 200 seeded iterations add no discriminating power. The file docstring fairly notes the schedule generator is a later story.",
+      "fix": "Assert the values against an independently computed Decimal oracle rather than only the exponent, and record AC1's schedule half as explicitly deferred to E9-S2/E9-S3 so it is not counted satisfied here."
+    },
+    {
+      "id": "CR-020",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "frontend/src/types/money.ts",
+      "line": 65,
+      "description": "fromWire/add/subtract route through toQuantizedDecimal, which wraps decimal.js failures in InvalidMoneyAmountError. multiply builds `new Decimal(scalar)` directly outside that wrapper, so an invalid scalar string throws decimal.js's raw Error: [DecimalError] Invalid argument. A caller catching InvalidMoneyAmountError - the contract money.test.ts:54 establishes - misses it. The path is untested; the tests pass only '3' and a valid Decimal.",
+      "fix": "Extract a toDecimal(value) helper that does the try/rethrow WITHOUT quantizing and have both toQuantizedDecimal and multiply use it. Do not route the scalar through toQuantizedDecimal - that would round the 0.105 rate to 0.11."
+    },
+    {
+      "id": "CR-024",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "project-manifest.json",
+      "line": 92,
+      "description": "Modified in the working tree (verification.mode docker->local plus a new mode_note key) although the pack lists it under 'Frozen, out-of-scope paths' and it is absent from task-envelope.json#allowed_paths. The change is defensible and honestly annotated (no docker-compose.yml until E15-S2, Docker Desktop absent) and the pack's duplicate-mode-key worry is unfounded - JSON.parse succeeds and mode appears exactly once inside verification - but it was made without an envelope amendment, traces to no group A acceptance criterion, and is the direct cause of the canvas-sync BLOCK. mode_note is also a non-schema key in a file other harness scripts parse.",
+      "fix": "Revert it out of the group A change and land it as its own chore: commit with an envelope amendment covering the frozen path; carry the rationale in the amendment rather than an ad-hoc mode_note key."
+    },
+    {
+      "id": "CR-025",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "standards",
+      "file": ".claude/state/task-envelope.json",
+      "line": 64,
+      "description": "The envelope was rotated, not amended: created_at/expires_at moved ~9h forward (2026-09-13T19:30:08.588Z -> 2026-09-14T04:37:07.592Z) and integrity.hash was rebuilt (4034d3db61bdff6b223fd631480932d03510d6d52a32870b4bf0c2ee702e05da -> fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404), while previous_envelope_hash stays null and amendments stays [] despite five files under .claude/state/task-envelope-history/, one named for exactly the superseded hash. The chain is unauditable, and moving created_at forward resets the 'evidence created after the envelope' window that finalize-task-evidence.js enforces. The path itself is inside allowed_paths (.claude/state/**), so this is about chaining, not path legality.",
+      "fix": "Set previous_envelope_hash to 4034d3db61bdff6b223fd631480932d03510d6d52a32870b4bf0c2ee702e05da and append an amendments entry recording the rotation and its reason, instead of rebuilding the hash in place."
+    },
+    {
+      "id": "CR-010",
+      "level": "INFO",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "specs/stories/E11-S1.md",
+      "line": 45,
+      "description": "Operation 2 places the classify function in backend/src/types/delinquency.py 'reading the floors from backend/src/config/delinquency.py' - a Types->Config import, explicitly FORBIDDEN by .claude/architecture.md. The implementation correctly refused it: the classifier sits in Config, types/delinquency.py keeps zero cross-layer imports, and config/delinquency.py:3-11 documents the reasoning against the architecture's own coupling-risk mitigation. INFO because the code is right and only the sealed text is wrong.",
+      "fix": "Correct Operation 2 to name backend/src/config/delinquency.py so a later story does not implement the layering violation literally."
+    },
+    {
+      "id": "CR-014",
+      "level": "INFO",
+      "confidence": "medium",
+      "axis": "spec",
+      "file": "backend/src/types/money.py",
+      "line": 81,
+      "description": "No divide and no ordering operators. This matches the contract ('add/subtract/multiply-style helpers') and adding them now would be speculative, but E9-S2/E9-S3 need division for EMI amortisation and ordering for overpayment checks, and division is where the rounding-mode choice becomes materially load-bearing.",
+      "fix": "When E9-S2 lands, add divide() and comparison operators inside Money rather than doing money.amount / n at the call site - the latter is exactly the leak CR-002's check cannot detect."
+    },
+    {
+      "id": "CR-015",
+      "level": "INFO",
+      "confidence": "low",
+      "axis": "spec",
+      "file": "backend/src/types/money.py",
+      "line": 10,
+      "description": "D-G and D-J specify decimal representation and 2dp but are silent on tie-breaking. Both sides independently chose ROUND_HALF_UP, both document the intent to match, and both pin -45.005 -> -45.01 in tests, so the halves agree today and the choice is defensible for lending. Nothing mechanical prevents them drifting apart, and half-up vs half-even changes reported interest.",
+      "fix": "Ratify ROUND_HALF_UP explicitly in specs/design/architecture.md under D-G so the two implementations have a shared oracle."
+    },
+    {
+      "id": "CR-019",
+      "level": "INFO",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "backend/src/config/delinquency.py",
+      "line": 20,
+      "description": "classify_by_days_past_due is correct only if DPD_BUCKET_FLOORS stays sorted ascending by floor, an invariant stated only in a comment. The existing sweep test would catch a reorder, so this is defensive only.",
+      "fix": "Add a one-line test asserting the floors are strictly ascending so the invariant fails at its own location rather than as five confusing boundary failures."
+    },
+    {
+      "id": "CR-021",
+      "level": "INFO",
+      "confidence": "low",
+      "axis": "standards",
+      "file": "frontend/tsconfig.json",
+      "line": 22,
+      "description": "include lists vitest.config.ts, which does not exist; E9-S1 Operation 4 required creating it. The test config lives in vite.config.ts via defineConfig from vitest/config - a legitimate and arguably better choice - and include tolerates the missing path, so nothing breaks.",
+      "fix": "Drop the vitest.config.ts entry from include and correct the contract text to match where the test config actually lives."
+    },
+    {
+      "id": "CR-022",
+      "level": "INFO",
+      "confidence": "low",
+      "axis": "standards",
+      "file": "frontend/src/types/money.ts",
+      "line": 75,
+      "description": "const [integerPart, fractionPart] = this.toWire().split('.') treats both as string. Safe today because toFixed(2) always yields exactly one '.', but against the project's 'static typing everywhere' rule this is the one place the type system asserts more than it can prove; tsconfig omits noUncheckedIndexedAccess.",
+      "fix": "Enable noUncheckedIndexedAccess in tsconfig.json and handle the undefined branch explicitly."
+    },
+    {
+      "id": "CR-023",
+      "level": "INFO",
+      "confidence": "low",
+      "axis": "standards",
+      "file": "frontend/eslint.config.js",
+      "line": 9,
+      "description": "The config spreads tseslint.configs.recommended rather than recommendedTypeChecked. For a codebase whose central invariant is 'no float touches money', the type-aware rules are the natural mechanical enforcement point for D-J and would be far stronger than CR-002's regex test.",
+      "fix": "Switch to recommendedTypeChecked with parserOptions.project and add no-restricted-properties for toNumber/valueOf scoped to src/types/money.ts."
+    },
+    {
+      "id": "CR-026",
+      "level": "INFO",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "specs/design/component-map.md",
+      "line": 29,
+      "description": "backend/src/__init__.py has no owning story row, which the ownership-check gate blocks on (14 checked, 1 unowned). The file is an empty package marker with zero behaviour, so this is a bookkeeping gap rather than a defect - but the deterministic gate blocks and the fix is one line. backend/tests/__init__.py is in the same position.",
+      "fix": "Add backend/src/__init__.py and backend/tests/__init__.py to E15-S1's owned-files row, which already owns the backend app factory."
+    },
+    {
+      "id": "CR-027",
+      "level": "INFO",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "specs/design/amendments/group-a-implementation-sync.md",
+      "line": 1,
+      "description": "The amendment states it 'exists solely to satisfy the amendment-provenance sensor' and records entries 'only to satisfy the provenance sensor's literal requirement', then asserts each story was 'implemented exactly as designed' - not accurate for E11-S1, whose sealed Operation 2 names a different file and a different classify signature than what shipped (CR-009, CR-010). To its credit the same document describes the Config placement honestly further down. An amendment whose stated purpose is to clear a sensor is not provenance.",
+      "fix": "Replace the 'implemented exactly as designed' claims with the actual divergences - classifier location and signature, vitest.config.ts not created, AC1's schedule half deferred - so the record matches the code."
+    }
+  ],
+  "pack_claims_not_sustained": [
+    {
+      "claim": "project-manifest.json duplicate mode key risk",
+      "assessment": "Not a defect. JSON.parse succeeds; verification.mode appears exactly once inside verification."
+    },
+    {
+      "claim": "regression-suite-full 54/50 findings",
+      "assessment": "Not a product regression. Every finding is an endpoint in groups B..M, none implemented. Group A is the first landed group so the prior-contract regression set is empty; the check is misapplied."
+    },
+    {
+      "claim": "X-Request-ID log injection / header injection",
+      "assessment": "Largely mitigated already: json.dumps escapes CR/LF and quotes, the ASGI server rejects CR/LF in raw header values, latin-1 decoding makes the echo round-trip safe. Downgraded to the robustness issue in CR-011; the security reviewer owns the vulnerability angle."
+    },
+    {
+      "claim": "Possible Config/Types layering violation in the delinquency split",
+      "assessment": "Clean. Direction is Config->Types; types/ imports nothing outside stdlib. Checked every import in the diff."
+    }
+  ]
+}

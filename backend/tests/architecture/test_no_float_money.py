@@ -26,18 +26,65 @@ _MONEY_TYPE_PATH = _BACKEND_ROOT / "src" / "types" / "money.py"
 _SERIALIZERS_PATH = _BACKEND_ROOT / "src" / "api" / "serializers.py"
 
 
+_GUARD_EXEMPTION = "money-guard: decimal-division"
+
+
+def _exempt_lines(source: str) -> frozenset[int]:
+    """Line numbers carrying the reviewable `# money-guard:` exemption.
+
+    Decimal/Decimal division is legitimate — E9-S3's EMI needs it. Without a
+    per-line escape hatch the only way to divide would be to disable the guard
+    wholesale, so the exemption is annotated line by line and shows up in a diff.
+    """
+    return frozenset(
+        number
+        for number, line in enumerate(source.splitlines(), start=1)
+        if _GUARD_EXEMPTION in line
+    )
+
+
 def _count_float_usages(source: str) -> int:
-    """Count `float(...)` calls and float literals in a source file's AST."""
+    """Count constructs that can put a float into a money code path.
+
+    Counting only `float(...)` calls and float literals let the most likely
+    leak through untouched: `principal / months` over two ints yields a float
+    in Python 3, which is exactly the shape an EMI calculation takes. Division
+    and the `math` module (whose functions all return floats) are therefore
+    counted too. Every later money story inherits this guard.
+    """
     tree = ast.parse(source)
+    exempt = _exempt_lines(source)
+    math_aliases = {"math"}
     count = 0
+
     for node in ast.walk(tree):
+        # `import math` / `from math import ceil` both hand back floats.
+        if isinstance(node, ast.Import):
+            if any(alias.name == "math" for alias in node.names):
+                count += 1
+            continue
+        if isinstance(node, ast.ImportFrom) and node.module == "math":
+            count += 1
+            continue
+
+        if getattr(node, "lineno", None) in exempt:
+            continue
+
         is_float_call = (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
             and node.func.id == "float"
         )
+        is_math_attr = (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id in math_aliases
+        )
         is_float_literal = isinstance(node, ast.Constant) and isinstance(node.value, float)
-        if is_float_call or is_float_literal:
+        is_division = isinstance(node, ast.BinOp) and isinstance(
+            node.op, (ast.Div, ast.FloorDiv)
+        )
+        if is_float_call or is_math_attr or is_float_literal or is_division:
             count += 1
     return count
 
@@ -89,6 +136,75 @@ def test_construction_rejects_bool() -> None:
 def test_construction_rejects_invalid_string() -> None:
     with pytest.raises(InvalidMoneyAmountError):
         Money("not-a-number")
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        Decimal("NaN"),
+        "NaN",
+        "nan",
+        "-NaN",
+        Decimal("sNaN"),
+        Decimal("Infinity"),
+        Decimal("-Infinity"),
+        "Infinity",
+        "-Infinity",
+    ],
+)
+def test_construction_rejects_non_finite(raw: Decimal | str) -> None:
+    """A non-finite amount is not money.
+
+    `Decimal` accepts NaN and Infinity, and a NaN that reaches a `Money`
+    poisons every downstream decision: an ordering comparison against an
+    underwriting threshold raises `InvalidOperation` (not an `AppError`, so
+    it surfaces as an unhandled 500), equality returns False so dedupe
+    breaks, and the serializer emits `"NaN"` on the wire, which the
+    frontend's `decimal.js` parser then throws on. The frontend module
+    already rejects non-finite values; the backend must match it.
+    """
+    with pytest.raises(InvalidMoneyAmountError):
+        Money(raw)
+
+
+@pytest.mark.parametrize(
+    "snippet",
+    [
+        pytest.param("value = principal / months\n", id="true-division"),
+        pytest.param("value = total // count\n", id="floor-division"),
+        pytest.param("import math\nvalue = math.floor(x)\n", id="math-module"),
+        pytest.param("value = float(amount)\n", id="float-call"),
+        pytest.param("value = 0.1 + x\n", id="float-literal"),
+        pytest.param("value = base ** 0.5\n", id="float-exponent"),
+        pytest.param("from math import ceil\nvalue = ceil(x)\n", id="math-import-from"),
+    ],
+)
+def test_float_guard_detects_realistic_leaks(snippet: str) -> None:
+    """The guard must catch the ways float actually enters money code.
+
+    Counting only `float(...)` calls and float literals let the most likely
+    leak through: `principal / months` on two ints yields a float in Python
+    3, which is exactly the EMI shape E9-S3 will write. Every later money
+    story inherits this guard, so it has to bite before then.
+    """
+    assert _count_float_usages(snippet) > 0
+
+
+def test_float_guard_allows_explicitly_marked_decimal_division() -> None:
+    """Decimal division is legitimate and needs a reviewable escape hatch.
+
+    Without one, E9-S3's EMI implementation cannot divide at all and the
+    guard would be bypassed wholesale instead of annotated line by line.
+    """
+    marked = "value = principal / months  # money-guard: decimal-division\n"
+    assert _count_float_usages(marked) == 0
+
+
+def test_float_guard_still_reports_zero_for_the_real_money_modules() -> None:
+    """The hardened guard must not fire on the shipped modules."""
+    for path in (_MONEY_TYPE_PATH, _SERIALIZERS_PATH):
+        source = path.read_text(encoding="utf-8")
+        assert _count_float_usages(source) == 0, f"found float usage in {path}"
 
 
 def test_add_returns_two_decimal_quantized_money() -> None:

@@ -1,0 +1,165 @@
+{
+  "gate": "security",
+  "instance": 2,
+  "instance_of": 3,
+  "report": "specs/reviews/security-review-instance2.md",
+  "range": "14e9487..d0b5c94 plus uncommitted working tree",
+  "reviewed_at": "2026-09-14",
+  "pass": true,
+  "block_severities": ["critical", "high"],
+  "summary": { "block": 0, "warn": 7, "info": 4 },
+  "findings": [
+    {
+      "id": "VULN-001",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "input-validation",
+      "file": "backend/src/api/serializers.py",
+      "line": 20,
+      "description": "The money wire validator accepts 'NaN'. Decimal('NaN') constructs and quantizes without signalling, so both the float/bool guard and the InvalidOperation guard pass. Verified: _validate_money('NaN') yields amount NaN, serializes back as \"NaN\", silently poisons add/multiply, makes Money equality return False, and makes any ordering comparison raise decimal.InvalidOperation - which is not an AppError and so surfaces as an unhandled 500. Underwriting limit and eligibility rules are ordering comparisons. Same root cause also accepts '1_000', '  12.34  ', and underflows '1e-999999999' to 0.00, none of which is the D-G quoted-2dp format. The frontend already guards this with !parsed.isFinite() in frontend/src/types/money.ts:31; the Python side has no equivalent. Not currently reachable over HTTP because no request model binds MoneyField and no POST/PUT endpoint exists - re-rate high at the first money-accepting endpoint.",
+      "fix": "Reject non-finite values in Money._quantize or __init__ via decimal_amount.is_finite() before quantizing, and constrain the wire validator to an anchored 2dp pattern instead of accepting anything Decimal() will coerce."
+    },
+    {
+      "id": "VULN-002",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "sensitive-data-exposure",
+      "file": "backend/src/config/logging.py",
+      "line": 42,
+      "description": "RedactionFilter removes only values explicitly registered via redact_values(), using case-sensitive literal str.replace. Demonstrated misses with redact_values('ABCDE1234F','123456789012') active: lowercase PAN 'abcde1234f', Aadhaar with dashes '1234-5678-9012', and Aadhaar with spaces '1234 5678 9012' all reach the sink unredacted, as does anything logged outside a redact_values() scope. The module docstring claims the filter drops PAN, Aadhaar and salary-document content, but there is no pattern-based fallback for those formats, and no production code in this diff calls redact_values, so redaction is currently a no-op. Not a BLOCK: the only log statement in the diff logs method, path and status code, so no PII or secret reaches a sink on any reachable path today. Nested containers, extra= fields and exception tracebacks were tested and do NOT leak.",
+      "fix": "Normalize before matching (case-fold, strip separators) and add a regex fallback for the PAN/Aadhaar formats the docstring advertises; prefer field-name-based redaction at the structured-logging call site over opt-in value registration. Correct the docstring to match actual behaviour."
+    },
+    {
+      "id": "VULN-003",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "audit-integrity",
+      "file": "backend/src/api/middleware.py",
+      "line": 32,
+      "description": "A caller-supplied X-Request-ID is bound and reflected with no length cap, charset allow-list, or format validation. Verified live: 1000, 8000, 16000 and 60000-byte values all return 200 and are echoed in full; the longest line in .claude/state/uvicorn.log is now 100146 bytes. Two impacts: (1) correlation-id forgery - any unauthenticated caller can set an arbitrary or colliding request_id, so audit lines can be attributed to another actor, and nothing distinguishes caller-supplied from server-generated ids; (2) log amplification - the attacker controls unbounded log bytes written per request. Whitespace-only ids are accepted since only the empty string is falsy. Injection on this input is refuted: uvicorn/h11 returns 400 Bad Request for bare CR, bare LF, obs-fold, ESC (0x1b), DEL (0x7f) and NUL, and json.dumps escapes JSON breakout attempts.",
+      "fix": "Validate before binding and reflecting: cap length to 64-128 chars and restrict to ^[A-Za-z0-9._-]{1,128}$; on mismatch generate a fresh uuid4().hex rather than echoing. Consider logging caller-supplied and server-generated ids in separate fields."
+    },
+    {
+      "id": "VULN-004",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "information-disclosure",
+      "file": "backend/src/api/app.py",
+      "line": 23,
+      "description": "create_app accepts FastAPI's defaults, so GET /docs, GET /redoc and GET /openapi.json are all publicly reachable and unauthenticated (verified live, all 200; /openapi.json discloses the machine-readable schema). Present disclosure is negligible since only /health exists, but the insecure default persists into production: as origination, disbursement and repayment endpoints land it will publish the full API surface, parameter names and response schemas of a loan-origination platform to anonymous callers with no code change. /docs and /redoc also serve HTML loading scripts from a third-party CDN with no CSP.",
+      "fix": "Gate docs_url, redoc_url and openapi_url on an explicit environment-driven setting (e.g. Settings.enable_docs, default False), passing None for all three when disabled."
+    },
+    {
+      "id": "VULN-005",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "information-disclosure",
+      "file": "backend/src/api/errors.py",
+      "line": 20,
+      "description": "The AppError handler returns exc.message verbatim to the client. Confirmed by raising AppError with a fabricated DSN: the client received the full string including the credential in the response body. AppError.__init__ also defaults status_code to 500, nudging callers to use it for internal faults - exactly the case where the message is most likely to carry a driver string, host name or DSN. There is no separation between internal detail and client-safe text. Not a BLOCK: nothing in this diff raises AppError, there are no subclasses, and no message is built from an internal exception, so there is no reachable exploit path today. The unhandled-exception path was separately verified clean - app.debug is False and the body is a bare 'Internal Server Error' with no traceback.",
+      "fix": "Split client-safe message from internal detail (e.g. public_message returned, detail logged only), return a generic message for any status_code of 500 or above, and remove the permissive 500 default so callers must state intent."
+    },
+    {
+      "id": "VULN-006",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "dependency-vulnerability",
+      "file": "frontend/package.json",
+      "line": 18,
+      "description": "npm audit on the manifest added by this diff reports 5 advisories (1 critical, 1 high, 3 moderate) against vite@5.4.21 and vitest@2.1.9: GHSA-5xrq-8626-4rwp (critical, vitest arbitrary file read/execute when the Vitest UI server is listening), GHSA-fx2h-pf6j-xcff (high, vite server.fs.deny bypass on Windows alternate paths), GHSA-v6wh-96g9-6wx3 (launch-editor NTLMv2 hash disclosure via UNC paths on Windows), GHSA-4w7w-66w2-5vf9 (vite optimized-deps .map path traversal), plus esbuild/@vitest/mocker/vite-node moderates. Kept at WARN rather than BLOCK: all affected packages are devDependencies absent from the production bundle, the critical is conditioned on the Vitest UI server which this project's 'vitest run' script never starts, the vite advisories need a reachable localhost dev server, and both fixes are semver-major (vite@8.3.0, vitest@5.0.0). Real developer-machine exposure on Windows remains.",
+      "fix": "Schedule the major upgrades to vite@8.x and vitest@5.x as a dedicated change gated on the test suite; until then do not run vitest --ui and do not expose the vite dev server beyond loopback."
+    },
+    {
+      "id": "VULN-007",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "audit-integrity",
+      "file": ".claude/state/task-envelope.json",
+      "line": 64,
+      "description": "The task envelope was rotated, not amended: created_at moved ~9h forward (2026-09-13T19:30:08.588Z to 2026-09-14T04:37:07.592Z), expires_at likewise, and integrity.hash was rebuilt (4034d3db... to fb41b097...), yet previous_envelope_hash is still null and amendments is still [] despite the superseded hash existing as a file under .claude/state/task-envelope-history/ (5 history files). The chain therefore has no link to its predecessor and is unauditable, and advancing created_at resets the 'evidence must be created after the envelope' window enforced by finalize-task-evidence.js. Separately, project-manifest.json was edited (verification.mode docker to local plus a mode_note) while absent from the envelope's 15 allowed_paths - confirmed directly when a write in this session was refused as 'outside task truelend-build's allowed_paths' - and the pack lists it as frozen. Kept at WARN: this is provenance/change-control integrity rather than an exploitable application vulnerability, and canvas-sync and ownership-check already block on the same working-tree edits.",
+      "fix": "Record the rotation as an amendment: set previous_envelope_hash to 4034d3db61bdff6b223fd631480932d03510d6d52a32870b4bf0c2ee702e05da, append an amendments[] entry covering the project-manifest.json scope expansion, and restore the original created_at so the evidence window is not reset."
+    },
+    {
+      "id": "VULN-008",
+      "severity": "low",
+      "level": "INFO",
+      "category": "security-headers",
+      "file": "backend/src/api/app.py",
+      "line": 23,
+      "description": "Responses carry only date, server, content-length, content-type and x-request-id. Missing X-Content-Type-Options: nosniff, Content-Security-Policy, X-Frame-Options and HSTS. Low impact for a JSON-only API, but /docs and /redoc serve HTML loading Swagger UI/ReDoc from a third-party CDN with no CSP, and the header 'server: uvicorn' advertises the stack.",
+      "fix": "Add a middleware setting nosniff, a CSP/frame-ancestors policy and HSTS behind TLS; set server_header=False in the uvicorn config."
+    },
+    {
+      "id": "VULN-009",
+      "severity": "low",
+      "level": "INFO",
+      "category": "logging-observability",
+      "file": "backend/src/api/middleware.py",
+      "line": 35,
+      "description": "Verified: on an unhandled exception the 500 response carries no X-Request-ID header and no truelend.access log line is emitted. The header assignment and access log both sit after await call_next(...), so an exception skips them, and finally resets the contextvar before Starlette's outer ServerErrorMiddleware handles it. Correlation is lost precisely on the error path where forensics matter most, so the sprint contract's 'every request-scoped log line carries the same non-empty request_id' holds only on the success path. The AppError path is unaffected and logs and echoes correctly.",
+      "fix": "Wrap call_next in try/except and emit the access line plus set the response header on the exception path as well as the success path."
+    },
+    {
+      "id": "VULN-010",
+      "severity": "low",
+      "level": "INFO",
+      "category": "logging-observability",
+      "file": "backend/src/config/logging.py",
+      "line": 57,
+      "description": "Two coupled robustness issues, neither a leak. (a) JSONLogFormatter emits a fixed five-key payload, so exc_info tracebacks and all extra= fields are silently discarded - logger.exception() records only the message, which prevents leakage but destroys diagnosability and makes extra= appear to work while being dropped. (b) RedactionFilter sets record.args = () after pre-formatting the message; uvicorn's AccessFormatter unpacks record.args into its %(client_addr)s-style fields, so once any redact_values() scope is active uvicorn access records will fail to format. Dormant today because no production code calls redact_values.",
+      "fix": "Include redacted exc_info and whitelisted extra keys in the payload; redact by rewriting record.args in place rather than clearing it, or scope the filter to the application's own handler only."
+    },
+    {
+      "id": "VULN-011",
+      "severity": "low",
+      "level": "INFO",
+      "category": "insecure-configuration",
+      "file": "backend/src/config/settings.py",
+      "line": 24,
+      "description": "log_level is an unvalidated free-form str accepting any TRUELEND_LOG_LEVEL value. Setting DEBUG in production enables third-party DEBUG logging into the same sink where redaction is opt-in. Observed concretely: the root handler captures third-party loggers and httpx emitted full request URLs ('HTTP Request: GET http://testserver/... \"HTTP/1.1 500 ...\"') into the JSON sink, so any future token or PII in a query string would be logged verbatim.",
+      "fix": "Constrain to Literal['DEBUG','INFO','WARNING','ERROR','CRITICAL'], refuse DEBUG in production, and pin third-party loggers to WARNING regardless of the application's own level."
+    }
+  ],
+  "refuted_block_candidates": [
+    {
+      "candidate": "HTTP response-header injection / response splitting via X-Request-ID",
+      "file": "backend/src/api/middleware.py",
+      "refutation": "uvicorn/h11 rejects the payload before application code. Raw-socket tests (bypassing curl's client-side CRLF stripping, which makes curl -H $'...\\r\\n...' inconclusive): bare LF, bare CR, obs-fold CRLF+TAB, ESC 0x1b, DEL 0x7f and NUL 0x00 each return 'HTTP/1.1 400 Bad Request - Invalid HTTP request received.' A true CRLF split parses as two header lines so X-Request-ID receives only 'abc' and the injected header is not reflected. Bytes 0x80-0xFF and TAB are accepted and echoed via latin-1 round-trip with no crash. Starlette/uvicorn normalizes this; no CRLF or ANSI sequence can reach the log sink or response header."
+    },
+    {
+      "candidate": "JSON log injection / forged request_id key",
+      "file": "backend/src/config/logging.py",
+      "refutation": "Payload 'a\",\"request_id\":\"spoofed' is reflected but JSONLogFormatter serializes through json.dumps, which escapes it. Emitted line is one valid JSON object with a single request_id key: ...\"message\": \"GET /health -> 200\", \"request_id\": \"a\\\",\\\"request_id\\\":\\\"spoofed\"}. High bytes escape to \\u00ff. No structural breakout, no forged field, no embedded newline."
+    },
+    {
+      "candidate": "Stack-trace or internal-detail leakage on the unhandled-exception path",
+      "file": "backend/src/api/errors.py",
+      "refutation": "Probed in-process against the real app with a route raising ValueError carrying a fake DSN. app.debug is False; response body is exactly 'Internal Server Error' (plain text, 500) with no traceback, no exception type and no secret. JSONLogFormatter also omits exc_info, so nothing leaks to the log sink."
+    },
+    {
+      "candidate": "PII redaction bypass via nested containers, extra= fields or exception args",
+      "file": "backend/src/config/logging.py",
+      "refutation": "Refuted as a leak. Nested dicts and lists ARE redacted because record.getMessage() stringifies before substring replacement (payload={'applicant': {'pan': '[REDACTED]'}}). extra= fields and exc_info never appear in output at all, since the formatter emits only a fixed five-key payload. The genuine gaps are case/format variants and opt-in scope, recorded as VULN-002."
+    },
+    {
+      "candidate": "CORS misconfiguration",
+      "file": "backend/src/api/app.py",
+      "refutation": "No CORSMiddleware is registered. GET /health with Origin: https://evil.example returns no Access-Control-* headers, so browsers block cross-origin reads. Secure default."
+    },
+    {
+      "candidate": "XSS in MoneyText",
+      "file": "frontend/src/ui/components/MoneyText.tsx",
+      "refutation": "No dangerouslySetInnerHTML, innerHTML, document.write or eval anywhere in the changed frontend files. The component renders <span>{value.format()}</span>, which React auto-escapes, and format() emits only digits, commas, a dot and an optional minus derived from a Decimal. A non-numeric string input throws InvalidMoneyAmountError rather than rendering."
+    },
+    {
+      "candidate": "project-manifest.json duplicate mode key",
+      "file": "project-manifest.json",
+      "refutation": "json.load succeeds and verification has exactly one mode key, value 'local'. The three file-wide 'mode' matches are in distinct objects."
+    }
+  ],
+  "pack_claims_verified": {
+    "claim": "No authn/authz, no persistence, no migrations, no outbound network calls, no file uploads, and no payment execution in this diff.",
+    "result": "accurate",
+    "evidence": "Scoped pattern search across the 13 changed source files found no eval/exec/pickle/yaml.load, no subprocess/os.system/shell=True, no SQL cursor/execute/ORM, no requests/httpx/fetch/urlopen outbound call, no open/Path/os.path.join filesystem access, no UploadFile/multipart, no md5/sha1/random, no JWT or auth dependency, and no hardcoded credential. The only 'token' matches are ContextVar reset tokens in middleware.py and logging.py (false positives). /health is intentionally unauthenticated and returns only {\"status\":\"ok\"}. settings.py holds only service_name and log_level, environment-sourced under the TRUELEND_ prefix."
+  }
+}

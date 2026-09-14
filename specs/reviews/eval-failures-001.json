@@ -1,0 +1,75 @@
+{
+  "group": "A",
+  "evaluator_instance": "1 of 3 (canonical)",
+  "timestamp": "2026-09-14T06:47:00Z",
+  "overall_verdict": "FAIL",
+  "failure_layer": "api",
+  "failures": [
+    {
+      "failure": {
+        "layer": "api",
+        "gate": "evaluator",
+        "check": "QA-VM-003 / VM-003 / E15-S1-AC3 — GET /health -> 200 with X-Request-ID: req-abc; 100% of log lines emitted while serving parse as JSON and each carries request_id == req-abc",
+        "actual": {
+          "status": 200,
+          "response_header_x_request_id": "req-abc",
+          "body": "{\"status\":\"ok\"}",
+          "log_window_lines_total": 4,
+          "log_window_lines_parsing_as_json": 2,
+          "json_parse_rate_pct": 50,
+          "offending_lines": [
+            "INFO:     127.0.0.1:51975 - \"GET /health HTTP/1.1\" 200 OK",
+            "INFO:     127.0.0.1:51976 - \"GET /health HTTP/1.1\" 200 OK"
+          ],
+          "request_id_var_at_uvicorn_access_emit_time": "",
+          "logger_tree_in_running_server": {
+            "root": "propagate=True handlers=[StreamHandler/JSONLogFormatter]",
+            "uvicorn": "propagate=False handlers=[StreamHandler/DefaultFormatter]",
+            "uvicorn.access": "propagate=False handlers=[StreamHandler/AccessFormatter]"
+          }
+        },
+        "stack_trace": "No exception. Behavioural failure observed via byte-offset log window on .claude/state/evaluator1-uvicorn.log (isolation instance) and reproduced on the official target .claude/state/uvicorn.log lines 15-16.",
+        "error_type": "assertion_error",
+        "files_likely_involved": [
+          "backend/src/config/logging.py:71",
+          "backend/src/config/logging.py:85",
+          "backend/src/api/middleware.py:41"
+        ],
+        "fix_summary": "Two independent causes, both must be fixed. (1) uvicorn/uvicorn.access have propagate=False and their own StreamHandler, so they never reach root's JSONLogFormatter — bring them under it in a way that survives uvicorn's own dictConfig (pass log_config to uvicorn, or re-assert after startup). (2) CorrelationIdMiddleware.dispatch resets request_id_var in its finally block before uvicorn writes its access line, so even with the formatter fixed the line would carry request_id '' rather than req-abc — the correlation scope must outlive the middleware.",
+        "artifacts": [".claude/state/evaluator1-uvicorn.log", "specs/reviews/evaluator-report.md#3-qa-vm-003--fail-the-hard-judgement"],
+        "prior_attempts": []
+      }
+    },
+    {
+      "failure": {
+        "layer": "api",
+        "gate": "evaluator",
+        "check": "E15-S1-AC2 / F002 — every configured logger is enumerated and the redaction filter is installed on 100% of them",
+        "actual": {
+          "total_loggers_in_running_server": 17,
+          "loggers_with_own_handlers_lacking_redaction_coverage": 2,
+          "uncovered": ["uvicorn", "uvicorn.access"],
+          "uvicorn_access_state": "propagate=False, logger_redaction=False, handlers=[('StreamHandler','AccessFormatter',redaction=False)]",
+          "demonstrated_leak": "INFO:     127.0.0.1:55076 - \"GET /health?pan=ABCDE1234F HTTP/1.1\" 200 OK",
+          "leak_context": "PAN ABCDE1234F was explicitly marked sensitive via redact_values(PAN). The httpx logger (which propagates to root) correctly rendered pan=[REDACTED]; uvicorn.access wrote the PAN verbatim to the log sink.",
+          "test_harness_view": "Under pytest (no uvicorn dictConfig) the same enumeration reports uvicorn.access redaction=True and 11/11 loggers covered, missing=[] — the AC2 test asserts against a logger tree that never exists in the deployed process."
+        },
+        "stack_trace": "No exception on the leak path. The latent second defect does raise: File \".../uvicorn/logging.py\", line 99, in formatMessage / ) = recordcopy.args  # type: ignore[misc] / ValueError: not enough values to unpack (expected 5, got 0) — triggered when RedactionFilter IS installed on uvicorn.access, because RedactionFilter.filter sets record.args = (). The access line is then silently dropped and replaced by a logging-error traceback on stderr.",
+        "error_type": "validation_error",
+        "files_likely_involved": [
+          "backend/src/config/logging.py:45",
+          "backend/src/config/logging.py:53",
+          "backend/src/config/logging.py:85",
+          "backend/tests/unit/test_log_redaction.py"
+        ],
+        "fix_summary": "Install the RedactionFilter on uvicorn/uvicorn.access in a way that survives uvicorn's dictConfig, AND make RedactionFilter redact record.args element-wise instead of clearing it — otherwise the fix for the leak destroys the access log (ValueError in AccessFormatter). Also re-point the AC2 test at the real uvicorn startup order so it cannot stay green while the invariant is false.",
+        "artifacts": ["specs/reviews/evaluator-report.md#7-e15-s1-ac2--fail-found-independently-not-in-the-context-pack"],
+        "prior_attempts": []
+      }
+    }
+  ],
+  "regressions": [],
+  "regression_note": "No regression check applicable: features.json has zero stories with passes:true in any group, so group A is the first landed group and the prior-contract regression set is empty.",
+  "passing_stories": ["E9-S1", "E11-S1"],
+  "failing_stories": ["E15-S1"]
+}

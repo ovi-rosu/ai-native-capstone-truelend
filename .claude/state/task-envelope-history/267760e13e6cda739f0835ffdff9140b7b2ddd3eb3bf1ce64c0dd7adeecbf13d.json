@@ -3,24 +3,11 @@
   "version": 1,
   "task_id": "truelend-build",
   "risk_tier": "R3",
-  "intent_hash": "140d0e77d15f129b3fe3c5d516e2e75bc1b8eff24b948e0d6e166964cac916ac",
+  "intent_hash": "d0b3b5c50d9e07beadcb3d1e06cfecc3234c302c9b7428d9ab0d55d26946cf3d",
   "risk_envelope_hash": "4e8d68506e2b09f73653f6811b8793472b0095d7807479d5fdaf2862477ee265",
   "allowed_paths": [
-    "backend/**",
-    "frontend/**",
-    "migrations/**",
-    "specs/reviews/**",
-    "specs/bundles/**",
-    "specs/stories/**",
-    "specs/design/reasons-canvas.md",
-    "specs/design/amendments/**",
-    "e2e/**",
-    "features.json",
-    "claude-progress.txt",
-    ".claude/state/**",
-    "docker-compose.yml",
-    ".env.example",
-    "README.md"
+    "project-manifest.json",
+    ".claude/state/**"
   ],
   "forbidden_actions": [
     "merge",
@@ -61,12 +48,12 @@
     "gate_pass",
     "no_block_findings"
   ],
-  "created_at": "2026-09-14T04:37:07.592Z",
-  "expires_at": "2026-09-15T04:37:07.592Z",
+  "created_at": "2026-09-14T04:37:07.202Z",
+  "expires_at": "2026-09-14T12:37:07.202Z",
   "previous_envelope_hash": null,
   "amendments": [],
   "integrity": {
     "algorithm": "sha256",
-    "hash": "fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404"
+    "hash": "267760e13e6cda739f0835ffdff9140b7b2ddd3eb3bf1ce64c0dd7adeecbf13d"
   }
 }

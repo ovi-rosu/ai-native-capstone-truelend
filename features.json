@@ -13,8 +13,8 @@
       "Assert the captured buffer contains 0 occurrences of each of those three values"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -34,9 +34,9 @@
     ],
     "verification": "default",
     "passes": false,
-    "last_evaluated": null,
-    "failure_reason": null,
-    "failure_layer": null
+    "last_evaluated": "2026-09-14T06:47:00Z",
+    "failure_reason": "E15-S1-AC2: in the running server 2 of 17 loggers (uvicorn, uvicorn.access) carry no RedactionFilter on logger or handler and have propagate=False, so redaction is bypassed. Proven by leak: GET /health?pan=ABCDE1234F was logged verbatim while the PAN was marked sensitive via redact_values(). The unit test passes only because pytest never applies uvicorn dictConfig.",
+    "failure_layer": "api"
   },
   {
     "id": "F003",
@@ -54,9 +54,9 @@
     ],
     "verification": "default",
     "passes": false,
-    "last_evaluated": null,
-    "failure_reason": null,
-    "failure_layer": null
+    "last_evaluated": "2026-09-14T06:47:00Z",
+    "failure_reason": "E15-S1-AC3 / QA-VM-003: only 50% (2 of 4) of the log lines emitted while serving parse as JSON. The request-scoped uvicorn.access line is plain text and carries no request_id. uvicorn loggers never reach root JSONLogFormatter (propagate=False), and request_id_var is already reset to \"\" when uvicorn writes its access line.",
+    "failure_layer": "api"
   },
   {
     "id": "F004",
@@ -73,8 +73,8 @@
       "Assert the response echoes that id"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -93,8 +93,8 @@
       "Assert the measured response time is under 1 second"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -173,8 +173,8 @@
       "Assert every money field on the result is a Decimal quantized to exactly 2 decimal places"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -192,8 +192,8 @@
       "Assert it reports 0 float arithmetic operations in those paths"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -212,8 +212,8 @@
       "Assert the static check reports 0 float arithmetic operations in that module"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1367,8 +1367,8 @@
       "Assert the returned bucket is DPD-30"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1387,8 +1387,8 @@
       "Assert no overlap"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1406,8 +1406,8 @@
       "Assert the returned bucket is CURRENT"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },
@@ -1425,8 +1425,8 @@
       "Assert it carries a bucket only, with no fee, penal interest or charge of any kind"
     ],
     "verification": "default",
-    "passes": false,
-    "last_evaluated": null,
+    "passes": true,
+    "last_evaluated": "2026-09-14T06:47:00Z",
     "failure_reason": null,
     "failure_layer": null
   },

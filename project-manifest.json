@@ -90,14 +90,15 @@
   },
   "verification": {
     "e2e_targets": [],
-    "mode": "docker",
+    "mode": "local",
     "docker": {
       "compose_file": "docker-compose.yml",
       "services": [
         "backend",
         "frontend"
       ]
-    }
+    },
+    "mode_note": "local until E15-S2 (group B) creates docker-compose.yml; flip back to docker once it exists and Docker Desktop is installed, since E15-S2-AC1 asserts docker compose up."
   },
   "topology": "web-app",
   "quality": {

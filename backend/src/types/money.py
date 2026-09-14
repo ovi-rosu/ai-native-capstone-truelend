@@ -46,6 +46,12 @@ class Money:
     `float`. Every arithmetic method returns a new `Money`, also quantized
     to exactly 2 places. `Money` never converts its amount to a Python
     `float` internally.
+
+    The amount is always finite. `Decimal` itself accepts `NaN` and
+    `Infinity`, but a non-finite money value poisons every downstream
+    decision: an ordering comparison against an underwriting threshold
+    raises `InvalidOperation`, equality with itself returns False, and the
+    serializer would put `"NaN"` on the wire.
     """
 
     __slots__ = ("_amount",)
@@ -56,6 +62,10 @@ class Money:
             decimal_amount = amount if isinstance(amount, Decimal) else Decimal(amount)
         except InvalidOperation as exc:
             raise InvalidMoneyAmountError(f"invalid money amount: {amount!r}") from exc
+        if not decimal_amount.is_finite():
+            raise InvalidMoneyAmountError(
+                f"Money must be a finite amount; got {amount!r}"
+            )
         self._amount = self._quantize(decimal_amount)
 
     @staticmethod

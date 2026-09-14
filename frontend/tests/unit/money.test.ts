@@ -67,22 +67,71 @@ describe("MoneyText", () => {
   });
 });
 
+/**
+ * Patterns that put a JS `number` into a money path.
+ *
+ * The original list stopped at parseFloat/parseInt/Number()/number-typed
+ * declarations, which left the likeliest leaks untouched: `decimal.js`
+ * exposes `.toNumber()` and `.toFixed()`, `Math.*` returns floats, and a
+ * bare float literal or a unary `+` coerces silently. Every later money
+ * story inherits this guard, so it has to catch them before then.
+ */
+const FLOAT_RISK_PATTERNS: readonly RegExp[] = [
+  /\bparseFloat\s*\(/,
+  /\bparseInt\s*\(/,
+  /\bNumber\s*\(/,
+  /:\s*number\b/,
+  /\bas\s+number\b/,
+  /\.toNumber\s*\(/,
+  /\bMath\s*\./,
+  /\b\d+\.\d+\b/,
+  /(?:^|[=(,[\s])\+\s*[A-Za-z_$(]/m,
+];
+
+/**
+ * Drop comments and quoted strings before scanning.
+ *
+ * Money is carried as a decimal *string*, so `"1,234.50"` in a comment or a
+ * wire-format example is not a float literal — scanning raw source flagged
+ * both and would have forced the real checks to be weakened instead.
+ * Template literals are deliberately left in place so code inside `${...}`
+ * is still scanned.
+ *
+ * Note `.toFixed()` is absent from the pattern list on purpose: on a
+ * `decimal.js` Decimal it returns a string, and it is the correct way to
+ * render 2dp for the wire.
+ */
+function stripCommentsAndStrings(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, " ")
+    .replace(/'(?:\\[\s\S]|[^'\\])*'/g, '""')
+    .replace(/"(?:\\[\s\S]|[^"\\])*"/g, '""');
+}
+
+function countFloatRisks(source: string): number {
+  const scannable = stripCommentsAndStrings(source);
+  return FLOAT_RISK_PATTERNS.filter((pattern) => pattern.test(scannable)).length;
+}
+
 describe("static check: zero float-arithmetic operations in src/types/money.ts", () => {
-  it("contains no parseFloat/parseInt/Number()/number-typed arithmetic", () => {
+  it("reports no float risk in the shipped money module", () => {
     const here = path.dirname(fileURLToPath(import.meta.url));
     const moneyTsPath = path.resolve(here, "../../src/types/money.ts");
     const source = readFileSync(moneyTsPath, "utf-8");
 
-    const forbiddenPatterns = [
-      /\bparseFloat\s*\(/,
-      /\bparseInt\s*\(/,
-      /\bNumber\s*\(/,
-      /:\s*number\b/,
-      /\bas\s+number\b/,
-    ];
+    expect(countFloatRisks(source)).toBe(0);
+  });
 
-    for (const pattern of forbiddenPatterns) {
-      expect(pattern.test(source)).toBe(false);
-    }
+  it.each([
+    ["toNumber", "const n = amount.toNumber();"],
+    ["Math", "const n = Math.round(amount);"],
+    ["float literal", "const rate = 0.105;"],
+    ["unary plus", "const n = +amount;"],
+    ["parseFloat", "const n = parseFloat(raw);"],
+    ["Number()", "const n = Number(raw);"],
+    ["number type", "let total: number = 0;"],
+  ])("flags %s as a float risk", (_label, snippet) => {
+    expect(countFloatRisks(snippet)).toBeGreaterThan(0);
   });
 });

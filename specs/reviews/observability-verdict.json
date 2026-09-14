@@ -1,0 +1,39 @@
+{
+  "gate": "observability",
+  "pass": true,
+  "checked": 13,
+  "summary": {
+    "block": 0,
+    "warn": 4
+  },
+  "findings": [
+    {
+      "id": "OBS-BOUNDARY-NO-LOGGER",
+      "level": "WARN",
+      "file": "backend/src/api/app.py",
+      "line": 1,
+      "message": "Likely service boundary without structured logger usage"
+    },
+    {
+      "id": "OBS-MIDDLEWARE-NO-REQUEST-ID",
+      "level": "WARN",
+      "file": "backend/src/api/app.py",
+      "line": 1,
+      "message": "HTTP middleware without request_id / X-Request-ID correlation"
+    },
+    {
+      "id": "OBS-BOUNDARY-NO-LOGGER",
+      "level": "WARN",
+      "file": "backend/src/api/errors.py",
+      "line": 1,
+      "message": "Likely service boundary without structured logger usage"
+    },
+    {
+      "id": "OBS-BOUNDARY-NO-LOGGER",
+      "level": "WARN",
+      "file": "backend/src/api/serializers.py",
+      "line": 1,
+      "message": "Likely service boundary without structured logger usage"
+    }
+  ]
+}

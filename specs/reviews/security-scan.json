@@ -1,0 +1,15 @@
+{
+  "tier": "standard",
+  "threshold": "high",
+  "tiers": [
+    "secrets",
+    "sast",
+    "deps"
+  ],
+  "missing": [
+    "gitleaks"
+  ],
+  "total": 0,
+  "blocking": 0,
+  "findings": []
+}

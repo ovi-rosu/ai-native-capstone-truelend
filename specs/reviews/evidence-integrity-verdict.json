@@ -1,0 +1,11 @@
+{
+  "gate": "evidence-integrity",
+  "pass": true,
+  "applicable": false,
+  "group": null,
+  "checked": 0,
+  "untested": [],
+  "findings": [],
+  "summary": "no sprint contract declares playwright checks — nothing to verify",
+  "timestamp": "2026-09-14T06:55:50.950Z"
+}

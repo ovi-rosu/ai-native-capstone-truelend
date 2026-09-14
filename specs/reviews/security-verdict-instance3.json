@@ -1,0 +1,216 @@
+{
+  "gate": "security",
+  "instance": 3,
+  "instance_of": 3,
+  "report": "specs/reviews/security-review-instance3.md",
+  "scope": {
+    "committed_range": "14e9487..d0b5c94",
+    "includes_uncommitted_worktree": true,
+    "group": "A",
+    "runtime_probed": "http://127.0.0.1:8000"
+  },
+  "pass": false,
+  "block_severities": ["critical", "high"],
+  "summary": { "block": 2, "warn": 6, "info": 10 },
+  "findings": [
+    {
+      "id": "VULN-001",
+      "severity": "high",
+      "level": "BLOCK",
+      "category": "sensitive-data-exposure",
+      "file": "backend/src/config/logging.py",
+      "line": 45,
+      "description": "RedactionFilter.filter rewrites only record.msg and never record.exc_info/exc_text, so a value registered via redact_values() reaches a log sink in cleartext inside an exception's arguments. Reproduced under the real uvicorn startup order: a synthetic PAN and salary-document token were emitted unredacted at ERROR level by uvicorn's plain-text handler on the logger.exception path that uvicorn uses for every unhandled ASGI exception. Violates the threat model's NEVER-log-PII rule and E15-S1's scope_out ('must not write applicant PAN, Aadhaar or salary-document content to any log sink'), while E15-S1-AC2's passing test certifies the filter as complete.",
+      "fix": "Apply the redaction substitution to record.exc_text (forcing it via Formatter.formatException) and to the exception args in record.exc_info, or take ownership of uvicorn's handlers in configure_logging so no sink renders raw exception text. Add a regression test that raises a registered value inside an exception, logs with exc_info=True, and asserts 0 occurrences in the captured sink."
+    },
+    {
+      "id": "VULN-002",
+      "severity": "high",
+      "level": "BLOCK",
+      "category": "resource-exhaustion",
+      "cwe": ["CWE-770", "CWE-779"],
+      "file": "backend/src/api/middleware.py",
+      "line": 32,
+      "description": "Caller-supplied X-Request-ID is accepted with no length cap, format constraint or charset allow-list, then written into every request-scoped log line via request_id_var and echoed into the response header. Verified live on the unauthenticated, unthrottled GET /health: 8KB, 100KB and 1MB headers all returned 200 OK, producing log lines of 100,147 and 1,000,147 bytes; 60,000 high bytes expanded 6x to a 360,147-byte line via json.dumps \\uXXXX escaping; the log file grew from ~414KB to 15.7MB during probing. No request-header cap, no rate limiting, no log rotation, and no reverse proxy or docker-compose.yml exists in the repo. Availability and audit-log-integrity impact.",
+      "fix": "Validate before use: cap the accepted value at 64-128 characters, restrict it to [A-Za-z0-9._-], and fall back to uuid4().hex when either check fails, so both the log binding and the response echo are bounded."
+    },
+    {
+      "id": "VULN-003",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "sensitive-data-exposure",
+      "file": "backend/src/config/logging.py",
+      "line": 42,
+      "description": "Redaction is opt-in (redact_values has zero production callers) and exact-substring only. Verified misses with ABCDE1234F registered: lowercase 'abcde1234f' and separator-split 'ABCDE-1234F' both emitted in cleartext. Aadhaar is conventionally written with spaces (1234 5678 9012) while the raw form has none, so either registered form leaves the other exposed. No format-based backstop exists despite the story naming PAN and Aadhaar, both of which have well-defined patterns.",
+      "fix": "Normalise case and strip separators on both sides of the comparison, and add an unconditional pattern-based backstop for PAN ([A-Z]{5}[0-9]{4}[A-Z]) and 12-digit Aadhaar so redaction fails closed."
+    },
+    {
+      "id": "VULN-004",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "information-disclosure",
+      "file": "backend/src/api/app.py",
+      "line": 23,
+      "description": "FastAPI is constructed without disabling docs, so GET /docs, /redoc and /openapi.json all return 200 to an unauthenticated caller (verified live, full schema served). Settings has no environment or debug field, so there is no per-environment switch. Every endpoint, parameter and model added by later groups will be published automatically.",
+      "fix": "Add an environment field to Settings and pass docs_url=None, redoc_url=None, openapi_url=None outside development."
+    },
+    {
+      "id": "VULN-005",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "audit-integrity",
+      "file": "backend/src/api/middleware.py",
+      "line": 32,
+      "description": "The inbound X-Request-ID is trusted verbatim from any anonymous caller as the sole audit correlation key, with no format validation and no trusted-proxy notion. An attacker can choose any correlation id, including one colliding with a legitimate trace. Verified live that duplicate headers resolve to the first value, so a client-chosen id can mask an upstream proxy's id depending on ordering.",
+      "fix": "Always generate the authoritative server-side request_id and record any inbound client value under a separate validated field (e.g. client_request_id), or accept the inbound id only from a configured trusted proxy."
+    },
+    {
+      "id": "VULN-006",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "missing-security-headers",
+      "file": "backend/src/api/app.py",
+      "line": 18,
+      "description": "Verified live that responses carry only date, server, content-length, content-type and x-request-id. No X-Content-Type-Options: nosniff, no X-Frame-Options / CSP frame-ancestors, no Content-Security-Policy, no HSTS. The app already serves text/html at /docs and /redoc, and that HTML loads Swagger UI / ReDoc scripts from cdn.jsdelivr.net plus a favicon from fastapi.tiangolo.com with no Subresource Integrity and no CSP. The server: uvicorn header also discloses the server software.",
+      "fix": "Add a middleware setting nosniff, a frame-ancestors/X-Frame-Options deny and a restrictive default CSP on every response; disable the CDN-backed docs outside development or self-host the assets with SRI."
+    },
+    {
+      "id": "VULN-007",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "logging-and-monitoring",
+      "file": "backend/src/api/middleware.py",
+      "line": 34,
+      "description": "The response-header assignment and the access-log call both sit after await call_next, and the finally block resets request_id_var before an exception leaves the middleware. For any exception not converted by the inner ExceptionMiddleware the 500 response carries no x-request-id, no access-log line is emitted, and uvicorn's traceback is logged with request_id already reset to empty. Errors are the only records that cannot be correlated. Verified live that handled paths are unaffected (404 and 405 both carry x-request-id).",
+      "fix": "Wrap call_next in try/except so the access line is logged and the header attached on the error path too, and keep the contextvar bound until after the error has been logged."
+    },
+    {
+      "id": "VULN-008",
+      "severity": "medium",
+      "level": "WARN",
+      "category": "dependency-vulnerability",
+      "file": "frontend/package.json",
+      "line": 1,
+      "description": "npm audit on the manifest added by this diff reports 1 critical (vitest: arbitrary file read/execute when the Vitest UI server listens; @vitest/mocker redirect-mock path traversal), 1 high (vite: optimized-deps .map path traversal, server.fs.deny bypass on Windows alternate paths, launch-editor NTLMv2 hash disclosure via UNC paths) and 3 moderate (@vitest/mocker, esbuild dev-server CORS, vite-node). All are devDependencies with no production-bundle reachability and --ui is not used, which is why this is not a BLOCK; it stays WARN because 'dev': 'vite' is a declared script and the Windows-specific advisories match this project's platform.",
+      "fix": "Bump or pin the affected dev dependencies to patched majors (or add npm overrides), re-run npm audit, and keep the dev server bound to loopback."
+    },
+    {
+      "id": "VULN-009",
+      "severity": "low",
+      "level": "INFO",
+      "category": "logging-and-monitoring",
+      "file": "backend/src/config/logging.py",
+      "line": 71,
+      "description": "configure_logging clears handlers on the root logger only. uvicorn.access keeps its own StreamHandler with propagate=False and uvicorn.error propagates to the uvicorn logger's own handler, both using uvicorn's plain-text DefaultFormatter. Measured on the live log: 66 JSON lines vs 94 non-JSON lines, none of the latter carrying a request_id. Security relevance is that this parallel sink is not protected by JSONLogFormatter's escaping.",
+      "fix": "Install the JSON formatter and redaction filter on uvicorn's handlers, or set handlers=[] with propagate=True on uvicorn, uvicorn.error and uvicorn.access."
+    },
+    {
+      "id": "VULN-010",
+      "severity": "low",
+      "level": "INFO",
+      "category": "logging-and-monitoring",
+      "file": "backend/src/config/logging.py",
+      "line": 60,
+      "description": "JSONLogFormatter.format builds a fixed five-key payload and never consults record.exc_info, record.exc_text or record.__dict__. Verified that logger.exception emitted only the message with no trace, and that extra= fields were dropped entirely. This limits exposure on the JSON sink but destroys forensic evidence, and means the useful trace appears only on the unredacted plain-text sink of VULN-001.",
+      "fix": "Render exception information into the JSON payload as a dedicated field, after it passes through redaction."
+    },
+    {
+      "id": "VULN-011",
+      "severity": "low",
+      "level": "INFO",
+      "category": "information-disclosure",
+      "file": "backend/src/api/errors.py",
+      "line": 20,
+      "description": "_handle_app_error returns {\"error\": exc.message} verbatim and AppError defaults to status_code=500. No leak today: InvalidMoneyAmountError is a ValueError, so it reaches ServerErrorMiddleware which with debug=False returns a generic 500 with no traceback (verified FastAPI is built without debug=True). The pattern is noted because Money and delinquency error messages interpolate raw caller input, so the first story that wraps one in an AppError will reflect user input into a response body.",
+      "fix": "Keep client-facing message values fixed and non-interpolated, carry raw input only in the redacted log record, and make status_code an explicit argument."
+    },
+    {
+      "id": "VULN-012",
+      "severity": "low",
+      "level": "INFO",
+      "category": "input-validation",
+      "file": "backend/src/api/middleware.py",
+      "line": 36,
+      "description": "Verified live that raw non-ASCII bytes in X-Request-ID round-trip verbatim into the x-request-id response header via Starlette's latin-1 decode/encode. RFC 9110 field values should be ASCII; downstream proxies and log shippers may mis-decode or reject. No injection is possible because h11 rejects CR, LF, NUL and control bytes.",
+      "fix": "Covered by the charset allow-list in VULN-002's fix."
+    },
+    {
+      "id": "VULN-013",
+      "severity": "low",
+      "level": "INFO",
+      "category": "availability",
+      "file": "frontend/src/ui/components/MoneyText.tsx",
+      "line": 14,
+      "description": "Money.fromWire throws InvalidMoneyAmountError on any non-decimal string and the component neither catches it nor sits behind an error boundary, so malformed or hostile API data unmounts the surrounding React tree. Not XSS: JSX text interpolation escapes output and format() can only emit digits, '.', ',' and '-'.",
+      "fix": "Validate at the API-response boundary or render a fallback on parse failure."
+    },
+    {
+      "id": "VULN-014",
+      "severity": "low",
+      "level": "INFO",
+      "category": "context-pack-accuracy",
+      "file": "specs/reviews/review-context-pack.md",
+      "line": 66,
+      "description": "The pack's 'no outbound network calls' claim is true for server-side code (no requests/httpx/urllib/aiohttp/socket in the changed backend modules) but incomplete: the diff's default FastAPI configuration serves /docs and /redoc HTML that instructs the browser to fetch scripts and styles from cdn.jsdelivr.net and a favicon from fastapi.tiangolo.com. All other pack claims (no authn/authz, no persistence, no migrations, no file uploads, no payment execution) were independently confirmed true.",
+      "fix": "Correct the pack's network claim and address the third-party origins via VULN-004/VULN-006."
+    },
+    {
+      "id": "VULN-015",
+      "severity": "low",
+      "level": "INFO",
+      "category": "insecure-configuration",
+      "file": "backend/src/config/settings.py",
+      "line": 9,
+      "description": "The docstring tells tests to pass _env_file=None to isolate from 'any real .env file', but SettingsConfigDict sets no env_file, so pydantic-settings never reads one and the documented control is inert. No hardcoded secrets exist in settings.py, .env is correctly gitignored, and no .env file exists in the repository.",
+      "fix": "Either configure env_file and keep the docstring, or drop the misleading instruction."
+    },
+    {
+      "id": "VULN-016",
+      "severity": "low",
+      "level": "INFO",
+      "category": "hardcoded-credentials",
+      "file": "backend/tests/unit/test_log_redaction.py",
+      "line": 24,
+      "description": "Synthetic PAN, Aadhaar and salary-document fixture values are clearly synthetic and test-only, and are not reused in any production configuration. Acceptable; recorded only to show it was considered.",
+      "fix": "No action required."
+    },
+    {
+      "id": "VULN-017",
+      "severity": "low",
+      "level": "INFO",
+      "category": "audit-integrity",
+      "file": ".claude/state/task-envelope.json",
+      "line": 64,
+      "description": "Independently verified rather than trusted: created_at/expires_at moved ~9h forward and integrity.hash was rebuilt (4034d3db -> fb41b097), yet previous_envelope_hash is still null and amendments is still [], while five files exist under .claude/state/task-envelope-history/ including one named for the superseded hash. The tamper-evidence chain on the control bounding agent writes is broken, and moving created_at forward resets the 'evidence created after the envelope' window. project-manifest.json was also confirmed absent from allowed_paths yet modified. This is a governance control, not an application vulnerability, so the security gate does not block on it.",
+      "fix": "Recreate the envelope with previous_envelope_hash set to the superseded hash and an amendments entry covering the project-manifest.json change; let the code-review/evaluator gate own the decision."
+    },
+    {
+      "id": "VULN-018",
+      "severity": "low",
+      "level": "INFO",
+      "category": "insecure-configuration",
+      "file": "project-manifest.json",
+      "line": 92,
+      "description": "Independently verified the pack's 'CLEARED' claim: the file parses, verification has keys [e2e_targets, mode, docker, mode_note] with exactly one mode, and the three file-wide \"mode\" matches are in distinct objects. The docker->local switch plus mode_note has no security impact.",
+      "fix": "No security action required; the frozen-path/envelope aspect is VULN-017."
+    }
+  ],
+  "refuted_candidates": [
+    "HTTP response-header injection / response splitting via X-Request-ID - h11 splits CRLF into separate headers and returns 400 for bare LF, obs-fold, NUL and control bytes; app never sees the injection",
+    "Log injection / forged JSON log lines via X-Request-ID - json.dumps(ensure_ascii=True) escapes quotes, braces and all control characters",
+    "ANSI escape-sequence injection into log viewers - h11 rejects \\x1b with 400 and json.dumps would escape it regardless",
+    "UnicodeEncodeError/500 from echoing a non-latin-1 request id - Starlette round-trips latin-1; verified 200 OK",
+    "Empty X-Request-ID producing an empty correlation id - 'or uuid4().hex' handles the falsy empty string; verified live",
+    "XSS in MoneyText.tsx - JSX text interpolation escapes; no dangerouslySetInnerHTML/innerHTML/eval/document.write in the changed frontend files",
+    "Stack-trace or config leakage in error responses - FastAPI built without debug=True; ServerErrorMiddleware returns a generic 500",
+    "GET /health information disclosure - returns exactly {\"status\":\"ok\"}; no version, config, hostname or dependency status",
+    "Hardcoded secrets or insecure defaults in settings.py - only service_name and log_level, both non-sensitive and env-overridable",
+    "Over-permissive CORS - no CORSMiddleware registered at all",
+    "SQL / command / template injection, SSRF, path traversal, insecure deserialization - no matching sinks in the changed backend modules; no DB driver in pyproject.toml; GET /health/../health returns 404",
+    "CSRF - only GET /health exists; no state-changing endpoint and no cookie session",
+    "Missing rate limiting as an independent finding - folded into VULN-002 as its amplifier; no auth/OTP/password-reset endpoints exist",
+    "Redaction filter missed on loggers created after startup - the root handler also carries the filter and callHandlers reaches it for later-created propagating loggers",
+    "Nested containers / extra= fields defeating redaction - nested dicts and lists are redacted via the %-formatted message; extra= never reaches the JSON sink",
+    "%-format injection via a user-controlled message - RedactionFilter sets record.args=(), so getMessage() skips % formatting"
+  ]
+}
