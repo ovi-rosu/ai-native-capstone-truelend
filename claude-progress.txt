@@ -1,17 +1,136 @@
-=== Session 0 ===
-date: 2026-09-13T13:04:00.730Z
+=== Session 4 ===
+date: 2026-09-14T13:30:00.000Z
 mode: full
 groups_completed: []
-groups_remaining: []
+groups_remaining: [A (1 open BLOCK), B, C, D, E, F, G, H, I, J, K, L, M]
 current_group: none
 current_stories: []
-sprint_contract: none
-last_commit: none
-features_passing: 0 / 0
-coverage: 0%
+sprint_contract: sprint-contracts/A.json
+last_commit: see `git log -1` (two commits landed this session)
+features_passing: 10 / 107 (per features.json; evaluator verdict is STALE, see below)
+coverage: backend 69 tests pass, frontend 18 tests pass, ruff/mypy/eslint/tsc all clean
 learned_rules: 0
 blocked_stories: none
-next_action: Run /auto
+
+UNBLOCKED — the Session 0 human gate is resolved WITHOUT patching any gate.
+  Session 0 concluded the fix was a group-scoping patch to .claude/hooks/lib/gates-ssdd.js
+  (which agents may not write). That patch is unnecessary. checkGenerationContract is
+  repo-wide by design and its own `fix:` line says what to do instead: fill Operations.
+  specs/stories/** is already in the task envelope's allowed_paths, so this was in scope
+  for an agent all along. All 26 remaining stories now carry ordered, file-naming
+  Operations derived from each bundle's structure.owned_files + component-map.md
+  ownership/Modifies/registry rules + program-design.md D-A..D-O + api-contracts.md +
+  data-models.md + CONTEXT.md. Verified: every bundle owned_file is cited by its own
+  story; only the Operations and Entities bodies changed (the sole removed lines across
+  all 26 files are the 26 `- pending` lines).
+  Evidence: bundle-check --mode implementable -> PASS, 29 implementable.
+             run-gate-checks.js -> 25 passed, 0 blocked (was 1 blocked).
+             pre-commit gate passed WITH production source staged, which is the real proof.
+  Do NOT reintroduce the gates-ssdd.js patch; narrowing that sensor would drop coverage
+  the project does not need to drop.
+
+GROUP A IS NOT DONE — 1 of 4 review BLOCKs is still open.
+  specs/reviews/code-review-verdict.json (pass:false, 4 BLOCK / 14 WARN / 9 INFO) and
+  .claude/state/gate-receipt.json (pass:false) both PREDATE the fixes and are STALE.
+  Re-verified each BLOCK against the current tree:
+    CR-001 Money accepts NaN                      -> FIXED (is_finite guard in money.py)
+    CR-002 float check ignores arithmetic         -> FIXED (ast.BinOp Div/FloorDiv walk)
+    CR-004 uvicorn loggers bypass JSON formatter  -> FIXED (_route_server_loggers_through_root)
+    CR-003 500 path loses X-Request-ID            -> STILL OPEN, see below
+  Session 0's claim that the group A fixes were "complete and verified" is wrong for CR-003.
+
+CR-003 (open BLOCK, E15-S1-AC4) — backend/src/api/middleware.py:34
+  The header write and the access-log emit both sit after `await call_next(request)`
+  inside the same try; only request_id_var.reset is in the finally. An unhandled
+  exception runs neither, so a 500 returns no X-Request-ID and emits no access line.
+  E15-S1-AC4 requires the response to echo the id, and the 500 path is the one case an
+  operator needs it. No test covers it (test_log_redaction.py asserts the header only on
+  the 200 path).
+  NOT fixed here deliberately — it is a design decision on the platform substrate every
+  later story inherits, and it is entangled with the contract drift below:
+    (a) swallow the exception in the middleware and return our own 500 (we can stamp the
+        header, but TestClient raise_server_exceptions semantics change and errors stop
+        propagating to any outer handler), versus
+    (b) log + re-raise (access line covered, header still impossible from here, because
+        ServerErrorMiddleware is OUTSIDE our middleware and builds that 500 itself).
+    An app.exception_handler(Exception) does not rescue option (b): Starlette binds an
+    Exception-keyed handler to ServerErrorMiddleware, i.e. outside our middleware, where
+    request_id_var has already been reset.
+  Whoever resolves this must also pick the 500 body, which runs into the drift below.
+
+OPEN DESIGN DEFECTS found while authoring the 26 contracts (none block the commit;
+all will bite at the group named):
+  1. ERROR ENVELOPE DRIFT (group A code vs frozen contract) — api-contracts.md:27 mandates
+     `{ "error": "<ErrorName>", "detail": "<message>", "context": {...} }` for every error
+     and shows the full PolicyViolation 422 body at :142-146. The landed handler in
+     backend/src/api/errors.py emits only `{"error": exc.message}` — `error` carries the
+     message instead of the name, and detail/context are absent. The wrong shape is PINNED
+     by a test (backend/tests/unit/test_log_redaction.py:126 asserts {"error":"boom"}), so
+     correcting it is group A rework, not an incidental fix. api-contracts.md is frozen, so
+     the code is what is wrong. Blocks E4-S4 (AC1/AC2 need threshold_kind +
+     configured_value in `context`).
+  2. UNOWNED BACKEND ROUTES (groups G/I) — api-contracts.md attributes
+     POST /applications/{application_id}/decision, GET /applications and
+     GET /applications/{application_id} to E6-S2/E7-S1/E8-S1, but E6-S2 and E8-S1 own only
+     frontend files and E7-S1 owns override_routes.py. Those routes belong in
+     backend/src/api/origination/routes.py, owned by E4-S1, and component-map.md's
+     "Modifies" table does not authorize any of them to touch it. GET /loans has no owning
+     story at all. Note E13-S1's authored Operations sidesteps this by using only
+     GET /loans/{loan_id} (E9-S2-owned), so GET /loans is currently an unimplemented row.
+  3. require_roles RETROFIT NOT IN "Modifies" (group C) — D-F makes require_roles the single
+     enforcement point, and E1-S1's Scope Out forbids it shipping the authorization matrix,
+     so E1-S2 must retrofit the guard onto E1-S1's backend/src/api/policy/routes.py. That
+     pair is absent from component-map.md's "Modifies" table.
+  4. TYPED-ERROR SUBCLASSES HAVE NO HOME (group K) — program-design.md puts AlreadyDisbursed
+     / InvalidTransition in backend/src/types/errors.py, owned by E15-S1 and NOT one of the
+     five shared registries, so no later story may add a subclass there. E10-S1's authored
+     Operations works around it by defining AlreadyDisbursed locally, subclassing AppError.
+  5. E3-S1 REPOSITORY SIGNATURE DEVIATION (group C) — program-design.md types
+     PolicyVersionRepository.insert(rules: PolicyRules), but PolicyRules is owned by E2-S1,
+     which is DOWNSTREAM of E3-S1. The authored Operations uses rules: dict[str, object]
+     with model_validate at the Service layer, to keep one-way layering. Either amend
+     program-design.md or move PolicyRules.
+  6. LoanRepository has no set_status although data-models.md lists loan.status as a mutable
+     projection needed for DISBURSED. E9-S2's authored Operations does the transition inside
+     DisbursementRepository.insert rather than invent a method outside the approved list.
+  7. BENIGN, NO ACTION — specs/bundles/E15-S2.json lists 1 owned_file while component-map.md
+     lists 6. Not staleness: parseStoryOwnership (hooks/lib/story-bundle.js:53) only accepts
+     backticked tokens containing "/", so root-level files (docker-compose.yml, init.sh,
+     Dockerfile.*, project-manifest.json) can never enter a bundle. Same reason several
+     tracer/UI stories (E1-S1, E4-S1, E6-S2, E9-S2, E14-S1) own no test file — their ACs are
+     verified by evaluator-run QA-VM checks in specs/test_artefacts/test-plan.md.
+
+NOT RUN (deliberate): node .claude/scripts/phase-cost.js --write --step implement.
+  --write zeroes .claude/state/phase-cost-cursor.json; restoring it needs the last Stop row
+  from phase-cost.jsonl. No implement code phase ran this session, so the meter was skipped
+  rather than corrupted.
+
+next_action: Resolve CR-003 (pick option (a) or (b) above) together with defect 1, since
+  both decide the 500/error body — then re-run /gate for a FRESH group A verdict, because
+  code-review-verdict.json and gate-receipt.json are snapshots taken before the fixes and
+  both still read pass:false. Only after a fresh PASS start group B (E15-S2, E1-S1);
+  sprint-contracts/B.json is 4 api_checks (POST /auth/login, GET /products,
+  POST /products/{product_code}/policy-versions, GET /products/{product_code}) and is
+  coherent — every check is served by E1-S1's own owned files, so group A's frozen-contract
+  defect is not repeated. E15-S2-AC1 asserts `docker compose up` and Docker Desktop is
+  still not installed; project-manifest.json#verification.mode was flipped to "local" with
+  a mode_note, so the evaluator boots, but AC1 itself stays unverifiable until Docker is
+  installed. Decide before group B whether to install Docker or amend E15-S2-AC1.
+
+=== Session 0 ===
+date: 2026-09-14T09:30:00.000Z
+mode: full
+groups_completed: []
+groups_remaining: [A, B, C, D, E, F, G, H, I, J, K, L, M]
+current_group: none
+current_stories: []
+sprint_contract: sprint-contracts/A.json
+last_commit: d0b5c94 "fix: repair group A contract and remove unratified gate waivers"
+features_passing: 10 / 107
+coverage: 0%
+learned_rules: 0
+blocked_stories: [E15-S1, E9-S1 (fixes complete and verified, blocked on a human gate patch before they can be committed)]
+next_action: BLOCKED ON HUMAN — apply the generation-contract/story-bundle-check group-scoping patch to .claude/hooks/lib/gates-ssdd.js (agents are refused by pre-write-gate: "may not modify the gates that verify their own work"). Both gates validate ALL 29 ready stories whenever any production source is staged, and 26 stories still hold "Operations: - pending", so the verified group A BLOCK fixes cannot be committed. Verify the patch with: grep -c currentGroupStoryIds .claude/hooks/lib/gates-ssdd.js (expect 4). Then commit the 50 staged files and start group B. Group B also needs Docker Desktop installed for E15-S2-AC1.
 
 === Session 1 ===
 date: 2026-09-13T18:05:00.000Z
