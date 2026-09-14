@@ -2,9 +2,9 @@
   "schema_version": 1,
   "lane": "sensors",
   "summary": {
-    "pass": false,
-    "passed": 1,
-    "blocked": 1,
+    "pass": true,
+    "passed": 25,
+    "blocked": 0,
     "warn": 0,
     "skipped": 0
   },
@@ -20,8 +20,169 @@
       "id": "amendment-provenance",
       "pack": "sensors",
       "blocking": true,
-      "status": "blocked",
-      "detail": "BLOCKED [amendment-provenance]: 1 file(s) under specs/design/ changed with no matching file under specs/design/amendments/ in the same commit\nFix: write a design amendment under specs/design/amendments/ (see docs/archive/superpowers/specs/2026-07-04-sprint-delta-lane-design.md) in the same commit as the specs/design/ change.\nWaive: reviewed exception in specs/reviews/sensor-waivers.json, or HARNES"
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "test-deletion-guard",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "stub-smell-gate",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "live-externals",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "registry-names",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "length-caps",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "refactor-purity",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "layer-imports",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "bounded-context-rules",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "ownership-check",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "generation-contract",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "story-bundle-check",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "canvas-sync-check",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "impact-scoped-regression",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "legacy-discipline-proof",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "sprout-diff",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "at-first-gate",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "trajectory-contract",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "sprint-contract",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "type-check",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "coverage-ratchet-py",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "coverage-ratchet-js",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "mutation-smoke",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "test-integrity",
+      "pack": "sensors",
+      "blocking": true,
+      "status": "passed",
+      "detail": ""
     }
   ]
 }

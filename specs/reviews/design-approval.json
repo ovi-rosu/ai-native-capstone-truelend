@@ -90,6 +90,22 @@
       "questions_asked": 1,
       "answered": 1,
       "recordedAt": "2026-09-14T15:02:10.669Z"
+    },
+    {
+      "round": 6,
+      "verdict": "approved",
+      "feedback": [
+        "Authorise E1-S1 to extend E15-S1's Settings with a row rather than letting the broad ownership waiver absorb the question."
+      ],
+      "changes": [
+        "component-map.md gains a Modifies row E15-S1 -> E1-S1 covering config/settings.py. E15-S1's own module docstring anticipates it: 'Later stories may extend this same Settings class with DB URL / JWT settings per the Config layer's responsibilities.' The Config layer holds one settings class, not one per story. Rationale in specs/design/amendments/e1-s1-settings-extension.md."
+      ],
+      "declined": [
+        "Did not rely on the ratified ownership-check waiver, which was written for two frontend config files and two package markers and is broader than its scope text: using it for a genuine ownership question would be the second time in two commits, which is how a waiver becomes a blanket exemption."
+      ],
+      "questions_asked": 1,
+      "answered": 1,
+      "recordedAt": "2026-09-14T15:08:39.791Z"
     }
   ],
   "artifacts": [
@@ -107,12 +123,12 @@
     },
     {
       "path": "specs/design/component-map.md",
-      "sha256": "aaf1ee6a8f2db021a849fbad7c1f242656044cd73221c5937eec0b11dce0f903"
+      "sha256": "e3b1c02294f52fdc3f7593778c0ae88f8db73bd06ea29b8671c012758b67b86e"
     }
   ],
   "low_engagement": false,
   "waived_by": null,
-  "approvedAt": "2026-09-14T15:02:10.669Z",
+  "approvedAt": "2026-09-14T15:08:39.791Z",
   "session_id": "91b7bdc8-0641-4b45-8093-b6d63f3ca9b0",
   "in_session": false
 }

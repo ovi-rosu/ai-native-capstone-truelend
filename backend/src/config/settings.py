@@ -24,3 +24,19 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     # Reported by `GET /health` per the frozen api-contracts.md shape.
     version: str = "0.1.0"
+
+    # Added by E1-S1 under the component-map Modifies row for this pair. One
+    # settings class for the whole Config layer, as this module's docstring
+    # anticipated, rather than one per story.
+    #
+    # Neither of these has a usable default, deliberately. A committed default
+    # DSN carries credentials -- the secret-scan gate rejected one here, and it
+    # was right to -- and a default signing key is how a development secret
+    # reaches production. Empty means the process fails fast at startup instead.
+    # The development values live in `.env.example`.
+    database_url: str = ""
+    jwt_secret: str = ""
+
+    # D-M fixes the session lifetime at 60 minutes.
+    jwt_ttl_seconds: int = 3600
+    jwt_algorithm: str = "HS256"

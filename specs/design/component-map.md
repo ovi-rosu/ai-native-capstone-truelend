@@ -228,6 +228,7 @@ the ladder rather than each other.
 | E4-S3 | E17-S1 | the Apply screen is remediated for accessibility; no endpoint or contract change |
 | E1-S1 | E1-S2 | the policy router gains `require_roles(ADMIN)` and the audit append; E1-S1's Scope Out deliberately left the route unenforced and D-F rules out a per-route hand-written check, so the single enforcement point has to be retrofitted here |
 | E15-S1 | E15-S4 | the correlation middleware gains request-duration timing and the metrics endpoint gains the histogram rendering; E15-S1 owns both files and its acceptance criteria cannot be extended in place without renumbering the whole verification matrix |
+| E15-S1 | E1-S1 | `config/settings.py` gains the database URL and the JWT secret and TTL. E15-S1's own module docstring anticipates this -- "Later stories may extend this same `Settings` class with DB URL / JWT settings" -- and the Config layer is meant to hold one settings class, not one per story. Without the row, E1-S1's step 3 and step 8 pass ownership-check only via the broad ratified waiver |
 
 ---
 
