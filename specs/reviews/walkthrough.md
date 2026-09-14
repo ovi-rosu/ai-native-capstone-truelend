@@ -1,13 +1,13 @@
 # PR walkthrough
 
-Generated: 2026-09-14T13:37:37.677Z
+Generated: 2026-09-14T14:43:57.065Z
 Files changed: **225**
 
 ## Intent
 
-# Review Context Pack — /gate --group A (round 3) **Gate lane:** on-demand pre-merge (`/gate`) **Generated:** 2026-09-14 (session 6) ## 1. Request / scope | Field | Value | |---|---| | Group | A | | Stories | E15-S1 (platform logging + health), E9-S1 (Money value type), E11-S1 (delinquency bucket), **E15-S4 (NEW — duration histogram + hostile-input hardening)** | | Sprint contract | `sprint-contra
+# Review Context Pack — /gate --group A (round 4) - **Generated:** 2026-09-14 (round 4) - **Group:** A · **Stories:** E15-S1, E9-S1, E11-S1, E15-S4 - **Range:** `14e9487..f3c25eb` (full group-A diff) — remediation since round 3 is `ba457bf..f3c25eb` - **Sprint contract:** `sprint-contracts/A.json` (frozen; all 13 contract hashes re-verified byte-identical this round) - **Security trigger:** **FIRE
 
-Stories: `E15-S1`, `E9-S1`, `E11-S1`, `E15-S4`, `E1-S1`
+Stories: `E15-S1`, `E9-S1`, `E11-S1`, `E15-S4`, `E4-S4`
 
 ## Story / slice groups
 
@@ -94,15 +94,15 @@ PolicyVersionRepository.activate(policy_versi
   - 🟠 **WARN** (high): CR-307
   - 🟠 **WARN** (medium): CR-308
 - `backend/src/api/middleware.py`
-  - 🔴 **BLOCK** (high): CR-301
-  - ⚪ **INFO** (high): CR-314
-  - ⚪ **INFO** (medium): CR-315
-  - ⚪ **INFO** (high): CR-316
-  - ⚪ **INFO** (medium): CR-318
+  - 🟠 **WARN** (high): CR-401
+  - 🟠 **WARN** (high): CR-402
+  - 🟠 **WARN** (high): CR-403
+  - 🟠 **WARN** (high): CR-404
+  - 🟠 **WARN** (medium): CR-406
 - `backend/src/api/platform/routes.py`
-  - 🟠 **WARN** (high): CR-302
+  - 🟠 **WARN** (high): CR-405
   - 🟠 **WARN** (high): CR-309
-  - ⚪ **INFO** (high): CR-317
+  - ⚪ **INFO** (high): CR-302
 - `backend/src/config/logging.py`
   - 🟠 **WARN** (high): CR-305
   - 🟠 **WARN** (high): CR-310
@@ -175,9 +175,10 @@ PolicyVersionRepository.activate(policy_versi
 - `backend/src/types/money.py`
 - `backend/tests/architecture/test_no_float_money.py`
 - `frontend/src/types/money.ts`
-  - 🟠 **WARN** (high): CR-304
+  - 🟠 **WARN** (high): CR-409
 - `frontend/src/ui/components/MoneyText.tsx`
 - `frontend/tests/unit/money.test.ts`
+  - ⚪ **INFO** (high): CR-414
 
 **Program design (this slice)**
 
@@ -224,8 +225,10 @@ PolicyVersionRepository.activate(policy_versi
 ### Slice `E15-S4`
 
 - `backend/tests/architecture/test_observability_contract.py`
-  - 🟠 **WARN** (high): CR-303
+  - 🟠 **WARN** (high): CR-407
+  - 🟠 **WARN** (high): CR-408
   - 🟠 **WARN** (high): CR-312
+  - ⚪ **INFO** (medium): CR-413
 
 **Program design (this slice)**
 
@@ -656,15 +659,15 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
   - 🟠 **WARN** (high): CR-307
   - 🟠 **WARN** (medium): CR-308
 - `backend/src/api/middleware.py`
-  - 🔴 **BLOCK** (high): CR-301
-  - ⚪ **INFO** (high): CR-314
-  - ⚪ **INFO** (medium): CR-315
-  - ⚪ **INFO** (high): CR-316
-  - ⚪ **INFO** (medium): CR-318
+  - 🟠 **WARN** (high): CR-401
+  - 🟠 **WARN** (high): CR-402
+  - 🟠 **WARN** (high): CR-403
+  - 🟠 **WARN** (high): CR-404
+  - 🟠 **WARN** (medium): CR-406
 - `backend/src/api/platform/routes.py`
-  - 🟠 **WARN** (high): CR-302
+  - 🟠 **WARN** (high): CR-405
   - 🟠 **WARN** (high): CR-309
-  - ⚪ **INFO** (high): CR-317
+  - ⚪ **INFO** (high): CR-302
 - `backend/src/api/serializers.py`
   - 🟠 **WARN** (high): CR-306
 
@@ -683,6 +686,7 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 ### 7. Tests
 
 - `frontend/tests/unit/money.test.ts`
+  - ⚪ **INFO** (high): CR-414
 
 ### 8. Docs & specs
 
@@ -886,8 +890,10 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 - `backend/tests/__init__.py`
 - `backend/tests/architecture/test_no_float_money.py`
 - `backend/tests/architecture/test_observability_contract.py`
-  - 🟠 **WARN** (high): CR-303
+  - 🟠 **WARN** (high): CR-407
+  - 🟠 **WARN** (high): CR-408
   - 🟠 **WARN** (high): CR-312
+  - ⚪ **INFO** (medium): CR-413
 - `backend/tests/conftest.py`
   - 🟠 **WARN** (medium): CR-313
 - `backend/tests/unit/test_bucket_ladder.py`
@@ -901,7 +907,7 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 - `features.json`
 - `frontend/package-lock.json`
 - `frontend/src/types/money.ts`
-  - 🟠 **WARN** (high): CR-304
+  - 🟠 **WARN** (high): CR-409
 - `frontend/src/ui/components/MoneyText.tsx`
 - `project-manifest.json`
 - `sprint-contracts/A.json`
@@ -909,10 +915,15 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 
 ## High-signal findings
 
-- 🔴 **BLOCK** `backend/src/api/middleware.py`: CR-301
-- 🟠 **WARN** `backend/src/api/platform/routes.py`: CR-302
-- 🟠 **WARN** `backend/tests/architecture/test_observability_contract.py`: CR-303
-- 🟠 **WARN** `frontend/src/types/money.ts`: CR-304
+- 🟠 **WARN** `backend/src/api/middleware.py`: CR-401
+- 🟠 **WARN** `backend/src/api/middleware.py`: CR-402
+- 🟠 **WARN** `backend/src/api/middleware.py`: CR-403
+- 🟠 **WARN** `backend/src/api/middleware.py`: CR-404
+- 🟠 **WARN** `backend/src/api/platform/routes.py`: CR-405
+- 🟠 **WARN** `backend/src/api/middleware.py`: CR-406
+- 🟠 **WARN** `backend/tests/architecture/test_observability_contract.py`: CR-407
+- 🟠 **WARN** `backend/tests/architecture/test_observability_contract.py`: CR-408
+- 🟠 **WARN** `frontend/src/types/money.ts`: CR-409
 - 🟠 **WARN** `backend/src/config/logging.py`: CR-305
 - 🟠 **WARN** `backend/src/api/serializers.py`: CR-306
 - 🟠 **WARN** `backend/src/api/errors.py`: CR-307

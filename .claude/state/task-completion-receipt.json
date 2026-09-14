@@ -4,7 +4,7 @@
   "task_id": "truelend-build",
   "task_envelope_hash": "ca69aafb561f072b387662da12300e17bb6ac46268df084ccb6b093a310a8298",
   "run_id": "run-a5737b1b-fdbe-4023-b908-cbabca4e9fd8",
-  "generated_at": "2026-09-14T13:38:56.677Z",
+  "generated_at": "2026-09-14T14:44:19.528Z",
   "pass": false,
   "evidence": [
     {
@@ -24,9 +24,9 @@
     {
       "kind": "independent_review",
       "path": "specs/reviews/code-review-verdict.json",
-      "sha256": "7e424a678e21b6b3455502a7c062250db0ace7b80bc796dc325dbf49a90878b7",
+      "sha256": "e6a8363380191123c0614543e6377f472079d63c1a2e17ddeb0864c3468fbbad",
       "current": true,
-      "pass": false
+      "pass": true
     },
     {
       "kind": "integration",
@@ -52,7 +52,7 @@
     {
       "kind": "security_review",
       "path": "specs/reviews/security-verdict.json",
-      "sha256": "9d4dab3ac83b6b24159fc633c5249069d5bb900af34d64b0df6fefaa7e1fe811",
+      "sha256": "d8085479570567453b34404286c49240c12a646ce46626b08c2f58f32dd17181",
       "current": true,
       "pass": true
     },
@@ -77,7 +77,6 @@
     "failed": [
       "unit",
       "acceptance",
-      "independent_review",
       "integration",
       "sast",
       "dependency_scan",
@@ -86,6 +85,6 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "hash": "93dfde3484bbe99ad3bf07079a2ce34f85642a595d8e4230bdb914ad5cfc0b22"
+    "hash": "2f45454b2b057445d904694adcf66699c3d035b0cdefecb40adb08d111051dbd"
   }
 }

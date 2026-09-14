@@ -82,9 +82,16 @@ def test_p95_is_computable_from_the_exposition() -> None:
 
     target = 0.95 * total
     p95_bound = next(le for le, count in buckets if count >= target)
-    assert p95_bound, "no bucket satisfied the 95th percentile"
+
+    # This assertion was inverted, not merely weak: it accepted `+Inf` — which
+    # means p95 landed in the *overflow* bucket, slower than the largest bound
+    # — while rejecting a finite value over budget. A forced p95 of 11 s, 22x
+    # the budget, passed. `+Inf` is the worst outcome, so it must fail first.
+    assert p95_bound != "+Inf", (
+        "p95 landed in the overflow bucket: slower than the largest bound"
+    )
     # A no-I/O health probe must land far under the 500 ms budget.
-    assert p95_bound == "+Inf" or float(p95_bound) <= 0.5
+    assert float(p95_bound) <= 0.5, f"p95 bound {p95_bound}s exceeds the 500 ms budget"
 
 
 def test_histogram_labels_cannot_be_injected_from_a_request_path() -> None:
@@ -223,3 +230,60 @@ def test_metrics_scrapes_do_not_count_toward_the_error_rate_denominator() -> Non
     assert "/metrics" not in routes, "the scrape counted itself into the denominator"
     assert "/health" in routes, "real traffic must still be counted"
     assert 'route="/metrics"' not in body
+
+
+def test_metrics_scrapes_are_excluded_from_the_histogram_too() -> None:
+    """GATE-B2: excluding the counter but not the histogram fixed one half.
+
+    The SLO sensor reads errorRate from `http_requests_total` and p95 from
+    `http_request_duration_seconds`. Excluding the scrape from only the former
+    left a fast scrape dragging p95 down while no longer leaving even a trace
+    in the counters: measured p95 of 5 ms against a real business p95 of
+    4,875 ms on a 500 ms budget, under-reporting a breach by ~1000x on the one
+    metric this story exists to make measurable.
+    """
+    from src.api.middleware import duration_snapshot
+
+    body = _scrape(["/health", "/health"])
+
+    duration_routes = {route for _, route in duration_snapshot()}
+    assert "/metrics" not in duration_routes, "the scrape diluted its own p95"
+    assert "/health" in duration_routes, "real traffic must still be timed"
+    assert 'route="/metrics"' not in body
+
+
+def test_p95_guard_rejects_a_breach_instead_of_accepting_the_worst_case() -> None:
+    """GATE-B1 regression: the guard must fail on a real breach.
+
+    The original assertion accepted `+Inf` -- the overflow bucket, slower than
+    every bound -- while rejecting finite values over budget, so a forced p95 of
+    11 s passed. This drives the same computation over a synthetic breach and
+    asserts the guard bites.
+    """
+    from src.api.middleware import (
+        duration_snapshot,
+        latency_bucket_bounds,
+        observe_duration,
+        reset_request_counters,
+    )
+
+    reset_request_counters()
+    for _ in range(20):
+        observe_duration("GET", "/slow", 11.0)
+
+    counts, observations, _ = duration_snapshot()[("GET", "/slow")]
+    bounds = (*latency_bucket_bounds(), float("inf"))
+    threshold = 0.95 * observations
+
+    running = 0
+    p95_bound = None
+    for bound, count in zip(bounds, counts, strict=True):
+        running += count
+        if not running < threshold:
+            p95_bound = bound
+            break
+
+    assert p95_bound == float("inf"), "an 11 s request must land in the overflow bucket"
+    # The corrected guard's shape, applied to a breach: it must reject.
+    accepted = p95_bound != float("inf") and p95_bound < 0.51
+    assert not accepted, "the guard accepted a p95 22x over budget"

@@ -1,6 +1,6 @@
 {
   "gate": "pr-walkthrough",
-  "generated_at": "2026-09-14T13:37:37.677Z",
+  "generated_at": "2026-09-14T14:43:57.065Z",
   "base": "14e9487",
   "file_count": 225,
   "slices": [
@@ -61,14 +61,63 @@
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR-301",
-              "level": "BLOCK",
+              "id": "CR-401",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-314",
+              "id": "CR-402",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-403",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-404",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-406",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-410",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-411",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-412",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-415",
               "level": "INFO",
               "confidence": "high",
               "axis": "spec",
@@ -78,13 +127,6 @@
               "id": "CR-315",
               "level": "INFO",
               "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-316",
-              "level": "INFO",
-              "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
@@ -101,7 +143,7 @@
           "path": "backend/src/api/platform/routes.py",
           "findings": [
             {
-              "id": "CR-302",
+              "id": "CR-405",
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
@@ -115,7 +157,7 @@
               "summary": ""
             },
             {
-              "id": "CR-317",
+              "id": "CR-302",
               "level": "INFO",
               "confidence": "high",
               "axis": "spec",
@@ -229,7 +271,7 @@
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR-304",
+              "id": "CR-409",
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
@@ -243,7 +285,15 @@
         },
         {
           "path": "frontend/tests/unit/money.test.ts",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-414",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         }
       ],
       "program_design": [
@@ -283,7 +333,14 @@
           "path": "backend/tests/architecture/test_observability_contract.py",
           "findings": [
             {
-              "id": "CR-303",
+              "id": "CR-407",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-408",
               "level": "WARN",
               "confidence": "high",
               "axis": "standards",
@@ -294,6 +351,13 @@
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-413",
+              "level": "INFO",
+              "confidence": "medium",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -1205,14 +1269,63 @@
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR-301",
-              "level": "BLOCK",
+              "id": "CR-401",
+              "level": "WARN",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-314",
+              "id": "CR-402",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-403",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-404",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-406",
+              "level": "WARN",
+              "confidence": "medium",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-410",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-411",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-412",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-415",
               "level": "INFO",
               "confidence": "high",
               "axis": "spec",
@@ -1222,13 +1335,6 @@
               "id": "CR-315",
               "level": "INFO",
               "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-316",
-              "level": "INFO",
-              "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
@@ -1245,7 +1351,7 @@
           "path": "backend/src/api/platform/routes.py",
           "findings": [
             {
-              "id": "CR-302",
+              "id": "CR-405",
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
@@ -1259,7 +1365,7 @@
               "summary": ""
             },
             {
-              "id": "CR-317",
+              "id": "CR-302",
               "level": "INFO",
               "confidence": "high",
               "axis": "spec",
@@ -1336,7 +1442,15 @@
       "files": [
         {
           "path": "frontend/tests/unit/money.test.ts",
-          "findings": []
+          "findings": [
+            {
+              "id": "CR-414",
+              "level": "INFO",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
         }
       ]
     },
@@ -2138,7 +2252,14 @@
           "path": "backend/tests/architecture/test_observability_contract.py",
           "findings": [
             {
-              "id": "CR-303",
+              "id": "CR-407",
+              "level": "WARN",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR-408",
               "level": "WARN",
               "confidence": "high",
               "axis": "standards",
@@ -2149,6 +2270,13 @@
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR-413",
+              "level": "INFO",
+              "confidence": "medium",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -2213,7 +2341,7 @@
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR-304",
+              "id": "CR-409",
               "level": "WARN",
               "confidence": "high",
               "axis": "spec",
@@ -2241,11 +2369,11 @@
     }
   ],
   "review_summary": {
-    "block": 1,
-    "warn": 12,
-    "info": 5
+    "block": 0,
+    "warn": 18,
+    "info": 9
   },
-  "review_pass": false,
+  "review_pass": true,
   "blast_radius": {
     "callers": [],
     "callees": []
@@ -2255,33 +2383,68 @@
     "E9-S1",
     "E11-S1",
     "E15-S4",
-    "E1-S1"
+    "E4-S4"
   ],
-  "intent": "# Review Context Pack — /gate --group A (round 3) **Gate lane:** on-demand pre-merge (`/gate`) **Generated:** 2026-09-14 (session 6) ## 1. Request / scope | Field | Value | |---|---| | Group | A | | Stories | E15-S1 (platform logging + health), E9-S1 (Money value type), E11-S1 (delinquency bucket), **E15-S4 (NEW — duration histogram + hostile-input hardening)** | | Sprint contract | `sprint-contra",
+  "intent": "# Review Context Pack — /gate --group A (round 4) - **Generated:** 2026-09-14 (round 4) - **Group:** A · **Stories:** E15-S1, E9-S1, E11-S1, E15-S4 - **Range:** `14e9487..f3c25eb` (full group-A diff) — remediation since round 3 is `ba457bf..f3c25eb` - **Sprint contract:** `sprint-contracts/A.json` (frozen; all 13 contract hashes re-verified byte-identical this round) - **Security trigger:** **FIRE",
   "high_signal": [
     {
-      "id": "CR-301",
-      "level": "BLOCK",
+      "id": "CR-401",
+      "level": "WARN",
       "confidence": "high",
       "file": "backend/src/api/middleware.py",
       "summary": ""
     },
     {
-      "id": "CR-302",
+      "id": "CR-402",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/api/middleware.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-403",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/api/middleware.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-404",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/src/api/middleware.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-405",
       "level": "WARN",
       "confidence": "high",
       "file": "backend/src/api/platform/routes.py",
       "summary": ""
     },
     {
-      "id": "CR-303",
+      "id": "CR-406",
+      "level": "WARN",
+      "confidence": "medium",
+      "file": "backend/src/api/middleware.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-407",
       "level": "WARN",
       "confidence": "high",
       "file": "backend/tests/architecture/test_observability_contract.py",
       "summary": ""
     },
     {
-      "id": "CR-304",
+      "id": "CR-408",
+      "level": "WARN",
+      "confidence": "high",
+      "file": "backend/tests/architecture/test_observability_contract.py",
+      "summary": ""
+    },
+    {
+      "id": "CR-409",
       "level": "WARN",
       "confidence": "high",
       "file": "frontend/src/types/money.ts",

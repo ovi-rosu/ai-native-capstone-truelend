@@ -1,102 +1,174 @@
 {
   "gate": "code-review",
-  "pass": false,
-  "round": 3,
-  "range": "14e9487..ba457bf",
+  "pass": true,
+  "round": 4,
+  "range": "14e9487..f3c25eb",
+  "new_work_range": "ba457bf..f3c25eb",
   "group": "A",
   "stories": ["E15-S1", "E9-S1", "E11-S1", "E15-S4"],
-  "summary": { "block": 1, "warn": 12, "info": 5 },
-  "round2_dispositions": [
-    {
-      "id": "B-3",
-      "status": "closed",
-      "evidence": "Live requests on create_app(): 405 carries 'allow: GET', 401 carries 'www-authenticate: Bearer realm=\"truelend\"', 429 keeps 'retry-after: 42'; 404/422/500/200 envelopes and the X-Request-ID stamp unchanged."
-    },
-    {
-      "id": "B-4",
-      "status": "confirmed-downgraded-to-warn",
-      "evidence": "Measured through the real class: 8-byte \"1e100000\" -> format() 4167.8 ms, fromWire 0.0 ms, toWire 2.5 ms; raw regex 4x per doubling of digits. Neither the constructor nor toWire() bounds the input. Only caller of format() is MoneyText, whose only callers are tests, so there is no untrusted path at HEAD. Tracked as CR-304."
-    }
-  ],
+  "summary": { "block": 0, "warn": 18, "info": 9 },
+  "baseline_at_head": {
+    "backend_pytest": "108 passed",
+    "backend_ruff": "clean",
+    "backend_mypy": "clean, 12 files",
+    "frontend_vitest": "20 passed",
+    "frontend_lint": "clean",
+    "frontend_typecheck": "clean",
+    "worktree_clean_after_measurement": true
+  },
   "findings": [
     {
-      "id": "CR-301",
-      "level": "BLOCK",
+      "id": "CR-401",
+      "level": "WARN",
       "confidence": "high",
       "axis": "spec",
       "file": "backend/src/api/middleware.py",
-      "line": 50,
-      "description": "The `method` label is unbounded, so round-2's B-2 cardinality hole is only half-closed: f1367f5 bounded the route dimension but `method` still comes straight from scope[\"method\"] into the keys of _request_counts and the new _duration_counts/_duration_totals. Measured against a real uvicorn server over raw sockets with http=\"h11\" (uvicorn's own parser and its fallback when httptools is absent): 3000 distinct method tokens on one keep-alive connection in 0.7 s produced 2998 counter series + 2998 histogram series, a 3,553,759-byte /metrics body and ~2.5 MB permanently retained; /metrics is unauthenticated, so this amplifies too. Refutation attempted: with the declared uvicorn[standard]/httptools parser the same tokens get 400 before the app sees them, so the bound today rests entirely on an optional C extension's method allow-list that nothing in this repo documents, tests or pins - while middleware.py is deliberately written as a server-agnostic pure ASGI middleware and no Dockerfile/compose exists to fix the parser.",
-      "fix": "Add `_KNOWN_METHODS = frozenset({\"GET\",\"HEAD\",\"POST\",\"PUT\",\"PATCH\",\"DELETE\",\"OPTIONS\",\"TRACE\"})` and a `method_label(scope)` returning the method when known and a single \"<other>\" bucket otherwise, mirroring `_UNMATCHED_ROUTE`; call it from `_stamping_send` and `_observe` in place of `str(scope.get(\"method\", \"-\"))`. Add the h11 flood as the regression test."
+      "line": 175,
+      "supersedes": "CR-314",
+      "description": "seen.append(status) still runs before await send(message), so the status is captured before the response reaches the wire. Measured by driving CorrelationIdMiddleware with a downstream send that raises ConnectionResetError at http.response.start: http_requests_total records (GET, unmatched, 200) 1 while the client received 500 and no byte was written. ab0fd6e moved where the counter fires, not when the status is captured, so round-3 CR-314 is unchanged. A client disconnect mid-response is a routine production event and it biases the SLO error rate downward. It also leaves the documented else-500 default nearly dead: the only path that reaches it is an app raising before any response start.",
+      "measurement": "TestClient over a bare ASGI app with a failing send; request_counter_snapshot() -- see specs/reviews/code-review.md section 2",
+      "fix": "Move seen.append(status) to after await send(message) inside send_with_correlation_id. One line; the else-500 default then correctly records the failed send as a 500."
     },
     {
-      "id": "CR-302",
+      "id": "CR-402",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "backend/src/api/middleware.py",
+      "line": 210,
+      "supersedes": "CR-316",
+      "description": "_observe is invoked from two call sites (the try body and the except body) instead of once in a finally. Because ab0fd6e moved the RED counter into _observe, the duplicated call site can now double-count the SLO numerator: record_request increments _request_counts first and calls observe_duration second, so if observe_duration raises the counter is already incremented, the except branch calls _observe again and increments it a second time. Measured on one request: http_requests_total = 2 while http_request_duration_seconds_count = 1, so the two series disagree. A metrics failure also converts a served 200 into a raised exception. Escalated from round-3 INFO CR-316 because only durations were at stake then. Not a BLOCK: reachability is essentially MemoryError inside observe_duration.",
+      "measurement": "observe_duration monkeypatched to raise MemoryError on its first call; counter snapshot showed 2 and the histogram 1",
+      "fix": "Replace the two call sites with a single finally: self._observe(scope, started, seen); keep _access_logger.exception and the bare raise in except, and keep the else branch that unwinds the contextvars."
+    },
+    {
+      "id": "CR-403",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "backend/src/api/middleware.py",
+      "line": 165,
+      "description": "The response status is smuggled back out of _stamping_send through a mutable list[int] out-parameter threaded through two static methods. Only element 0 is ever read, the list grows on every response start a buggy app sends, the name describes the container rather than the value, and seen[0] if seen else 500 fuses two decisions (which status, and what to do when there is none) into one expression. The static-method split itself is justified: inlining both closures into __call__ puts it near 50 lines, over the 30-line cap. The out-parameter is not.",
+      "measurement": "Read of middleware.py lines 163-214; __call__ measured at 27 lines, _stamping_send 16, _observe 15",
+      "fix": "Introduce a two-line dataclass _ResponseState with status: int or None; assign state.status in the send wrapper and read state.status if state.status is not None else 500 in _observe. Same line count, named and typed. One edit with CR-402 -- both touch lines 210-214."
+    },
+    {
+      "id": "CR-404",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/api/middleware.py",
+      "line": 115,
+      "description": "The scrape exclusion is asymmetric and therefore only half a fix. record_request skips the RED counter for the metrics route but still calls observe_duration for it, deliberately. The harness parser the comment cites aggregates histogram buckets across all label-sets in _aggregateBuckets, exactly as errorRate sums all counter series, so the retained duration series dilutes global p95 the same way the counter diluted error rate. Measured with the real renderer and the real harness parser: 20 genuine 3.0 s requests plus 380 scrapes gives histogramP95 = 5 ms while the business-only p95 is 4875 ms, against the declared p95_ms of 500. Not a BLOCK because the diff strictly improves the prior state and the root cause is harness-side, but the SLO gate is falsifiable by scrape volume and the gate lead should know.",
+      "measurement": "node against .claude/hooks/lib/prom-parse.js over an exposition body rendered by _counter_lines/_histogram_lines",
+      "fix": "Move observe_duration inside the same if route not in _SLI_EXCLUDED_ROUTES block so the mitigation is symmetric (one line). Better: give errorRate and _aggregateBuckets a route filter in the harness and revert the product-side exclusion so the product metric stays truthful."
+    },
+    {
+      "id": "CR-405",
       "level": "WARN",
       "confidence": "high",
       "axis": "spec",
       "file": "backend/src/api/platform/routes.py",
-      "line": 78,
-      "description": "_escape_label escapes only backslash, double-quote and LF. CR, NUL, ESC and U+2028 pass through verbatim: with a CR in a label value, _histogram_lines() emits 14 lines containing a raw CR. E15-S4-AC2 requires 'no raw control character' when attacker-supplied control characters reach a metrics label, so the renderer fails the AC under the AC's own stated precondition. Not a BLOCK because the Prometheus exposition format only requires those three escapes (the docstring is accurate) and, once CR-301 is fixed, neither label source can carry a control character.",
-      "fix": "Extend _LABEL_ESCAPES to map \\r to its escaped form and, cheaply, the rest of the C0 range, so the renderer satisfies AC2 independently of which labels happen to exist."
+      "line": 89,
+      "description": "The HELP line still reads Total HTTP requests served, which f3c25eb made false: the metrics route is now excluded. The HELP string is part of the exposition surface a scraper and an operator read, so an operator computing total RPS from this series under-counts with no indication why. The exclusion is documented only in a code comment in another module.",
+      "measurement": "Two consecutive scrapes: first body carries no metrics-route counter series and the counter snapshot after the request confirms none was recorded",
+      "fix": "Amend the HELP text to say it excludes the observability scrape endpoint, e.g. Total HTTP requests served, excluding scrapes of the metrics endpoint."
     },
     {
-      "id": "CR-303",
+      "id": "CR-406",
+      "level": "WARN",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "backend/src/api/middleware.py",
+      "line": 104,
+      "description": "_SLI_EXCLUDED_ROUTES hardcodes the literal metrics path, which already appears in the route decorator in api/platform/routes.py and as observability.metrics_path in project-manifest.json. Three copies of one configured value and no single source of truth: change the manifest and the exclusion silently stops matching, leaving the dilution the commit set out to fix. The decorator hardcode is pre-existing; this diff adds the second copy in a different module.",
+      "measurement": "project-manifest.json observability.metrics_path is /metrics; grep shows no source file reads it",
+      "fix": "Put the path in one constant in src/config/settings.py (Config layer, below API, so neither module needs to import the other) and read it from both the route registration and the exclusion set."
+    },
+    {
+      "id": "CR-407",
       "level": "WARN",
       "confidence": "high",
       "axis": "standards",
       "file": "backend/tests/architecture/test_observability_contract.py",
-      "line": 90,
-      "description": "The label-escaping fix has zero effective coverage. Reducing _escape_label to `return value` - deleting the whole B-1 remediation - leaves the suite green at 104 passed. Mutating route_label to the raw path instead fails four tests including both '...labels cannot be injected from a request path' (test_observability_contract.py:90 and test_health_probe.py:93), proving those two tests assert the cardinality bound, not the escaping. A future refactor can drop the escaping silently. The cumulative-bucket logic, by contrast, is covered: `running = count` fails test_histogram_buckets_are_cumulative_and_carry_count_and_sum.",
-      "fix": "Assert the escaping at the exposition boundary: after observe_duration with a quote- and backslash-bearing method label, require _histogram_lines() to contain the escaped form and no unescaped quote."
+      "line": 180,
+      "description": "Both new cardinality tests call record_request() directly, so they cover the helper and not the HTTP boundary the finding was about. Measured: mutating _observe to bypass the bounded entry point and increment _request_counts with str(scope.get(method)) -- the exact regression that reopens CR-301 at the call site -- leaves test_metric_label_cardinality_is_bounded_on_the_method_dimension and test_known_methods_keep_their_own_label both green. The mutant is caught only incidentally, by the unrelated metrics-exclusion test, which happens to drive a real request. My round-3 fix note asked for the h11 flood as the regression test.",
+      "measurement": "Mutant applied to _observe; 1 failed, 107 passed, and the failure was test_metrics_scrapes_do_not_count_toward_the_error_rate_denominator, not either cardinality test",
+      "fix": "Add one request-driven case: serve a request through create_app() with a non-standard method (client.request(BOGUS, /health)) and assert the method labels in request_counter_snapshot() are a subset of _KNOWN_METHODS plus the other bucket."
     },
     {
-      "id": "CR-304",
+      "id": "CR-408",
+      "level": "WARN",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "backend/tests/architecture/test_observability_contract.py",
+      "line": 225,
+      "description": "The final assertion on the scrape body is vacuous and, read as a guarantee, false. It passes for two independent reasons: the exclusion, and the fact that the metrics record is written after the body has been rendered. With the exclusion removed the first scrape still does not mention the route. And a second scrape DOES contain metrics-route histogram lines, measured, because durations are still observed -- so the assertion asserts something the code does not promise. The preceding assertion on request_counter_snapshot() is the one that kills the mutant.",
+      "measurement": "Two consecutive scrapes: first mentions the metrics route false, second true, with three example bucket lines captured",
+      "fix": "Delete the body assertion, or re-point it at a second scrape and narrow it to the counter series name so it states what is actually guaranteed."
+    },
+    {
+      "id": "CR-409",
       "level": "WARN",
       "confidence": "high",
       "axis": "spec",
       "file": "frontend/src/types/money.ts",
-      "line": 78,
-      "description": "Money.fromWire does not bound the input its docstring describes ('Parse the quoted 2dp wire string'): toQuantizedDecimal accepts anything decimal.js parses, so 8-byte \"1e100000\" reaches format() as 100,004 digits and the quadratic thousands-separator regex at line 78 costs 4167.8 ms (fromWire 0.0 ms, toWire 2.5 ms - the cost is isolated to the regex). WARN not BLOCK: format()'s only caller is MoneyText and its only callers are tests; the frontend at HEAD has no fetch layer and no input control, so there is no untrusted path and the impact is a client-side stall.",
-      "fix": "In toQuantizedDecimal, reject a string that does not match the wire form the backend declares (/^-?\\d+\\.\\d{2}$/, backend/src/api/serializers.py:24) or cap the integer digit count, throwing InvalidMoneyAmountError. Choose the same tolerance as CR-306 so both sides of the wire agree."
+      "line": 24,
+      "supersedes": "CR-304 (contract half)",
+      "description": "CR-304 is only half disposed. The quadratic sink is genuinely gone and I verified the rewrite is linear and correct, but toQuantizedDecimal still bounds nothing, so the type admits amounts the backend rejects. Measured: Money.fromWire(1e100000) succeeds and toWire() returns a 100004-character string, while POST of that same wire value to a live MoneyField model returns 422 because the backend Decimal.quantize raises InvalidOperation. The two sides of one declared wire form disagree about what a Money is, and the fromWire docstring still claims it parses the quoted 2dp wire string. At 1e5000000 the client also allocates a 6.7 MB display string on the UI thread (toWire 200 ms, format 424 ms). WARN not BLOCK: format() is called only by MoneyText, whose only callers are tests, and the frontend has no fetch layer at HEAD.",
+      "measurement": "Timed fromWire/toWire/format/equals/add/multiply at 1e100000, 1e1000000 and 1e5000000; live POST of 1e100000 through MoneyField returned 422",
+      "fix": "In toQuantizedDecimal, reject a string input that does not match the backend declared wire form (dash-optional digits dot two digits) or cap the integer digit count, throwing InvalidMoneyAmountError. Pick the same tolerance as CR-306 so both sides of the wire agree."
     },
     {
       "id": "CR-305",
       "level": "WARN",
       "confidence": "high",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/config/logging.py",
       "line": 217,
-      "description": "Both stated reasons for silencing uvicorn.access are untrue at HEAD. Claim (a) - 'request_id_var is already reset by the time it emits... it logs after the response completes, outside the middleware scope' - is false: uvicorn emits the access line inside its own send(), in the http.response.start branch (httptools_impl.py:484, h11_impl.py:481), and that send is the one CorrelationIdMiddleware wraps; replaying the ordering in-process shows request_id_var reads 'req-42' at that call site, not ''. It was true of the BaseHTTPMiddleware version CR-003 deleted. Claim (b) is overstated: RedactionFilter clears record.args only when a redaction actually fires (no registered values -> args preserved as ('a','b'); matching value -> ()).",
-      "fix": "Delete the two false sentences; keep the third (CorrelationIdMiddleware already emits an equivalent JSON line), which is the real and sufficient justification."
+      "description": "Carried unchanged. Both stated reasons for silencing uvicorn.access are still verbatim in the file and both were empirically disproven in round 3: uvicorn emits the access line inside its own send, in the http.response.start branch, which is the send CorrelationIdMiddleware wraps, so request_id_var is still bound; and RedactionFilter clears record.args only when a redaction actually fires. Third review round for a comment-only fix.",
+      "measurement": "sed of logging.py lines 210-224 at HEAD: text byte-identical to round 3; file untouched in ba457bf..f3c25eb",
+      "fix": "Delete the two false sentences and keep the third (CorrelationIdMiddleware already emits an equivalent JSON line), which is the real and sufficient justification."
     },
     {
       "id": "CR-306",
       "level": "WARN",
       "confidence": "high",
       "axis": "spec",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/api/serializers.py",
       "line": 75,
-      "description": "The new JSON-schema hook works as claimed (model_json_schema renders; both a response model and a request-body model appear in components.schemas with the requestBody $ref intact - verified against a live /openapi.json), but the declared pattern is documentation only: no_info_plain_validator_function bypasses schema validation, so POST {\"principal\": \"12.3\"} returns 200 with \"12.30\" while the schema says 1dp is invalid. The docstring claims the pattern exists 'so a generated client cannot send 12.3 or a JSON number and still look contract-conformant'; only the JSON-number half is enforced (a float correctly 422s). backend/tests/architecture/test_no_float_money.py:342 asserts the documented pattern rejects '1234.5' while nothing checks the enforced behaviour.",
-      "fix": "Match a str input against _WIRE_PATTERN in _validate_money before constructing Money, or narrow the pattern and docstring to the tolerance actually implemented. Keep it consistent with CR-304."
+      "description": "Carried unchanged and re-measured live. The JSON-schema hook publishes a pattern that nothing enforces, because no_info_plain_validator_function bypasses schema validation. A POST through a real MoneyField model returns 200 for 12.3 (echoed as 12.30), 200 for 12.345 (echoed as 12.35) and 200 for 0.005 (echoed as 0.01), while the published pattern declares all three invalid. The docstring claims a generated client cannot send 12.3 and look contract-conformant; only the JSON-number half is enforced.",
+      "measurement": "Live FastAPI app with a MoneyField request model; three payloads returned 200 and the declared pattern read back from app.openapi()",
+      "fix": "Match a str input against _WIRE_PATTERN inside _validate_money before constructing Money, or narrow the pattern and docstring to the tolerance actually implemented. Keep it consistent with CR-409."
     },
     {
       "id": "CR-307",
       "level": "WARN",
       "confidence": "high",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/api/errors.py",
       "line": 85,
-      "description": "sanitise_context drops context values silently, with no marker and no log. Measured on live requests: {\"note\": \"A\"*300, \"kept\": \"short\"} -> {\"kept\":\"short\"}; {\"ratio\": 0.5, \"flag\": None} -> {}. Strings over _MAX_CONTEXT_VALUE_CHARS are discarded rather than truncated, and floats, None, lists and nested mappings vanish. context is the machine-readable half of the frozen envelope and src/types/errors.py:20 records that E4-S4-AC2 reads threshold_kind/configured_value out of it, so a caller cannot distinguish 'not set' from 'removed'. _scalar's docstring ('Anything structured is dropped') under-describes what actually goes.",
-      "fix": "Substitute a marker (\"<omitted>\") for the dropped key instead of deleting it, and truncate over-long strings to _MAX_CONTEXT_VALUE_CHARS rather than discarding them."
+      "description": "Carried unchanged; errors.py is byte-identical in ba457bf..f3c25eb. sanitise_context drops context values silently with no marker and no log: over-long strings are discarded rather than truncated, and floats, None, lists and nested mappings vanish. context is the machine-readable half of the frozen envelope and types/errors.py records that E4-S4-AC2 reads threshold_kind and configured_value out of it, so a caller cannot distinguish not-set from removed.",
+      "measurement": "git diff --name-only ba457bf..f3c25eb shows errors.py absent; round-3 live measurements stand",
+      "fix": "Substitute a marker such as omitted for the dropped key instead of deleting it, and truncate over-long strings to _MAX_CONTEXT_VALUE_CHARS rather than discarding them."
     },
     {
       "id": "CR-308",
       "level": "WARN",
       "confidence": "medium",
       "axis": "spec",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/api/errors.py",
       "line": 115,
-      "description": "`detail` bypasses the _CREDENTIAL_URI and length guards that context values get - it receives scrub_text() only, which is a no-op unless the exact value was registered. Measured: an AppError whose message interpolates a database URI carrying inline user:password credentials egresses those credentials verbatim in `detail`, while the identical string placed in `context` is dropped by _sanitise_value. Medium confidence because detail is developer-authored and handle_unexpected already pins a constant, but detail is the likeliest carrier of such a message, which is why the guard exists.",
+      "description": "Carried unchanged. detail bypasses the credential-URI and length guards that context values receive: it gets scrub_text only, which is a no-op unless the exact value was registered. An AppError whose message interpolates a database URI with inline credentials egresses them verbatim in detail, while the identical string in context is dropped.",
+      "measurement": "File untouched in ba457bf..f3c25eb",
       "fix": "Run detail through the same _CREDENTIAL_URI and length check inside _envelope."
     },
     {
@@ -104,100 +176,190 @@
       "level": "WARN",
       "confidence": "high",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/api/platform/routes.py",
-      "line": 57,
-      "description": "_database_status swallows the probe's failure reason entirely: `except Exception: return \"down\"` with no log. The failure itself does reach the caller (database=down, status=degraded), so it is not a hidden error, but /health is the operator's only signal and a misconfigured probe is indistinguishable from a dead database with nothing in the logs.",
-      "fix": "Log at warning with exc_info=True before returning \"down\" - the traceback is already redaction-filtered by RedactionFilter."
+      "line": 59,
+      "description": "Carried unchanged: _database_status still swallows the probe failure reason entirely with except Exception returning down and no log. The failure does reach the caller as database=down, so it is not hidden, but health is the operator only signal and a misconfigured probe is indistinguishable from a dead database with nothing in the logs. Third review round for a one-line fix.",
+      "measurement": "sed of routes.py lines 54-60 at HEAD",
+      "fix": "Log at warning with exc_info=True before returning down; the traceback is already scrubbed by RedactionFilter."
     },
     {
       "id": "CR-310",
       "level": "WARN",
       "confidence": "high",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/config/logging.py",
-      "line": 84,
-      "description": "Avoidable `# type: ignore[arg-type]` in production code: begin_redaction_scope() -> object discards the Token type ContextVar.set returns, forcing the ignore on the reset. CLAUDE.md requires static typing everywhere. Verified the fix is clean - typing both as contextvars.Token[set[str] | None] and deleting the ignore gives `mypy src/` Success (12 files) and 104 passed (applied, verified, reverted).",
-      "fix": "Import Token from contextvars; type begin_redaction_scope's return and end_redaction_scope's parameter as Token[set[str] | None]; delete the type: ignore."
+      "line": 91,
+      "description": "Carried unchanged: the avoidable type: ignore[arg-type] is still on the reset call, because begin_redaction_scope returns object and discards the Token type ContextVar.set returns. CLAUDE.md requires static typing everywhere. Round 3 applied the fix, confirmed mypy Success on 12 files and the suite green, and reverted it. This is the third round for a verified one-line fix; it costs less to land than to carry.",
+      "measurement": "grep -n type: ignore backend/src/config/logging.py returns exactly line 91 at HEAD",
+      "fix": "Import Token from contextvars; type begin_redaction_scope return and end_redaction_scope parameter as Token[set[str] or None]; delete the ignore."
     },
     {
       "id": "CR-311",
       "level": "WARN",
       "confidence": "high",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/tests/unit/test_log_redaction.py",
       "line": 43,
-      "description": "Round-2's finding is unfixed: both AC2 'every logger has the filter' tests (lines 43-64 and 190-220) build their logger list from logging.root.manager.loggerDict - the same collection _install_redaction_filter_everywhere (logging.py:241-251) just iterated - so a logger created after configure_logging is invisible to the assertion by construction. The 'unregistered-probe-logger' control proves the predicate works, not that the enumeration is complete. The real guarantee comes from the RedactionFilter on the root handler (logging.py:199), covered behaviourally by test_sensitive_application_values_never_appear_in_any_log_line.",
-      "fix": "Add one case that creates a logger after configure_logging, gives it its own handler with propagate=False, and asserts a registered value is still redacted - the case the enumeration cannot see."
+      "description": "Carried unchanged. Both AC2 every-logger-has-the-filter tests build their logger list from logging.root.manager.loggerDict, the same collection the implementation just iterated, so a logger created after configure_logging is invisible to the assertion by construction. The unregistered-probe-logger control proves the predicate works, not that the enumeration is complete.",
+      "measurement": "File untouched in ba457bf..f3c25eb",
+      "fix": "Add one case that creates a logger after configure_logging, gives it its own handler with propagate False, and asserts a registered value is still redacted."
     },
     {
       "id": "CR-312",
       "level": "WARN",
       "confidence": "high",
       "axis": "spec",
+      "carried_from_round": 3,
+      "status": "still-open-now-proved-vacuous",
       "file": "backend/tests/architecture/test_observability_contract.py",
       "line": 87,
-      "description": "`assert p95_bound == \"+Inf\" or float(p95_bound) <= 0.5` accepts the unbounded bucket, so the assertion passes when p95 exceeds every declared bound - the exact opposite of the comment above it ('A no-I/O health probe must land far under the 500 ms budget'). The test proves p95 is computable (E15-S4-AC1's main claim) but asserts nothing about its value.",
-      "fix": "assert p95_bound != \"+Inf\" and float(p95_bound) <= 0.5"
+      "description": "Carried unchanged, and this round I proved it vacuous by execution rather than by reading. The assertion accepts the unbounded bucket, so it passes precisely when p95 exceeds every declared bound. I replaced every latency bucket bound with 1e-12 while keeping 0.5 in the tuple, so every real duration lands in the plus-Inf bucket and p95 is therefore above the 500 ms SLO boundary, and the whole file still passed 10 tests. The test proves p95 is computable, which is E15-S4-AC1 main claim, but asserts nothing about its value despite the comment above it. Third round for a one-line fix.",
+      "measurement": "_LATENCY_BUCKETS mutated to 1e-12 upward keeping 0.5; uv run pytest tests/architecture/test_observability_contract.py gave 10 passed; mutation reverted",
+      "fix": "Change the assertion to require a finite bound: assert the bound is not plus-Inf and its float value is at most 0.5."
     },
     {
       "id": "CR-313",
       "level": "WARN",
       "confidence": "medium",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/tests/conftest.py",
       "line": 28,
-      "description": "The process-global metric state (_request_counts, _duration_counts, _duration_totals) has no enforced test isolation - it holds today only because every count-asserting test remembers reset_request_counters() first (verified across three orderings: file alone 6 passed, file last after the whole suite 104 passed, reordered 8 passed). One future test that forgets it silently inherits another test's counts. reset_request_counters() is also production API whose docstring says it exists 'For tests'.",
-      "fix": "Add an autouse fixture in backend/tests/conftest.py calling reset_request_counters(), making isolation structural rather than conventional."
+      "description": "Carried unchanged: conftest.py contains zero references to reset_request_counters, so isolation of the three process-global metric dicts remains conventional. It holds today only because every count-asserting test remembers to reset first; the four tests added in ab0fd6e and f3c25eb each remember, which is exactly the convention that will eventually be forgotten.",
+      "measurement": "grep -c reset_request_counters backend/tests/conftest.py returns 0 at HEAD",
+      "fix": "Add an autouse fixture in backend/tests/conftest.py calling reset_request_counters(), making isolation structural."
     },
     {
-      "id": "CR-314",
+      "id": "CR-302",
+      "level": "INFO",
+      "confidence": "high",
+      "axis": "spec",
+      "carried_from_round": 3,
+      "status": "downgraded-warn-to-info",
+      "file": "backend/src/api/platform/routes.py",
+      "line": 78,
+      "description": "Downgraded exactly as predicted. _escape_label is unchanged and still passes CR, NUL, ESC, TAB and U+2028 through verbatim, but neither label source can now carry one: method resolves to a closed set of ten literals and route to a code-authored template or the unmatched literal. Measured end to end: five crafted paths including a percent-encoded CRLF forged series, a NUL, a quote, an ESC sequence and U+2028 produced exactly the label values GET and unmatched, zero raw control characters in the body and no forged series. E15-S4-AC2 can no longer reach its own stated precondition, so this is pure defence-in-depth.",
+      "measurement": "Direct calls to _escape_label on five control characters, plus a five-path hostile scrape through create_app()",
+      "fix": "Optional: extend _LABEL_ESCAPES over the C0 range so the renderer satisfies AC2 independently of which labels happen to exist."
+    },
+    {
+      "id": "CR-410",
+      "level": "INFO",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "backend/src/api/middleware.py",
+      "line": 95,
+      "description": "Paragraph-workaround rule: BLOCK considered and declined, stated explicitly so the gate lead can overrule. The nine-line paragraph above _SLI_EXCLUDED_ROUTES justifies a partial workaround and says so in its own words -- it does not close the finding, and it names a harness file as where the real fix lives. I measured the workaround is genuinely incomplete (CR-404). Two lesser instances: the seven-line paragraph above _KNOWN_METHODS, which justifies a real fix rather than a workaround and is merely long, and a three-line apology in frontend/src/types/money.ts lines 89 to 91 about not using Math.max for a slice bound that the loop does not have. I declined to BLOCK because the commit strictly improves the prior state and the underlying dilution is a documented harness-side defect; blocking would spend a sole veto on comment placement.",
+      "measurement": "Line counts from the diff: 9, 7 and 3 comment lines respectively",
+      "fix": "After CR-404 and CR-405 land, compress the exclusion paragraph to one line plus the finding id, and delete the Math.max comment outright."
+    },
+    {
+      "id": "CR-411",
       "level": "INFO",
       "confidence": "high",
       "axis": "spec",
       "file": "backend/src/api/middleware.py",
-      "line": 132,
-      "description": "The counter is incremented before `await send(message)`, so a response that fails mid-send is still recorded as served: with a send that raises at http.response.start, request_counter_snapshot() shows {('GET','/health',200): 1}. Minor over-count of successes in the SLO signal.",
-      "fix": "Increment after the await, or accept the over-count and note it."
+      "line": 91,
+      "description": "method_label upper-cases before matching, so the non-RFC lowercase token get is recorded on the GET series. HTTP methods are case-sensitive per RFC 9110 section 9.1, so a lowercase token is not GET and would be rejected or 405d; folding it into the GET series slightly misattributes traffic. Cardinality stays bounded either way, so this is cosmetic. The normalisation is also uncovered: mutating upper = method.upper() to upper = method leaves all 108 tests green.",
+      "measurement": "Mutant applied to middleware.py line 91; 108 passed; reverted",
+      "fix": "Drop the .upper() and match exactly, or keep it and add a case asserting that a lowercase token lands in the other bucket."
+    },
+    {
+      "id": "CR-412",
+      "level": "INFO",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/api/middleware.py",
+      "line": 212,
+      "description": "Behaviour change worth recording: the RED counter used to fire at http.response.start and now fires after the app call returns. For a streaming or long-poll response the request is therefore uncounted until its body completes, and lost from the counter entirely if the process restarts mid-stream. No streaming or long-poll route exists at HEAD, so this is an observation rather than a defect, but it is a real semantic difference for the groups that add them.",
+      "measurement": "Probe with an app that sends response.start then continues: counter written only after the app returns",
+      "fix": "No change now. Revisit when the first streaming route lands (E4 / E6); a request-started counter alongside the completed counter is the usual answer."
+    },
+    {
+      "id": "CR-413",
+      "level": "INFO",
+      "confidence": "medium",
+      "axis": "standards",
+      "file": "backend/tests/architecture/test_observability_contract.py",
+      "line": 161,
+      "description": "Style drift: all four new backend tests import their subjects inside the test body while the module already imports create_app and reset_request_counters at the top. Separately, one of them reaches a private helper, _escape_label, rather than public behaviour. Recording that the coupling is justified rather than a shortcut: no reachable public path can put a quote into a label any more, which is precisely why the exposition-boundary test failed to kill the identity mutant in round 3, so the direct test is the only form that actually covers the escaping.",
+      "measurement": "Read of the four new test bodies; the escaping mutants are killed only by the direct test",
+      "fix": "Move the imports to the module header for consistency. Keep the private-helper test and keep its docstring note about why."
+    },
+    {
+      "id": "CR-414",
+      "level": "INFO",
+      "confidence": "high",
+      "axis": "standards",
+      "file": "frontend/tests/unit/money.test.ts",
+      "line": 147,
+      "description": "Asked to judge flake risk: measured, and it is not a flake risk. format() at 100,001 digits over 20 samples ran 0 ms min, 1 ms median, 3 ms max, an ~80x margin under the 250 ms bound, and the fromWire parse that would dominate is outside the timer at 1 ms. In the kill direction, restoring the quadratic lookahead takes 4,124 ms, a 16x margin over the bound. A CI runner would have to stall the process eighty-fold to produce a false red. A ratio assertion would be sturdier in principle but buys nothing at these margins.",
+      "measurement": "20-sample timing run plus a quadratic-regex mutation of format(); 4124 ms, test failed as intended, mutation reverted",
+      "fix": "No change required."
+    },
+    {
+      "id": "CR-415",
+      "level": "INFO",
+      "confidence": "high",
+      "axis": "spec",
+      "file": "backend/src/api/middleware.py",
+      "line": 104,
+      "description": "Consequence of the scrape exclusion that nothing records: the exclusion is unconditional on status, so a 5xx on the metrics route is counted nowhere. The availability of the observability endpoint itself is now invisible to the RED signal, and the endpoint is the only thing the runtime-SLO sensor reads.",
+      "measurement": "Read of record_request: the exclusion test precedes the increment and ignores status",
+      "fix": "Either keep counting 5xx on the excluded route, or record excluded-route outcomes under a separate metric name so the endpoint own health stays observable."
     },
     {
       "id": "CR-315",
       "level": "INFO",
       "confidence": "medium",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/api/middleware.py",
-      "line": 98,
-      "description": "latency_bucket_bounds() is a single-use getter returning a module constant that routes.py could import directly - a borderline shallow wrapper under code-gen principle 8, kept only to preserve the leading-underscore convention.",
-      "fix": "Leave as is, or export _LATENCY_BUCKETS as LATENCY_BUCKETS and drop the getter."
-    },
-    {
-      "id": "CR-316",
-      "level": "INFO",
-      "confidence": "high",
-      "axis": "standards",
-      "file": "backend/src/api/middleware.py",
-      "line": 159,
-      "description": "_observe is called on both the success and exception branches rather than once in a finally - a duplicated call site; and if _observe itself raised inside the try, the except would record a second observation.",
-      "fix": "Move the single _observe call into a finally block, keeping the exception logging in except."
-    },
-    {
-      "id": "CR-317",
-      "level": "INFO",
-      "confidence": "high",
-      "axis": "spec",
-      "file": "backend/src/api/platform/routes.py",
-      "line": 115,
-      "description": "Refuted, recorded for coverage. zip(..., strict=True) is safe: both lengths derive from the module-level _LATENCY_BUCKETS tuple and observe_duration sizes the list from the same constant. The linear bucket scan (middleware.py:80-83) is not a perf concern - 11 comparisons per request, below measurement noise. Bucket `le` semantics verified correct (0.005 -> bucket 0, 0.0050001 -> bucket 1, 0.5 -> bucket 6, 11.0 and NaN -> +Inf). The exception path was verified to record both a duration and a counter with X-Request-ID present on the 500.",
-      "fix": "No change required."
+      "line": 140,
+      "description": "Carried unchanged: latency_bucket_bounds() is a single-use getter returning a module constant that routes.py could import directly, kept only to preserve the leading-underscore convention.",
+      "measurement": "File diff shows the function untouched",
+      "fix": "Leave as is, or export the tuple as LATENCY_BUCKETS and drop the getter."
     },
     {
       "id": "CR-318",
       "level": "INFO",
       "confidence": "medium",
       "axis": "standards",
+      "carried_from_round": 3,
+      "status": "still-open",
       "file": "backend/src/api/middleware.py",
       "line": 25,
-      "description": "A 7-line paragraph justifies deliberately not unwinding two contextvars on the failure path. The decision is sound and the reason is real, but this is the shape the code-gen paragraph rule warns about.",
-      "fix": "Compress to one line plus the story/finding reference (CR-003, E15-S1-AC4)."
+      "description": "Carried unchanged: the seven-line docstring paragraph justifying not unwinding two contextvars on the failure path. The decision is sound and the reason is real, but this is the shape the paragraph rule warns about, and ab0fd6e added two more paragraphs to the same file (CR-410).",
+      "measurement": "Module docstring byte-identical in ba457bf..f3c25eb",
+      "fix": "Compress to one line plus the story and finding reference (CR-003, E15-S1-AC4)."
     }
+  ],
+  "round3_dispositions": [
+    { "id": "CR-301", "was": "BLOCK", "status": "closed", "evidence": "3000 requests on one keep-alive connection, each with a unique method token and a unique path, against a real uvicorn server on port 8031. http=h11: 1 counter series, 12 histogram lines, 1713-byte /metrics body, 341 KB transient heap growth, 1.61 s; the single series is method=other route=unmatched status=404 count 3000. http=httptools: the parser aborts the connection below the ASGI layer. Round 3 measured 2998 plus 2998 series and a 3553759-byte body on the same rig. Both label dimensions bounded: record_request is the single writer and bounds the method once for both series. Guard mutant method_label to identity is killed." },
+    { "id": "CR-302", "was": "WARN", "status": "downgraded-to-info", "evidence": "Escaping unchanged (CR, NUL, ESC, TAB, U+2028 still pass through), but unreachable: five crafted paths scraped through create_app() yield exactly the label values GET and unmatched, zero raw control characters, no forged series." },
+    { "id": "CR-303", "was": "WARN", "status": "closed", "evidence": "The identity-function mutant that left the escaping at 104 passed now fails test_escape_label_neutralises_exposition_metacharacters (1 failed, 107 passed). Each individual escape mapping (backslash, quote, newline) is independently killed by the same test." },
+    { "id": "CR-304", "was": "WARN", "status": "partly-closed-refiled-as-CR-409", "evidence": "Performance half closed: grouping is linear and correct, verified against an independent reference grouper over 2400 cases plus 11 boundary cases; scaling is 6 ms at 100k digits, 32 ms at 1M, 424 ms at 5M; arithmetic has no second quadratic sink. Contract half still open: the constructor bounds nothing, and POST of the resulting 1e100000 wire value to a live MoneyField model returns 422." },
+    { "id": "CR-305", "was": "WARN", "status": "still-open", "evidence": "logging.py untouched; both disproven sentences verbatim. Third round for a comment-only fix." },
+    { "id": "CR-306", "was": "WARN", "status": "still-open", "evidence": "serializers.py untouched; re-measured live, 12.3 and 12.345 and 0.005 all return 200 against a declared two-decimal pattern." },
+    { "id": "CR-307", "was": "WARN", "status": "still-open", "evidence": "errors.py untouched in ba457bf..f3c25eb." },
+    { "id": "CR-308", "was": "WARN", "status": "still-open", "evidence": "errors.py untouched in ba457bf..f3c25eb." },
+    { "id": "CR-309", "was": "WARN", "status": "still-open", "evidence": "routes.py _database_status still except Exception returning down with no log. Third round for a one-line fix." },
+    { "id": "CR-310", "was": "WARN", "status": "still-open", "evidence": "type: ignore[arg-type] still at logging.py line 91. The fix was applied, type-checked clean and reverted in round 3. Third round." },
+    { "id": "CR-311", "was": "WARN", "status": "still-open", "evidence": "test_log_redaction.py untouched." },
+    { "id": "CR-312", "was": "WARN", "status": "still-open-proved-vacuous", "evidence": "Every latency bucket bound replaced with 1e-12 while keeping 0.5, so p95 lands in the plus-Inf bucket above the SLO boundary; the file still passed 10 tests. Third round for a one-line fix." },
+    { "id": "CR-313", "was": "WARN", "status": "still-open", "evidence": "conftest.py has zero references to reset_request_counters." },
+    { "id": "CR-314", "was": "INFO", "status": "re-derived-escalated-to-CR-401", "evidence": "The code round 3 described is gone, but the defect is not. seen.append(status) still precedes await send(message): with a downstream send raising ConnectionResetError at http.response.start, the counter records 200 while the client received 500 and nothing reached the wire. Re-derived from scratch; eight request-accounting paths measured, listed in the report." },
+    { "id": "CR-315", "was": "INFO", "status": "still-open", "evidence": "latency_bucket_bounds() untouched." },
+    { "id": "CR-316", "was": "INFO", "status": "escalated-to-CR-402", "evidence": "The RED counter moved into _observe, so the duplicated call site can now double-count the SLO numerator. Measured: one request produced http_requests_total 2 with http_request_duration_seconds_count 1." },
+    { "id": "CR-317", "was": "INFO", "status": "closed", "evidence": "Refutation stands; zip strict remains safe and bucket le semantics unchanged. No change required." },
+    { "id": "CR-318", "was": "INFO", "status": "still-open", "evidence": "Module docstring unchanged, and two further paragraphs were added to the same file (CR-410)." }
   ]
 }

@@ -1,112 +1,66 @@
-# Security Review — ai-native-capstone-truelend — /gate --group A round 3
+# Security Review — TrueLend Group A, round 4, security instance 1 of 3 — 2026-09-14
 
-**Date:** 2026-09-14 · **HEAD:** `ba457bf` · **Range:** `14e9487..HEAD` · **Reviewer:** security-reviewer instance 1/3 (canonical)
+Target commit f3c25eb. Scope: the two remediation commits since round 3 (ab0fd6e bound the method label and made grouping linear; f3c25eb stopped the metrics scrape diluting its own error rate) plus immediate data-flow neighbours. Both HTTP parsers present (h11 0.16.0, httptools 0.8.0). Baseline suite: 108 passed. Every claim is backed by an executed request or command.
 
 ## Summary
+- BLOCK findings: 0
+- WARN findings: 3
+- INFO findings: 5
+- Overall verdict: PASS (0 BLOCK-level vulnerability)
 
-- BLOCK findings: **0**
-- WARN findings: **6**
-- INFO findings: **4** (+2 fixed items retained as INFO for the record)
-- **Overall verdict: PASS** (no critical/high finding on a reachable path)
+## Remediation verified closed (by attack)
 
-Both round-2 security BLOCKs (`B-1` metrics injection, `B-2` unbounded cardinality) are
-**genuinely closed by execution**, and the SEC-103 partial (`SEC-003`) is closed. The
-remaining findings are WARN-latent or INFO. Nothing in the group-A change set is exploitable
-today, so the security gate does not block the merge. Two WARNs (`SEC-201`, `SEC-202`) are
-timed to become BLOCKs the instant the E4-S1 / E1-S1 handlers land, and must be fixed first.
+### CR-301 method-label cardinality bound — CLOSED under BOTH parsers
+Output domain of method_label() is provably the 9 ASCII constants + <other>; no attacker string is ever returned (Unicode .upper() expansions map to a known bucket or <other>).
+- In-process: 22,003 distinct method tokens via the shipped record_request path -> 1 counter series, 1 duration series, 1,348 bytes retained (round 3: 25.3 MB). Known methods keep their own labels.
+- Live h11 (port 8021): 3,000 distinct tchar method tokens over one keep-alive connection -> all collapsed to method="<other>"; /metrics body 3.6 KB.
+- Live httptools (port 8022): BOGUSMETHOD /health -> 400 below the ASGI layer; 20 distinct bogus methods produced zero counter series.
 
-**Coverage caveat:** the computational tier is unprovisioned — gitleaks, semgrep and
-pip-audit are absent and skipped, so the SAST and secrets tiers are **UNSCANNED, not passed**.
-This inferential review is the only real coverage for the injection/authz/PII classes this
-round. `npm audit`: 1 critical (vitest) + 1 high (vite), both devDependency-only, absent from
-any production image — out of scope for a runtime finding.
+### B-1 /metrics exposition injection — CLOSED
+Labels are the bucketed method (a constant) and the matched route template or <unmatched>; the raw path never reaches a label. Live h11 attacks with percent-encoded quote/newline/CRLF payloads all returned 404 and collapsed to route="<unmatched>"; post-attack body had no forged/injected/admin token, no raw CR (0x0d), no NUL. Could neither forge a series nor mask an outage.
 
-## Priority 1 — round-2 remediation BLOCKs, re-tested at HEAD
-
-### B-1 `/metrics` exposition injection — FIXED (INFO residual)
-
-Reproduction attempt against a live server on port 8034 (raw sockets):
-- Round-2 vector `GET /%22%7D%201%0Ahttp_requests_total%7B...%7D%209999%0A` → **404**, folded
-  into the bounded `route="<unmatched>"` series. No forged `http_requests_total{...status="500"}`
-  series appeared in `/metrics`.
-- `slo-check.js --url http://127.0.0.1:8034` → `{"verdict":"pass","error_rate_pct":0}` against
-  the 1% budget (round 2 drove this to 99.90%).
-- Label channels enumerated: **route** is the matched template (`/health`, `/metrics`) or the
-  constant `<unmatched>` — never attacker data. **status** is an int. **method** is filtered by
-  the httptools/llhttp parser: a method containing CR (`GET\r`), a double-quote (`GE"T`), a
-  backslash, or an unknown token (`FOOBAR`, `GET_PARAMETER`) all return **400** before the
-  counter runs. Only parser-known method tokens (`M-SEARCH`, `PROPFIND`, `QUERY`, `ACL`,
-  `PURGE`, …) reach the counter, and those contain no control characters.
-
-**Residual (INFO, defence-in-depth):** `_LABEL_ESCAPES` still omits carriage return and the
-other C0 control characters the pack flagged. This is unreachable given the parser filter above,
-but the control is one parser-swap away from mattering. Escape/reject all C0 controls.
-
-### B-2 `/metrics` unbounded cardinality — FIXED
-
-Measured: 1500 GETs to distinct unmatched paths (`/nope-N-<rand>`) → the counter series count
-stayed at **8** and the `http_request_duration_seconds_count` series count stayed at **8**; all
-1500 collapsed into `route="<unmatched>"` (count 1501). `route_label()` returns the matched
-template or the single `<unmatched>` bucket, and the new histogram dicts `_duration_counts` /
-`_duration_totals` key on `(method, route_label(scope))`, inheriting that bound. The **method**
-component does not re-open growth: unknown method tokens are rejected 400 by the parser, so
-method is confined to llhttp's fixed method table.
-
-## Priority 2 — carried findings re-judged at HEAD
-
-| Finding | Disposition | Evidence |
-|---|---|---|
-| **SEC-003** sanitise_context int/key PII (SEC-103) | **FIXED (INFO)** | int Aadhaar → `[REDACTED]`; Aadhaar as key → `[REDACTED]`; `pan-ABCDE1234F` key → `pan-[REDACTED]`; str PAN → `[REDACTED]`; bool passes through harmlessly |
-| **Redaction bypass by formatting** (SEC-201) | **WARN (latent)** | Live `scrub_text` LEAKS dot/underscore/slash-separated, NBSP, zero-width and fullwidth variants. **Zero production call sites** of `register_sensitive`/`redact_values` in `backend/src` (ba457bf added them only to the E4-S1/E1-S1 *specs*), so no real PII flows yet. Becomes BLOCK when those handlers are built. |
-| **X-Request-ID** unvalidated/unbounded (SEC-203) | **WARN** | 16 KB id accepted, reflected verbatim, logged verbatim in the `request_id` field. No CRLF/log injection (parser rejects CR/LF; `json.dumps` escapes controls). |
-| **Host-header open redirect** (SEC-204) | **WARN** | `GET /health/` + `Host: evil.example` → `307 Location: http://evil.example/health` (Starlette `redirect_slashes`) |
-| **Public `/docs` `/openapi.json` `/redoc`** (SEC-207) | **INFO** | all 200; minimal surface in group A |
-| **Missing security headers** (SEC-205) | **WARN** | `/health` has no CSP / X-Frame-Options / X-Content-Type-Options / HSTS |
-| **PII retained as lru_cache keys** (SEC-202) | **WARN (latent)** | `_redaction_pattern` `@lru_cache(maxsize=256)` keyed on the raw sensitive value; retains up to 256 PII strings for process lifetime once call sites exist |
-| **`/metrics` no auth** (SEC-208) | **INFO — deferral defensible** | Content is bounded RED counters + latency histogram, no PII/secrets/injectable series; E15-S4 Scope Out defers auth to E1-S1 (group B) |
-| **`Money.multiply` bare `decimal.Overflow`** | not re-filed | Backend correctness/perf; no attacker-reachable path in group A (no route constructs Money from request input yet). Track with E9. |
-| **money.ts thousands-separator regex** (SEC-206) | **WARN** | Quadratic: 20k digits 157 ms, 50k digits 1008 ms; unbounded magnitude reaches `format()` → client-side DoS |
-
-## BLOCK Findings
-
-None.
+### B-4 money.ts ReDoS — CLOSED
+f3c25eb replaced the quadratic lookahead with a linear forward walk. No dangerouslySetInnerHTML/innerHTML in changed frontend; MoneyText.tsx uses JSX text interpolation (React auto-escaping). No XSS.
 
 ## WARN Findings
 
-- **SEC-201** — redaction defeated by formatting (`backend/src/config/logging.py:102`). Latent
-  (no call sites); escalates to BLOCK with E4-S1/E1-S1. Fix: NFKC-normalize + strip zero-width/
-  formatting chars before matching.
-- **SEC-202** — PII retained as `lru_cache` keys (`backend/src/config/logging.py:102`). Cache on
-  a non-sensitive derived key or drop the cache.
-- **SEC-203** — `X-Request-ID` unvalidated/unbounded (`backend/src/api/middleware.py:151`).
-  Enforce a bounded charset/length; regenerate on failure.
-- **SEC-204** — host-header-reflected open redirect (`backend/src/api/app.py:36`). Disable
-  `redirect_slashes` or build Location from a configured canonical host.
-- **SEC-205** — missing security response headers (`backend/src/api/app.py:42`). Add nosniff,
-  frame protection, HSTS.
-- **SEC-206** — quadratic `Money.format()` regex (`frontend/src/types/money.ts:78`). Bound
-  integer length or use a linear formatter.
+### [SEC3-003] Unauthenticated caller can still mask a real SLO breach
+File: backend/src/api/middleware.py:95-115; root cause .claude/hooks/lib/prom-parse.js:37-90. Severity: medium (WARN).
+f3c25eb excludes only /metrics from its own counters. errorRate() and histogramP95() still sum globally across every route, and /health is unauthenticated with no rate limit. Proven with the real sensor code: a true 50% outage (errorRate 50.0000%, p95 500 ms, both BREACH the 1%/500ms budgets) drops to 0.9804% and 4.8 ms (both under budget) after 5,000 fast /health 200s an anonymous caller can trivially generate — outage and latency fully MASKED. Residual severity medium. Not a BLOCK for this diff: the diff strictly improved matters, the true fix (per-route aggregation) is in the untouched harness file, and auth/rate-limiting are documented deferrals to group B.
+Fix: aggregate the SLI per business route; add rate limiting with the auth layer.
+
+### [CR-308] DB credentials egress verbatim through error detail
+File: backend/src/api/errors.py:104-123 (_envelope), :45 (_CREDENTIAL_URI). Severity: medium (WARN).
+A credential URI in a context value is dropped by _CREDENTIAL_URI ({"db":"postgresql://admin:S3cr3tPass@..."} -> context {}), but the identical URI in detail egresses verbatim — detail passes only through the inert scrub_text, never the guard. Proven: _envelope(400,"BadRequest","connect failed to postgresql://admin:S3cr3tPass@dbhost:5432",{...}) returned detail with creds intact. Asymmetric protection in a changed file. Latent at HEAD (no AppError is raised; handle_unexpected returns a static string) -> WARN.
+Fix: run detail through the same credential-URI guard and length cap in _envelope.
+
+### [F-1] PII redaction is inert
+File: backend/src/config/logging.py:74-142; backend/src/api/errors.py:66-101. Severity: medium (WARN).
+register_sensitive/redact_values have zero production call sites, so scrub_text/RedactionFilter never redact. With an empty scope, sanitise_context egressed a 12-digit Aadhaar int (234512345612), a PAN in a context key (pan-ABCDE1234F), and a PAN in a value — all verbatim. Dead subsystem giving false coverage. Latent (no business PII flows in the change set; those arrive group B/E) -> WARN; rises to BLOCK once business code handles PAN/Aadhaar and relies on this without calling register_sensitive.
+Fix: wire register_sensitive(...) at the PII-introducing operations; normalise-then-match in the sanitiser.
 
 ## INFO Findings
 
-- **B-1 residual** — `_escape_label` omits `\r`/C0 controls (unreachable today).
-- **SEC-207** — public `/docs` `/redoc` `/openapi.json`.
-- **SEC-208** — `/metrics` unauthenticated (documented, defensible deferral).
-- **SEC-209** — `HEAD /health` → 405 (compatibility, not security).
+### [CR-302] _escape_label passes raw CR/TAB/NUL/BEL/ESC/DEL
+File: backend/src/api/platform/routes.py:78-83. Severity: low (INFO). Confirmed UNREACHABLE at HEAD: no attacker string reaches a label (method -> constant, route -> template/<unmatched>). Live CRLF-path attack produced no raw CR in the body. Defense-in-depth gap only. Fix: escape all control characters.
 
-## Method notes / what I could not test
+### [SEC-OBS] observe_duration unbounded on method dimension if called directly
+File: backend/src/api/middleware.py:107-128. Severity: low (INFO). record_request bounds method first; called directly with raw methods, observe_duration produced 22,003 series / 12.3 MB. Not reachable over HTTP. Fix: bound inside observe_duration so the invariant is not caller-dependent.
 
-- Live testing used a throwaway uvicorn on **port 8034** (httptools/llhttp protocol, confirmed
-  via `Config.load()`); server killed and port confirmed free; all scratch removed.
-- **Two sibling instances mutated production files mid-review** (`routes.py:83` `_escape_label`
-  neutralised to `return value`, `middleware.py:63` `route_label` changed to the raw path,
-  each tagged `# MUTANT`). These are concurrent mutation-test artifacts, **not part of HEAD**. I
-  restored both from `git checkout` and re-derived every verdict against the true HEAD code;
-  `git status` for both files is clean. Untracked `backend/.eval-i3/`, `backend/sec3_probe.py`,
-  `frontend/.eval-i3/`, `frontend/tests/unit/_eval_i2_b4.test.ts` belong to siblings and were
-  left untouched.
-- **UNSCANNED:** SAST (semgrep) and secrets (gitleaks) tiers — tools unprovisioned. Python
-  dependency CVEs (pip-audit) — unprovisioned. These classes have only inferential coverage.
-- The `X-Request-ID` "5 MB accepted" round-2 claim did not reproduce here — httptools rejects a
-  200 KB header; 16 KB was the largest I confirmed accepted. The finding stands on the 16 KB
-  reproduction.
+### [AUTHZ] /health and /metrics unauthenticated
+File: backend/src/api/platform/routes.py:63-129. Severity: low (INFO). Documented, ratified deferral (E15-S4 Scope Out; auth arrives E1-S1 group B). Anonymous disclosure at HEAD: /health -> version 0.1.0, DB liveness, status; /metrics -> route templates (API surface), per-route/status counts, latency histogram (traffic volume/timing). Low sensitivity given the minimal surface today.
+
+### [REQID] X-Request-ID reflected and logged verbatim
+File: backend/src/api/middleware.py:171-176, 203-204. Severity: low (INFO). PAN-format id echoed verbatim and logged unredacted (redaction inert); it is the callers own data. Oversized bounded — 100 KB id -> 400 at the server header limit (round-2 5 MB accepted no longer reproduces). Fix: validate id charset/length.
+
+### [PRE-EXISTING] Unchanged network-adjacent WARNs
+Not touched by these commits, out of scope, noted for continuity: public /docs and /openapi.json, missing security headers (CSP/X-Frame-Options/X-Content-Type-Options), host-header-reflected open redirect. No regression introduced.
+
+## Classes NOT covered — UNSCANNED, not clean
+- Secrets scan (gitleaks): unprovisioned — UNSCANNED.
+- SAST (semgrep): unprovisioned — UNSCANNED.
+- Python dependency CVEs (pip-audit): unprovisioned — UNSCANNED. (npm audit: 1 critical + 1 high, all devDependency-only, absent from prod images.)
+The clean security-scan.json is not evidence for these tiers.
+
+## Verdict rationale
+Every round-2/3 BLOCK is closed by execution; the two new commits add only bounded, constant-domain labels and a linear formatter. The three WARNs are latent or architectural (root causes in untouched harness code or deferred to group B), and the diff strictly improved matters. No finding survives adversarial refutation as a reachable, unmitigated attacker path at HEAD. Security axis: PASS.

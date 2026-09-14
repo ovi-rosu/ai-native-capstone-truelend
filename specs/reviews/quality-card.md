@@ -1,18 +1,18 @@
 # Quality card
 
-Generated: 2026-09-14T13:37:46.247Z
+Generated: 2026-09-14T14:43:57.147Z
 Range: `14e9487..HEAD`
 
-**Overall: FAIL** — 7 pass · 3 fail · 0 missing · 4 skipped
+**Overall: FAIL** — 8 pass · 2 fail · 0 missing · 4 skipped
 
 | Check | Status | Detail |
 |---|---|---|
-| evaluator | ❌ fail | — |
-| code_review | ❌ fail | [object Object] |
+| evaluator | ✅ pass | — |
+| code_review | ✅ pass | [object Object] |
 | security | ✅ pass | [object Object] |
 | security_scan | ❓ unknown | — |
 | ownership | ❌ fail | — |
-| regression | ✅ pass | pass |
+| regression | ❌ fail | blocked |
 | verification_matrix | ✅ pass | — |
 | evidence_integrity | ✅ pass | no sprint contract declares playwright checks — nothing to verify |
 | observability | ✅ pass | [object Object] |

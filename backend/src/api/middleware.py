@@ -92,26 +92,34 @@ def method_label(method: str) -> str:
     return upper if upper in _KNOWN_METHODS else _OTHER_METHOD
 
 
-# The observability endpoint is excluded from its own RED counters. The SLO
-# sensor's errorRate sums *every* http_requests_total series globally
-# (.claude/hooks/lib/prom-parse.js), so a frequent scraper dilutes the business
-# error rate purely by observing -- the reviewers showed a real 50% outage
-# reading 0.0100% and passing the 1% budget (SEC3-003). Excluding the scrape
-# removes the self-observation component; it does not close the finding, since
-# any public route still contributes. The full fix is per-route aggregation,
-# which lives in that harness file. Durations are still observed, so p95 for
-# the endpoint stays visible.
+# The observability endpoint is excluded from BOTH of its own series. The SLO
+# sensor aggregates globally with no per-route dimension
+# (.claude/hooks/lib/prom-parse.js), reading errorRate from
+# http_requests_total and p95 from http_request_duration_seconds, so a frequent
+# scraper dilutes either one purely by observing (SEC3-003).
+#
+# The first attempt excluded the counter only and left the histogram, which
+# fixed the wrong half: a fast scrape still dragged p95 down, and it no longer
+# left even a trace in the counters. Measured p95 of 5 ms against a real
+# business p95 of 4,875 ms on a 500 ms budget -- under-reporting a breach by
+# ~1000x, on the one metric E15-S4 exists to make measurable.
+#
+# This still does not close SEC3-003: any public route contributes to both
+# aggregates. The full fix is per-route aggregation, which lives in that
+# harness file.
 _SLI_EXCLUDED_ROUTES = frozenset({"/metrics"})
 
 
 def record_request(method: str, route: str, status: int, seconds: float) -> None:
     """Record one served request: the RED counter and the duration observation.
 
-    Single entry point so the method label is bounded once, for both series.
+    Single entry point so the method label is bounded once and the
+    observability route is excluded once, for both series rather than one.
     """
+    if route in _SLI_EXCLUDED_ROUTES:
+        return
     label = method_label(method)
-    if route not in _SLI_EXCLUDED_ROUTES:
-        _request_counts[label, route, status] += 1
+    _request_counts[label, route, status] += 1
     observe_duration(label, route, seconds)
 
 

@@ -1,14 +1,14 @@
 {
   "gate": "quality-card",
   "pass": false,
-  "generated_at": "2026-09-14T13:37:46.247Z",
+  "generated_at": "2026-09-14T14:43:57.147Z",
   "range": "14e9487..HEAD",
   "checks": [
     {
       "key": "evaluator",
       "file": "evaluator-report.md",
-      "status": "fail",
-      "pass": false,
+      "status": "pass",
+      "pass": true,
       "optional": false,
       "detail": null,
       "summary": null
@@ -16,18 +16,18 @@
     {
       "key": "code_review",
       "file": "code-review-verdict.json",
-      "status": "fail",
-      "pass": false,
+      "status": "pass",
+      "pass": true,
       "optional": false,
       "detail": {
-        "block": 1,
-        "warn": 12,
-        "info": 5
+        "block": 0,
+        "warn": 18,
+        "info": 9
       },
       "summary": {
-        "block": 1,
-        "warn": 12,
-        "info": 5
+        "block": 0,
+        "warn": 18,
+        "info": 9
       }
     },
     {
@@ -38,8 +38,8 @@
       "optional": true,
       "detail": {
         "block": 0,
-        "warn": 6,
-        "info": 4
+        "warn": 3,
+        "info": 5
       },
       "summary": null
     },
@@ -64,10 +64,10 @@
     {
       "key": "regression",
       "file": "regression-gate-verdict.json",
-      "status": "pass",
-      "pass": true,
+      "status": "fail",
+      "pass": false,
       "optional": true,
-      "detail": "pass",
+      "detail": "blocked",
       "summary": null
     },
     {
@@ -161,8 +161,8 @@
     "specs/reviews/walkthrough.md"
   ],
   "summary": {
-    "pass": 7,
-    "fail": 3,
+    "pass": 8,
+    "fail": 2,
     "missing": 0,
     "skipped": 4
   }
