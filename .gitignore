@@ -59,6 +59,10 @@ coverage/
 # below — caches, indexes, logs, counters, and *.jsonl ledgers. All scoped to
 # .claude/state/ so real project data (e.g. a data/*.jsonl fixture) is never hit.
 .claude/runs/
+# Per-instance review checkouts created by /gate. These are full nested git
+# repositories: a `git add -A` swept seven of them into a commit as embedded
+# repos, which clones cannot resolve.
+.claude/worktrees/
 .claude/state/archive/
 .claude/state/context-cache/
 .claude/state/tool-output/
