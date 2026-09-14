@@ -17,4 +17,16 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(AppError)
     async def _handle_app_error(request: Request, exc: AppError) -> JSONResponse:
-        return JSONResponse(status_code=exc.status_code, content={"error": exc.message})
+        # One shape for every non-2xx response, per api-contracts.md:
+        # {"error": "<ErrorName>", "detail": "<message>", "context": {...}}.
+        # The earlier body put the *message* under "error" and omitted the
+        # other two keys, which E4-S4 needs to read threshold_kind and
+        # configured_value from.
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": exc.error,
+                "detail": exc.message,
+                "context": exc.context,
+            },
+        )

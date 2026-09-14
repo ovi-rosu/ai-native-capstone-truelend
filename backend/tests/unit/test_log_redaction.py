@@ -113,17 +113,20 @@ def test_health_endpoint_returns_ok_json_under_one_second(client: TestClient) ->
 def test_app_error_is_mapped_to_a_typed_json_response() -> None:
     """Coverage for api/errors.py: AppError is mapped once at the API
     boundary to a JSON body carrying its message, at its status code."""
-    app = create_app()
+    from src.api.app import build_fastapi_app
 
-    @app.get("/_test-only-raises")
+    inner = build_fastapi_app()
+
+    @inner.get("/_test-only-raises")
     def _raise_app_error() -> None:
         raise AppError("boom", status_code=418)
 
-    with TestClient(app, raise_server_exceptions=False) as test_client:
+    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
         response = test_client.get("/_test-only-raises")
 
     assert response.status_code == 418
-    assert response.json() == {"error": "boom"}
+    # Envelope per api-contracts.md, not the old {"error": <message>} shape.
+    assert response.json() == {"error": "AppError", "detail": "boom", "context": {}}
 
 
 def test_uvicorn_loggers_do_not_bypass_json_formatting() -> None:
@@ -320,3 +323,123 @@ def test_redaction_filter_covers_every_logger_under_the_real_server_config() -> 
     ]
 
     assert not missing, f"loggers without a RedactionFilter: {missing}"
+
+
+def test_unhandled_exception_response_still_carries_the_correlation_id() -> None:
+    """CR-003 / E15-S1-AC4 on the path that matters most.
+
+    The correlation middleware wrote the header and emitted the access line
+    only after `await call_next(request)` returned, with just the contextvar
+    reset in `finally`. An unhandled exception ran neither, so a 500 came
+    back with no `X-Request-ID` and left no access-log record — the one case
+    an operator needs to correlate.
+
+    A `BaseHTTPMiddleware` cannot fix this: Starlette's
+    `ServerErrorMiddleware` builds the 500 *outside* user middleware, and an
+    `app.exception_handler(Exception)` is bound to it, by which point the
+    contextvar is already reset. The correlation middleware is therefore a
+    pure-ASGI wrapper mounted outside `ServerErrorMiddleware`, stamping the
+    header on `http.response.start` whoever produced it.
+    """
+    from src.api.app import build_fastapi_app, create_app
+
+    inner = build_fastapi_app()
+
+    @inner.get("/_test-only-explodes")
+    def _explode() -> None:
+        raise RuntimeError("unhandled")
+
+    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
+        response = test_client.get(
+            "/_test-only-explodes", headers={"X-Request-ID": "req-500"}
+        )
+
+    assert response.status_code == 500
+    assert response.headers.get("X-Request-ID") == "req-500", (
+        "a 500 response must still echo the correlation id"
+    )
+
+
+def test_unhandled_exception_still_emits_an_access_log_line() -> None:
+    """The 500 must leave an access-log record carrying the correlation id."""
+    from src.api.app import build_fastapi_app, create_app
+    from src.config.logging import JSONLogFormatter
+
+    inner = build_fastapi_app()
+
+    @inner.get("/_test-only-explodes-logged")
+    def _explode() -> None:
+        raise RuntimeError("unhandled")
+
+    handler = ListLogHandler()
+    handler.setFormatter(JSONLogFormatter())
+    root = logging.getLogger()
+    root.addHandler(handler)
+    try:
+        with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
+            test_client.get(
+                "/_test-only-explodes-logged", headers={"X-Request-ID": "req-501"}
+            )
+    finally:
+        root.removeHandler(handler)
+
+    access_lines = [
+        json.loads(line)
+        for line in handler.lines
+        if json.loads(line).get("logger") == "truelend.access"
+    ]
+    assert access_lines, "no access-log line was emitted for the failing request"
+    assert any(
+        entry["request_id"] == "req-501" and "500" in entry["message"]
+        for entry in access_lines
+    ), f"access lines did not record the 500 with its correlation id: {access_lines}"
+
+
+def test_error_response_matches_the_frozen_contract_envelope() -> None:
+    """Defect 1: the landed envelope contradicts the frozen contract.
+
+    `specs/design/api-contracts.md:27` mandates one shape for every non-2xx
+    response — `{"error": "<ErrorName>", "detail": "<message>",
+    "context": {...}}` — but the handler emitted `{"error": exc.message}`,
+    putting the *message* where the error *name* belongs and omitting both
+    other fields. The contract is frozen, so the code is what is wrong.
+    E4-S4-AC2 needs `threshold_kind` and `configured_value` in `context`.
+    """
+    from src.api.app import build_fastapi_app, create_app
+
+    inner = build_fastapi_app()
+
+    @inner.get("/_test-only-app-error")
+    def _raise_app_error() -> None:
+        raise AppError(
+            "declared income is below the minimum",
+            status_code=422,
+            context={"threshold_kind": "min_income", "configured_value": "25000.00"},
+        )
+
+    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
+        response = test_client.get("/_test-only-app-error")
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "error": "AppError",
+        "detail": "declared income is below the minimum",
+        "context": {"threshold_kind": "min_income", "configured_value": "25000.00"},
+    }
+
+
+def test_error_envelope_context_defaults_to_empty() -> None:
+    """An error raised without context still ships all three keys."""
+    from src.api.app import build_fastapi_app, create_app
+
+    inner = build_fastapi_app()
+
+    @inner.get("/_test-only-bare-error")
+    def _raise_bare() -> None:
+        raise AppError("boom", status_code=418)
+
+    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
+        response = test_client.get("/_test-only-bare-error")
+
+    assert response.status_code == 418
+    assert response.json() == {"error": "AppError", "detail": "boom", "context": {}}
