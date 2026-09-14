@@ -1,13 +1,13 @@
 # PR walkthrough
 
-Generated: 2026-09-14T11:05:15.107Z
-Files changed: **153**
+Generated: 2026-09-14T12:15:23.638Z
+Files changed: **162**
 
 ## Intent
 
-# Review Context Pack — /gate --group A (fresh re-run) **This pack supersedes the 2026-09-14T09:37 pack.** That pack described commit `e147f7e`. Every BLOCK it produced has since been fixed in three commits, and the stored verdicts (`code-review-verdict.json`, `security-verdict.json`, `evaluator-report.md`, `quality-card.json`, `.claude/state/gate-receipt.json`) all predate those fixes and read `p
+# Review Context Pack — /gate --group A (round 2) / **Gate lane:** on-demand pre-merge (`/gate`) / **Generated:** 2026-09-14 (session 5) ## 1. Request / scope | Field | Value | |---|---| | Group | A | | Stories | E15-S1 (platform logging + health), E9-S1 (Money value type), E11-S1 (delinquency bucket) | | Sprint contract | `sprint-contracts/A.json` (FROZEN — do not edit) |
 
-Stories: `E15-S1`, `E9-S1`, `E11-S1`, `E15-S2`
+Stories: `E15-S1`, `E9-S1`, `E11-S1`, `E1-S1`, `E15-S2`
 
 ## Story / slice groups
 
@@ -16,30 +16,38 @@ _Grouped from `component-map.md`. Each slice sits next to the matching `program-
 ### Slice `E15-S1`
 
 - `backend/src/api/app.py`
-  - 🟠 **WARN** (medium): CR-022
+  - ⚪ **undefined** (high): CR2-W08
 - `backend/src/api/errors.py`
-  - 🔴 **BLOCK** (high): CR-001
+  - ⚪ **undefined** (high): CR2-002
+  - ⚪ **undefined** (high): CR2-I02
+  - ⚪ **undefined** (high): CR2-I04
+  - ⚪ **undefined** (high): CR2-I05
 - `backend/src/api/middleware.py`
-  - 🟠 **WARN** (medium): CR-010
+  - ⚪ **undefined** (high): CR2-001
+  - ⚪ **undefined** (high): CR2-W06
+  - ⚪ **undefined** (high): CR2-I01
 - `backend/src/api/platform/routes.py`
-  - 🟠 **WARN** (high): CR-004
-  - 🟠 **WARN** (medium): CR-005
+  - ⚪ **undefined** (high): CR2-W01
+  - ⚪ **undefined** (high): CR2-W07
+  - ⚪ **undefined** (medium): CR2-W12
+  - ⚪ **undefined** (high): CR2-W13
+  - ⚪ **undefined** (high): CR2-I03
 - `backend/src/config/logging.py`
-  - 🔴 **BLOCK** (high): CR-002
-  - 🟠 **WARN** (high): CR-008
-  - 🟠 **WARN** (medium): CR-009
-  - 🟠 **WARN** (medium): CR-011
-  - 🟠 **WARN** (medium): CR-012
+  - ⚪ **undefined** (high): CR2-W02
+  - ⚪ **undefined** (medium): CR2-W09
+  - ⚪ **undefined** (high): CR2-W10
+  - ⚪ **undefined** (medium): CR2-W16
 - `backend/src/config/settings.py`
-  - 🟠 **WARN** (high): CR-007
 - `backend/src/types/errors.py`
 - `backend/tests/conftest.py`
+- `backend/tests/unit/test_correlation_id.py`
+  - ⚪ **undefined** (high): CR2-I06
+- `backend/tests/unit/test_error_envelope.py`
+- `backend/tests/unit/test_health_probe.py`
+  - ⚪ **undefined** (high): CR2-W05
 - `backend/tests/unit/test_log_redaction.py`
-  - 🟠 **WARN** (high): CR-017
-  - 🟠 **WARN** (medium): CR-018
-  - 🟠 **WARN** (medium): CR-019
-  - 🟠 **WARN** (high): CR-020
-  - 🟠 **WARN** (high): CR-023
+  - ⚪ **undefined** (high): CR2-W03
+  - ⚪ **undefined** (high): CR2-W04
 
 **Program design (this slice)**
 
@@ -96,19 +104,14 @@ PolicyVersionRepository.activate(policy_versi
 ### Slice `E9-S1`
 
 - `backend/src/api/serializers.py`
-  - ⚪ **INFO** (high): CR-027
+  - ⚪ **undefined** (high): CR2-W11
 - `backend/src/types/money.py`
-  - 🟠 **WARN** (high): CR-006
-  - 🟠 **WARN** (medium): CR-016
-  - ⚪ **INFO** (high): CR-025
-  - ⚪ **INFO** (high): CR-026
 - `backend/tests/architecture/test_no_float_money.py`
-  - 🔴 **BLOCK** (high): CR-003
 - `frontend/src/types/money.ts`
-  - 🟠 **WARN** (medium): CR-015
+  - ⚪ **undefined** (high): CR2-W15
+  - ⚪ **undefined** (medium): CR2-I08
 - `frontend/src/ui/components/MoneyText.tsx`
 - `frontend/tests/unit/money.test.ts`
-  - 🟠 **WARN** (medium): CR-014
 
 **Program design (this slice)**
 
@@ -131,8 +134,6 @@ ApplicationStatus          = SUBMITTED | AWAITING_DOCUMENTS | UNDER_REVIEW | MAN
 ### Slice `E11-S1`
 
 - `backend/src/config/delinquency.py`
-  - 🟠 **WARN** (high): CR-013
-  - ⚪ **INFO** (high): CR-028
 - `backend/src/types/delinquency.py`
 - `backend/tests/unit/test_bucket_ladder.py`
 
@@ -247,10 +248,11 @@ PolicyVersionRepository.activate(policy_versi
 - `.claude/state/task-envelope-history/8914ad672f478b7a255bfa5bae84a4f42f262d43034b9944be6525ac67b9e330.json`
 - `.claude/state/task-envelope-history/b24a95b810c8614edc100467573c4435f8ec62962945fb944182f44df8a260f8.json`
 - `.claude/state/task-envelope-history/ebce3b61ee635eb8cc8f12d7b9694b33b719a76c5e05eeaa634f09bc416b8f7e.json`
+- `.claude/state/task-envelope-history/eda892d10c64151b32bbc2480478f10210ff8346da6a9d222f34b97ad71a715d.json`
+- `.claude/state/task-envelope-history/fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404.json`
 - `.claude/state/task-envelope.json`
 - `.claude/state/work-claims/group__A.json`
 - `backend/src/__init__.py`
-  - 🟠 **WARN** (medium): CR-021
 - `backend/tests/__init__.py`
 - `claude-progress.txt`
 - `docs/CODEBASE.md`
@@ -258,7 +260,6 @@ PolicyVersionRepository.activate(policy_versi
 - `frontend/eslint.config.js`
 - `frontend/package.json`
 - `frontend/tsconfig.json`
-  - ⚪ **INFO** (high): CR-030
 - `frontend/vite.config.ts`
 - `specs/brownfield/code-graph.json`
 - `specs/brownfield/code-graph.meta.json`
@@ -291,7 +292,9 @@ PolicyVersionRepository.activate(policy_versi
 - `specs/bundles/E9-S1.json`
 - `specs/bundles/E9-S2.json`
 - `specs/bundles/E9-S3.json`
+- `specs/design/amendments/group-a-gate-remediation.md`
 - `specs/design/amendments/group-a-implementation-sync.md`
+- `specs/design/component-map.md`
 - `specs/design/reasons-canvas.md`
 - `specs/reviews/canvas-semantic-review.md`
 - `specs/reviews/canvas-sync-check.md`
@@ -299,6 +302,7 @@ PolicyVersionRepository.activate(policy_versi
 - `specs/reviews/code-review-verdict.json`
 - `specs/reviews/code-review.md`
 - `specs/reviews/contract-freeze.json`
+- `specs/reviews/design-approval.json`
 - `specs/reviews/eval-failures-001.json`
 - `specs/reviews/evaluator-evidence-instance2.json`
 - `specs/reviews/evaluator-evidence-instance3.json`
@@ -316,6 +320,7 @@ PolicyVersionRepository.activate(policy_versi
 - `specs/reviews/plan-seal.json`
 - `specs/reviews/quality-card.json`
 - `specs/reviews/quality-card.md`
+- `specs/reviews/regression-gate-verdict-nobaseline.json`
 - `specs/reviews/regression-gate-verdict.json`
 - `specs/reviews/reverify-votes.json`
 - `specs/reviews/review-context-pack.md`
@@ -361,7 +366,6 @@ PolicyVersionRepository.activate(policy_versi
 - `specs/stories/E7-S1.md`
 - `specs/stories/E8-S1.md`
 - `specs/stories/E9-S1.md`
-  - ⚪ **INFO** (high): CR-029
 - `specs/stories/E9-S2.md`
 - `specs/stories/E9-S3.md`
 - `specs/test_artefacts/test-plan.md`
@@ -445,40 +449,42 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 ### 1. Entry points (routes / handlers / CLI)
 
 - `backend/src/api/app.py`
-  - 🟠 **WARN** (medium): CR-022
+  - ⚪ **undefined** (high): CR2-W08
 - `backend/src/api/errors.py`
-  - 🔴 **BLOCK** (high): CR-001
+  - ⚪ **undefined** (high): CR2-002
+  - ⚪ **undefined** (high): CR2-I02
+  - ⚪ **undefined** (high): CR2-I04
+  - ⚪ **undefined** (high): CR2-I05
 - `backend/src/api/middleware.py`
-  - 🟠 **WARN** (medium): CR-010
+  - ⚪ **undefined** (high): CR2-001
+  - ⚪ **undefined** (high): CR2-W06
+  - ⚪ **undefined** (high): CR2-I01
 - `backend/src/api/platform/routes.py`
-  - 🟠 **WARN** (high): CR-004
-  - 🟠 **WARN** (medium): CR-005
+  - ⚪ **undefined** (high): CR2-W01
+  - ⚪ **undefined** (high): CR2-W07
+  - ⚪ **undefined** (medium): CR2-W12
+  - ⚪ **undefined** (high): CR2-W13
+  - ⚪ **undefined** (high): CR2-I03
 - `backend/src/api/serializers.py`
-  - ⚪ **INFO** (high): CR-027
+  - ⚪ **undefined** (high): CR2-W11
 
 ### 6. Config & infrastructure
 
 - `backend/src/config/delinquency.py`
-  - 🟠 **WARN** (high): CR-013
-  - ⚪ **INFO** (high): CR-028
 - `backend/src/config/logging.py`
-  - 🔴 **BLOCK** (high): CR-002
-  - 🟠 **WARN** (high): CR-008
-  - 🟠 **WARN** (medium): CR-009
-  - 🟠 **WARN** (medium): CR-011
-  - 🟠 **WARN** (medium): CR-012
+  - ⚪ **undefined** (high): CR2-W02
+  - ⚪ **undefined** (medium): CR2-W09
+  - ⚪ **undefined** (high): CR2-W10
+  - ⚪ **undefined** (medium): CR2-W16
 - `backend/src/config/settings.py`
-  - 🟠 **WARN** (high): CR-007
 - `frontend/eslint.config.js`
 - `frontend/package.json`
 - `frontend/tsconfig.json`
-  - ⚪ **INFO** (high): CR-030
 - `frontend/vite.config.ts`
 
 ### 7. Tests
 
 - `frontend/tests/unit/money.test.ts`
-  - 🟠 **WARN** (medium): CR-014
 
 ### 8. Docs & specs
 
@@ -516,7 +522,9 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 - `specs/bundles/E9-S1.json`
 - `specs/bundles/E9-S2.json`
 - `specs/bundles/E9-S3.json`
+- `specs/design/amendments/group-a-gate-remediation.md`
 - `specs/design/amendments/group-a-implementation-sync.md`
+- `specs/design/component-map.md`
 - `specs/design/reasons-canvas.md`
 - `specs/reviews/canvas-semantic-review.md`
 - `specs/reviews/canvas-sync-check.md`
@@ -524,6 +532,7 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 - `specs/reviews/code-review-verdict.json`
 - `specs/reviews/code-review.md`
 - `specs/reviews/contract-freeze.json`
+- `specs/reviews/design-approval.json`
 - `specs/reviews/eval-failures-001.json`
 - `specs/reviews/evaluator-evidence-instance2.json`
 - `specs/reviews/evaluator-evidence-instance3.json`
@@ -541,6 +550,7 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 - `specs/reviews/plan-seal.json`
 - `specs/reviews/quality-card.json`
 - `specs/reviews/quality-card.md`
+- `specs/reviews/regression-gate-verdict-nobaseline.json`
 - `specs/reviews/regression-gate-verdict.json`
 - `specs/reviews/reverify-votes.json`
 - `specs/reviews/review-context-pack.md`
@@ -586,7 +596,6 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 - `specs/stories/E7-S1.md`
 - `specs/stories/E8-S1.md`
 - `specs/stories/E9-S1.md`
-  - ⚪ **INFO** (high): CR-029
 - `specs/stories/E9-S2.md`
 - `specs/stories/E9-S3.md`
 - `specs/test_artefacts/test-plan.md`
@@ -609,61 +618,38 @@ _Ordered for review top-to-bottom (entry → domain → services → data → ad
 - `.claude/state/task-envelope-history/8914ad672f478b7a255bfa5bae84a4f42f262d43034b9944be6525ac67b9e330.json`
 - `.claude/state/task-envelope-history/b24a95b810c8614edc100467573c4435f8ec62962945fb944182f44df8a260f8.json`
 - `.claude/state/task-envelope-history/ebce3b61ee635eb8cc8f12d7b9694b33b719a76c5e05eeaa634f09bc416b8f7e.json`
+- `.claude/state/task-envelope-history/eda892d10c64151b32bbc2480478f10210ff8346da6a9d222f34b97ad71a715d.json`
+- `.claude/state/task-envelope-history/fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404.json`
 - `.claude/state/task-envelope.json`
 - `.claude/state/work-claims/group__A.json`
 - `backend/src/__init__.py`
-  - 🟠 **WARN** (medium): CR-021
 - `backend/src/types/delinquency.py`
 - `backend/src/types/errors.py`
 - `backend/src/types/money.py`
-  - 🟠 **WARN** (high): CR-006
-  - 🟠 **WARN** (medium): CR-016
-  - ⚪ **INFO** (high): CR-025
-  - ⚪ **INFO** (high): CR-026
 - `backend/tests/__init__.py`
 - `backend/tests/architecture/test_no_float_money.py`
-  - 🔴 **BLOCK** (high): CR-003
 - `backend/tests/conftest.py`
 - `backend/tests/unit/test_bucket_ladder.py`
+- `backend/tests/unit/test_correlation_id.py`
+  - ⚪ **undefined** (high): CR2-I06
+- `backend/tests/unit/test_error_envelope.py`
+- `backend/tests/unit/test_health_probe.py`
+  - ⚪ **undefined** (high): CR2-W05
 - `backend/tests/unit/test_log_redaction.py`
-  - 🟠 **WARN** (high): CR-017
-  - 🟠 **WARN** (medium): CR-018
-  - 🟠 **WARN** (medium): CR-019
-  - 🟠 **WARN** (high): CR-020
-  - 🟠 **WARN** (high): CR-023
+  - ⚪ **undefined** (high): CR2-W03
+  - ⚪ **undefined** (high): CR2-W04
 - `claude-progress.txt`
 - `features.json`
 - `frontend/src/types/money.ts`
-  - 🟠 **WARN** (medium): CR-015
+  - ⚪ **undefined** (high): CR2-W15
+  - ⚪ **undefined** (medium): CR2-I08
 - `frontend/src/ui/components/MoneyText.tsx`
 - `project-manifest.json`
 - `sprint-contracts/A.json`
 
 ## High-signal findings
 
-- 🔴 **BLOCK** `backend/src/api/errors.py`: CR-001
-- 🔴 **BLOCK** `backend/src/config/logging.py`: CR-002
-- 🔴 **BLOCK** `backend/tests/architecture/test_no_float_money.py`: CR-003
-- 🟠 **WARN** `backend/src/api/platform/routes.py`: CR-004
-- 🟠 **WARN** `backend/src/api/platform/routes.py`: CR-005
-- 🟠 **WARN** `backend/src/types/money.py`: CR-006
-- 🟠 **WARN** `backend/src/config/settings.py`: CR-007
-- 🟠 **WARN** `backend/src/config/logging.py`: CR-008
-- 🟠 **WARN** `backend/src/config/logging.py`: CR-009
-- 🟠 **WARN** `backend/src/api/middleware.py`: CR-010
-- 🟠 **WARN** `backend/src/config/logging.py`: CR-011
-- 🟠 **WARN** `backend/src/config/logging.py`: CR-012
-- 🟠 **WARN** `backend/src/config/delinquency.py`: CR-013
-- 🟠 **WARN** `frontend/tests/unit/money.test.ts`: CR-014
-- 🟠 **WARN** `frontend/src/types/money.ts`: CR-015
-- 🟠 **WARN** `backend/src/types/money.py`: CR-016
-- 🟠 **WARN** `backend/tests/unit/test_log_redaction.py`: CR-017
-- 🟠 **WARN** `backend/tests/unit/test_log_redaction.py`: CR-018
-- 🟠 **WARN** `backend/tests/unit/test_log_redaction.py`: CR-019
-- 🟠 **WARN** `backend/tests/unit/test_log_redaction.py`: CR-020
-- 🟠 **WARN** `backend/src/__init__.py`: CR-021
-- 🟠 **WARN** `backend/src/api/app.py`: CR-022
-- 🟠 **WARN** `backend/tests/unit/test_log_redaction.py`: CR-023
+_No BLOCK/WARN findings in code-review-verdict.json (or review not run yet)._
 
 ## Blast radius (from code-graph)
 

@@ -1,0 +1,14 @@
+# HELP http_requests_total Total HTTP requests served.
+# TYPE http_requests_total counter
+http_requests_total{method="GET",route="/health",status="200"} 26
+http_requests_total{method="GET",route="/inj
+http_requests_total{method="FORGED"} 999999",status="404"} 1
+http_requests_total{method="GET",route="/inj"x",status="404"} 1
+http_requests_total{method="GET",route="/inj\x",status="404"} 1
+http_requests_total{method="GET",route="/metrics",status="200"} 6
+http_requests_total{method="GET",route="/nonexistent",status="404"} 1
+http_requests_total{method="GET",route="/nonexistent-ABCDE1234F",status="404"} 1
+http_requests_total{method="GET",route="/random-aaa",status="404"} 1
+http_requests_total{method="GET",route="/random-bbb",status="404"} 1
+http_requests_total{method="GET",route="/random-ccc",status="404"} 1
+http_requests_total{method="POST",route="/health",status="405"} 1

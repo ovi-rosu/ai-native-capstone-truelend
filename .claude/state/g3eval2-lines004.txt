@@ -1,0 +1,1 @@
+{"timestamp": "2026-09-14T11:40:50.889059+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "85daf79199cf475faee136cb7965f0d7"}

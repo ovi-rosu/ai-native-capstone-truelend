@@ -184,3 +184,32 @@ def test_context_drops_structured_and_credential_bearing_values() -> None:
     context = response.json()["context"]
     assert "nested" not in context, "only scalars may cross the boundary"
     assert "pw@db" not in response.text, "a credential-bearing DSN leaked through context"
+
+
+def test_http_exception_headers_survive_the_envelope() -> None:
+    """An HTTPException's headers must reach the client.
+
+    The handler rebuilt the response from status/detail alone and dropped
+    `exc.headers`, so a 401 lost `WWW-Authenticate` and a 405 lost `Allow` --
+    both of which the HTTP specs require. It gets worse at group C, where
+    `require_roles` becomes the single 401 point for every guarded route.
+    """
+    from fastapi import HTTPException
+    from src.api.app import build_fastapi_app
+
+    inner = build_fastapi_app()
+
+    @inner.get("/_test-only-unauthorised")
+    def _unauthorised() -> None:
+        raise HTTPException(
+            status_code=401,
+            detail="no session",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    with TestClient(create_app(inner), raise_server_exceptions=False) as test_client:
+        response = test_client.get("/_test-only-unauthorised")
+
+    assert response.status_code == 401
+    assert response.headers.get("WWW-Authenticate") == "Bearer"
+    assert response.json()["error"] == "Unauthorized"

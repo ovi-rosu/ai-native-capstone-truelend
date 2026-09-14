@@ -1,0 +1,48 @@
+{
+  "evaluator_instance": 1,
+  "group": "A",
+  "head": "9112495",
+  "timestamp": "2026-09-14T11:52:00Z",
+  "note": "The three frozen api_checks (QA-VM-003/004/005) and all twelve group-A acceptance criteria PASS by live interaction. The single failure below is a security finding on group A's newly added /metrics surface, which no acceptance criterion covers.",
+  "failure": {
+    "layer": "security",
+    "gate": "evaluator",
+    "check": "HIGH-1 -- GET /metrics must not let an unauthenticated caller inject Prometheus series",
+    "actual": {
+      "status": 404,
+      "request": "GET /x%22%2Cstatus%3D%22200%22%7D%201%0Ahttp_requests_total%7Bmethod%3D%22GET%22%2Croute%3D%22%2Fhealth%22%2Cstatus%3D%22500%22%7D%2099999%0A%23",
+      "body": "one unauthenticated GET injected a well-formed forged series into /metrics: http_requests_total{method=\"GET\",route=\"/health\",status=\"500\"} 99999",
+      "exposition_after_attack": "# HELP http_requests_total Total HTTP requests served.\n# TYPE http_requests_total counter\nhttp_requests_total{method=\"GET\",route=\"/health\",status=\"200\"} 1\nhttp_requests_total{method=\"GET\",route=\"/metrics\",status=\"200\"} 1\nhttp_requests_total{method=\"GET\",route=\"/x\",status=\"200\"} 1\nhttp_requests_total{method=\"GET\",route=\"/health\",status=\"500\"} 99999\n#\",status=\"404\"} 1",
+      "exposition_wellformed": true,
+      "malformed_lines": 0,
+      "slo_sensor_before": "{\"verdict\":\"pass\",\"error_rate_pct\":0,\"breaches\":[]}",
+      "slo_sensor_after": "{\"verdict\":\"fail\",\"error_rate_pct\":99.995000199992,\"breaches\":[\"error_rate\"],\"exit\":1}"
+    },
+    "stack_trace": "No exception raised -- this is a silent data-integrity failure, not a crash. No process logs captured for it beyond the normal 404 access line: {\"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /x... -> 404\", \"request_id\": \"...\"}.",
+    "error_type": "injection",
+    "root_cause": "The RED counter is keyed on the raw, URL-decoded scope['path'] rather than the matched route template, and the metrics endpoint f-string-interpolates that value into a Prometheus label with no escaping. %0A, %22 and %23 in the request path therefore become real newlines, quote characters and comment markers inside the exposition. Two independent defects share this root cause: (1) arbitrary metric forgery, and (2) unbounded label cardinality -- every distinct 404 path mints a permanent new series in an unevicted module-level Counter.",
+    "files_likely_involved": [
+      "backend/src/api/middleware.py:78-86",
+      "backend/src/api/platform/routes.py:82-91"
+    ],
+    "artifacts": [
+      ".claude/state/eval-i1/metrics-forged.txt",
+      ".claude/state/eval-i1/metrics-poisoned.txt",
+      ".claude/state/eval-i1/promcheck.js",
+      ".claude/state/eval-i1/attack.log",
+      "specs/reviews/evaluator-report.md",
+      "specs/reviews/evaluator-evidence.json"
+    ],
+    "prior_attempts": []
+  },
+  "non_blocking": [
+    { "id": "MED-1", "severity": "medium", "summary": "attacker-controlled X-Request-ID and the raw path are logged verbatim and unbounded in length; AC-coverage gap against E15-S1's 'no PII to any log sink'", "files": ["backend/src/api/middleware.py:84", "backend/src/api/middleware.py:89-91"] },
+    { "id": "MED-2", "severity": "medium", "summary": "sanitise_context still egresses absolute filesystem paths (SEC-003 residual)", "files": ["backend/src/api/errors.py:75-88"] },
+    { "id": "MED-3", "severity": "medium", "summary": "/metrics exposes no duration metric, so observability.slo.p95_ms is permanently unmeasurable (every sensor run reported p95_ms: null)", "files": ["backend/src/api/platform/routes.py:82-91"] },
+    { "id": "MED-4", "severity": "medium", "summary": "frontend/package-lock.json is gitignored at .gitignore:49, so installs are not reproducible (SEC-011 still open)", "files": [".gitignore:49"] },
+    { "id": "LOW-1", "severity": "low", "summary": "unhandled-exception tracebacks log absolute paths and raw exception text (intentional; noted because logs ship off-host)", "files": ["backend/src/api/middleware.py:97-103"] },
+    { "id": "INFO-1", "severity": "info", "summary": "'ruff check .' in backend/ reports 92 errors, all in a concurrent evaluator instance's untracked _probe_*.py debris; 'ruff check src/ tests/' is clean. Clean backend/ before trusting the gate's lint result, and do not commit those files.", "files": [] }
+  ],
+  "prior_blocks_resolved": ["CR-001", "CR-002", "CR-003", "SEC-001", "SEC-002"],
+  "prior_blocks_partial": ["SEC-003"]
+}

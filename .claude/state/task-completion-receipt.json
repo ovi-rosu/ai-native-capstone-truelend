@@ -2,9 +2,9 @@
   "schema_version": 1,
   "type": "task_completion",
   "task_id": "truelend-build",
-  "task_envelope_hash": "fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404",
+  "task_envelope_hash": "9a1142eaa81a33a48bcc68d2252eefe06fb3db52e50f19947aa449da5d909a0d",
   "run_id": "run-a5737b1b-fdbe-4023-b908-cbabca4e9fd8",
-  "generated_at": "2026-09-14T06:56:31.470Z",
+  "generated_at": "2026-09-14T12:16:29.465Z",
   "pass": false,
   "evidence": [
     {
@@ -24,7 +24,7 @@
     {
       "kind": "independent_review",
       "path": "specs/reviews/code-review-verdict.json",
-      "sha256": "e313150272a26943bdd132bc2b6b43babe9d9088033ca3a5135767a922ac2d6f",
+      "sha256": "2b52079f9b87e0485c42cde61381836d84c04b904b755704f21535640ef8259c",
       "current": true,
       "pass": false
     },
@@ -38,21 +38,21 @@
     {
       "kind": "sast",
       "path": "specs/reviews/security-scan.json",
-      "sha256": "44101276ac1e3ce924e644fe2d346afe141b05f10219ac456e08d9b89450ee4a",
+      "sha256": "49fdd5654c388144faa63372d6d5a6ea8a463844892b0770814972c469d136ab",
       "current": true,
       "pass": false
     },
     {
       "kind": "dependency_scan",
       "path": "specs/reviews/security-scan.json",
-      "sha256": "44101276ac1e3ce924e644fe2d346afe141b05f10219ac456e08d9b89450ee4a",
+      "sha256": "49fdd5654c388144faa63372d6d5a6ea8a463844892b0770814972c469d136ab",
       "current": true,
       "pass": false
     },
     {
       "kind": "security_review",
       "path": "specs/reviews/security-verdict.json",
-      "sha256": "ec52e17795257fd73d3599addefc6702fdcb276817f55f67d0cbe4a5e148f131",
+      "sha256": "2bef380d275b00287dc9fd1c4f25274022ccb975d020302d89086fde3e4d24fd",
       "current": true,
       "pass": false
     },
@@ -87,6 +87,6 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "hash": "995babf7880e0192ff4fbd2cd8c62ae04110075542772c662434fe3dde72e92f"
+    "hash": "d4bfcb196bf297a58e26ea32716361d45427f9bac500b07b4dfb5167c51d0e9f"
   }
 }

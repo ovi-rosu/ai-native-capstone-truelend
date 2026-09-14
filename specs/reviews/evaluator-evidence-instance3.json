@@ -1,173 +1,245 @@
 {
+  "gate": "evaluator",
   "instance": 3,
-  "instance_count": 3,
+  "instances_total": 3,
   "group": "A",
-  "contract": "sprint-contracts/A.json",
-  "head": "f4abd41",
-  "branch": "feat/harness-scaffold-and-planning",
+  "stories": ["E15-S1", "E9-S1", "E11-S1"],
+  "round": 2,
+  "head": "9112495",
+  "base": "14e9487",
+  "evaluated_at": "2026-09-14T11:52:00Z",
   "verification_mode": "local",
-  "api_base_url": "http://localhost:8002",
-  "runtime_command": "cd backend && uv run uvicorn src.api.app:app --port 8002",
-  "evaluated_at": "2026-09-14T10:40:00Z",
-  "functional_verdict": "PASS",
-  "contract_declared_checks": {
-    "api_checks": 3,
-    "playwright_checks": 0,
-    "design_checks": 0,
-    "accessibility_checks": 0
-  },
-  "entries": [
+  "boot_command": "cd backend && uv run uvicorn src.api.app:app --port 8002 --host 127.0.0.1",
+  "port": 8002,
+  "app_reachable": true,
+  "health_check": { "url": "http://127.0.0.1:8002/health", "attempts": 1, "status": 200 },
+  "verdict": "FAIL",
+  "failure_layer": "security",
+  "failure_reason": "All three frozen api_checks and all story ACs pass on live evidence. FAIL is driven by G3-F1 (high): the raw URL-decoded request path is used unescaped as the Prometheus 'route' label, so one unauthenticated GET forges arbitrary samples into GET /metrics - including a fabricated http_requests_total{route=\"/health\",status=\"500\"} 424242 - and unauthenticated 404 traffic grows _request_counts without bound.",
+  "contract_checks": [
     {
       "id": "QA-VM-003",
       "layer": "api",
-      "verdict": "pass",
       "matrix_ids": ["VM-003"],
-      "interactions": [
-        "curl -s -D <hdr> -o <body> -w 'status=%{http_code} time_total=%{time_total}' -H 'X-Request-ID: req-abc' http://localhost:8002/health",
-        "tail of captured uvicorn stdout+stderr from a recorded line offset, to isolate only the lines emitted while serving that request",
-        "python json.loads over every non-empty line of the captured stream"
-      ],
-      "observed": {
-        "status": 200,
-        "content_type": "application/json",
-        "body": "{\"status\":\"ok\"}",
-        "response_header_x_request_id": "req-abc",
-        "lines_emitted_while_serving": 1,
-        "lines_parsing_as_json": 1,
-        "lines_with_request_id_req_abc": 1,
-        "log_line": "{\"timestamp\": \"2026-09-14T10:39:49.002202+00:00\", \"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /health -> 200\", \"request_id\": \"req-abc\"}",
-        "whole_session_log_lines": 53,
-        "whole_session_non_json_lines": 0,
-        "uvicorn_own_loggers_json": true,
-        "uvicorn_access_plaintext_lines": 0,
-        "json_injection_probe": {
-          "sent_header": "X-Request-ID: inj-a\", \"level\": \"FAKE",
-          "status": 200,
-          "log_line_parsed_as_json": true,
-          "injected_field_created": false
-        },
-        "control_char_probe": {
-          "transport": "raw socket, ANSI escape + BEL + BS in X-Request-ID",
-          "status": 400,
-          "emitted_line_parsed_as_json": true
-        }
+      "verdict": "pass",
+      "request": "GET /health with X-Request-ID: req-abc",
+      "expected_status": 200,
+      "actual_status": 200,
+      "assertions": {
+        "log_lines_while_serving": 1,
+        "parsed_as_json": 1,
+        "parsed_as_json_pct": 100.0,
+        "request_id_matches_req_abc": 1,
+        "request_id_match_pct": 100.0,
+        "response_header_x_request_id": "req-abc"
       },
-      "artifacts": []
+      "denominator_note": "The served app emits exactly one request-scoped line per request, so 100% is over a denominator of 1. Re-run at TRUELEND_LOG_LEVEL=DEBUG (confirmed applied) gave the same result: denominator 1, id match 1.",
+      "interactions": ["curl -D -", "raw socket", "log tail + json.loads per line"],
+      "artifacts": [".claude/state/g3eval3-uvicorn.log", ".claude/state/g3eval3-uvicorn-debug.log"]
     },
     {
       "id": "QA-VM-004",
       "layer": "api",
-      "verdict": "pass",
       "matrix_ids": ["VM-004"],
-      "interactions": [
-        "curl -s -D <hdr> -o <body> -w 'status=%{http_code} time_total=%{time_total}' http://localhost:8002/health (no X-Request-ID sent)",
-        "tail of captured uvicorn stdout+stderr from a recorded line offset",
-        "three independent no-header requests, comparing the generated ids"
-      ],
-      "observed": {
-        "status": 200,
-        "content_type": "application/json",
-        "body": "{\"status\":\"ok\"}",
-        "generated_request_id": "fc43305076c6454785e6f4f70214addb",
-        "generated_id_non_empty": true,
+      "verdict": "pass",
+      "request": "GET /health with no X-Request-ID",
+      "expected_status": 200,
+      "actual_status": 200,
+      "assertions": {
+        "generated_request_id": "7434e974224240bbba4c879e9f4b4ea6",
         "generated_id_length": 32,
-        "response_header_echoes_generated_id": true,
-        "log_field_matches_response_header": true,
+        "generated_id_non_empty": true,
         "request_scoped_lines": 1,
-        "log_line": "{\"timestamp\": \"2026-09-14T10:39:50.343804+00:00\", \"level\": \"INFO\", \"logger\": \"truelend.access\", \"message\": \"GET /health -> 200\", \"request_id\": \"fc43305076c6454785e6f4f70214addb\"}",
-        "distinct_ids_across_three_requests": [
-          "a261c5878dff490fa431d87e09843bba",
-          "810da1a88d0140c88945d6cfc04e5c16",
-          "fc43305076c6454785e6f4f70214addb"
-        ]
+        "distinct_request_ids_in_lines": 1,
+        "response_header_echoes_generated_id": true,
+        "empty_inbound_header_also_generates": true
       },
-      "artifacts": []
+      "interactions": ["curl -D -", "log tail + json.loads per line"],
+      "artifacts": [".claude/state/g3eval3-uvicorn.log"]
     },
     {
       "id": "QA-VM-005",
       "layer": "api",
-      "verdict": "pass",
       "matrix_ids": ["VM-005"],
-      "interactions": [
-        "20 single-shot curl requests to http://localhost:8002/health recording %{http_code} and %{time_total}",
-        "10 requests over one reused connection in a single curl invocation to isolate server-side service time from per-process connect overhead",
-        "header inspection for content-type and body parse"
-      ],
-      "observed": {
-        "status_all_samples": 200,
-        "sample_count": 30,
-        "body": "{\"status\":\"ok\"}",
-        "body_parses_as_json": true,
+      "verdict": "pass",
+      "request": "GET /health",
+      "expected_status": 200,
+      "actual_status": 200,
+      "assertions": {
         "content_type": "application/json",
-        "single_shot_time_total_s": { "min": 0.203520, "max": 0.225187 },
-        "reused_connection_time_total_s": { "first_with_connect": 0.212722, "min": 0.000221, "max": 0.000381 },
-        "server_side_p95_ms_approx": 0.4,
-        "threshold_s": 1.0,
-        "slo_p95_ms": 500,
-        "under_threshold": true
+        "body_is_valid_json": true,
+        "body": "{\"status\":\"ok\",\"database\":\"unconfigured\",\"version\":\"0.1.0\"}",
+        "samples": 60,
+        "min_ms": 1.25,
+        "p50_ms": 1.39,
+        "p95_ms": 1.53,
+        "max_ms": 2.17,
+        "budget_ms": 1000,
+        "within_budget": true
       },
-      "artifacts": []
-    },
-    {
-      "id": "SLO-error-rate",
-      "layer": "slo",
-      "verdict": "untested",
-      "matrix_ids": [],
-      "interactions": [
-        "curl -s -o /dev/null -w '%{http_code}' http://localhost:8002/metrics"
-      ],
-      "observed": {
-        "metrics_path": "/metrics",
-        "metrics_status": 404,
-        "observability_enabled_in_manifest": true,
-        "reason": "observability.enabled is true and metrics_path is /metrics, but the app exposes no /metrics endpoint and no group-A story, AC or feature owns one; no story file in the repo mentions metrics. Sensor could not be executed.",
-        "observed_5xx_from_evaluator_traffic": 0,
-        "observed_non_2xx": "one deliberate 404 probe, one 405 probe, one 400 malformed-request probe (all 4xx, not server errors)"
-      },
+      "interactions": ["curl -w time_total x 60"],
       "artifacts": []
     }
   ],
-  "acceptance_criteria": [
-    { "id": "E15-S1-AC1", "feature": "F001", "verdict": "pass", "evidence": "test_sensitive_application_values_never_appear_in_any_log_line PASSED; non-vacuity proven by test_pii_redaction_control_is_not_vacuous PASSED; live probe sent PAN/Aadhaar/salary-doc values in query string and POST body, 0 occurrences in the captured stream" },
-    { "id": "E15-S1-AC2", "feature": "F002", "verdict": "pass", "evidence": "test_redaction_filter_installed_on_every_configured_logger PASSED (includes the required negative control) and test_redaction_filter_covers_every_logger_under_the_real_server_config PASSED (applies uvicorn dictConfig first)" },
-    { "id": "E15-S1-AC3", "feature": "F003", "verdict": "pass", "evidence": "QA-VM-003 executed live: 1 of 1 line JSON, request_id == req-abc; whole-session 53 lines, 0 non-JSON" },
-    { "id": "E15-S1-AC4", "feature": "F004", "verdict": "pass", "evidence": "QA-VM-004 executed live: generated 32-hex non-empty id on the log line and echoed byte-identically in x-request-id" },
-    { "id": "E15-S1-AC5", "feature": "F005", "verdict": "pass", "evidence": "QA-VM-005 executed live: 200, JSON body, server-side service time about 0.3 ms" },
-    { "id": "E9-S1-AC1", "feature": "F009", "verdict": "pass", "evidence": "test_random_principal_rate_tenure_triples_always_quantize_to_two_places PASSED over 200 seeded triples; see WARN-5 (no schedule exists in group A, excluded by the story's own scope)" },
-    { "id": "E9-S1-AC2", "feature": "F010", "verdict": "pass", "evidence": "test_money_type_has_zero_float_operations and test_serializers_module_has_zero_float_operations PASSED; guard proven non-vacuous by 7 leak-shape cases" },
-    { "id": "E9-S1-AC3", "feature": "F011", "verdict": "pass", "evidence": "18 vitest cases PASSED including the static float check on src/types/money.ts with 7 negative controls" },
-    { "id": "E11-S1-AC1", "feature": "F070", "verdict": "pass", "evidence": "test_35_days_past_due_is_dpd_30 and test_installment_due_35_days_before_as_of_date_is_dpd_30 PASSED" },
-    { "id": "E11-S1-AC2", "feature": "F071", "verdict": "pass", "evidence": "test_full_sweep_has_no_gap_or_overlap PASSED over range(0, 401) against an independent oracle; 9 boundary cases; test_exactly_five_buckets_exist PASSED" },
-    { "id": "E11-S1-AC3", "feature": "F072", "verdict": "pass", "evidence": "three CURRENT cases PASSED (due date equal to as-of, future due date, zero dpd)" },
-    { "id": "E11-S1-AC4", "feature": "F073", "verdict": "pass", "evidence": "test_result_carries_bucket_only_no_fee_or_charge_attribute PASSED" }
+  "story_acceptance_criteria": [
+    { "id": "E15-S1-AC1", "verdict": "pass", "evidence": "PAN_in_logs=0 AADHAAR_in_logs=0 PAN_in_body=0 on both async and sync failure paths; traceback reads pan=[REDACTED] aadhaar=[REDACTED]", "instrumented": true },
+    { "id": "E15-S1-AC2", "verdict": "pass", "evidence": "loggers=11 covered=11 pct=100.0% missing=[]; negative control (logger created after configure_logging) has_filter=False" },
+    { "id": "E15-S1-AC3", "verdict": "pass", "evidence": "QA-VM-003 at INFO and at DEBUG" },
+    { "id": "E15-S1-AC4", "verdict": "pass", "evidence": "QA-VM-004; plus the 500 path stamps X-Request-ID and both the access and traceback lines carry the same id" },
+    { "id": "E15-S1-AC5", "verdict": "pass", "evidence": "QA-VM-005, p95 1.53 ms" },
+    { "id": "E9-S1-AC1", "verdict": "pass", "evidence": "MoneyField round trip '1234.5' -> {\"amount\":\"1234.50\"}, '0.005' -> '0.01' ROUND_HALF_UP; 19 probes all 2dp or typed rejection" },
+    { "id": "E9-S1-AC2", "verdict": "pass", "evidence": "pytest tests/architecture/test_no_float_money.py -q => 39 passed; full backend suite 88 passed; Money(1.5) and Money(True) raise InvalidMoneyAmountError" },
+    { "id": "E9-S1-AC3", "verdict": "pass", "evidence": "npm test => 18 passed; money.ts holds decimal.js Decimal, isFinite rejects NaN/Infinity" },
+    { "id": "E11-S1-AC1", "verdict": "pass", "evidence": "classify_by_days_past_due(35) == 'DPD-30'" },
+    { "id": "E11-S1-AC2", "verdict": "pass", "evidence": "0..400 sweep yields exactly the 5 buckets; boundaries exact at 29/30/59/60/89/90/179/180" },
+    { "id": "E11-S1-AC3", "verdict": "pass", "evidence": "future due date -> CURRENT; same day -> CURRENT" },
+    { "id": "E11-S1-AC4", "verdict": "pass", "evidence": "5-member StrEnum; attribute scan for fee/interest/charge returns []" }
   ],
-  "deterministic_instruments": [
-    { "command": "cd backend && uv run pytest -q", "exit": 0, "result": "73 passed, 2 warnings, 0.10s" },
-    { "command": "cd backend && uv run ruff check .", "exit": 0, "result": "All checks passed" },
-    { "command": "cd backend && uv run mypy src/", "exit": 0, "result": "no issues found in 12 source files" },
-    { "command": "cd frontend && npm test", "exit": 0, "result": "18 passed (1 file)" }
-  ],
-  "browser_layer": {
-    "playwright_entries": 0,
-    "accessibility_entries": 0,
-    "reason": "sprint-contracts/A.json declares no playwright_checks, design_checks or accessibility_checks; no contract in the repo declares any; e2e/ is empty. No browser evidence produced and none claimed."
+  "deterministic_layers": {
+    "backend_pytest": "88 passed",
+    "backend_architecture_guard": "39 passed",
+    "frontend_vitest": "18 passed",
+    "note": "re-run independently in this session, not copied from the review context pack"
   },
   "performance": {
+    "endpoint": "GET /health",
+    "p95_ms": 1.53,
+    "slo_p95_ms": 500,
     "baseline_exists": false,
-    "regression": false,
-    "note": "Group A is the first group, so no perf baseline exists to compare against. Absolute p95 (about 0.4 ms server-side) is far under slo.p95_ms 500. WARN-only by rule; nothing to report."
+    "regression": null,
+    "verdict": "warn",
+    "warn_reason": "no perf baseline exists (project-manifest performance: null); first/greenfield build, so no regression is measurable"
   },
-  "warnings": [
-    { "id": "WARN-1", "severity": "warn", "subject": "evidence strength", "finding": "GET /health emits exactly one request-scoped log line, so the 'every log line' / '100% of lines' quantifiers in VM-003 and VM-004 are verified over n=1 at runtime. The multi-line-per-request case is covered only at test level." },
-    { "id": "WARN-2", "severity": "warn", "subject": "backend/src/api/middleware.py", "finding": "Caller-supplied X-Request-ID is reflected unbounded and unvalidated: a 5000-char id was written verbatim into the log line and echoed into the x-request-id response header (5015-byte header value). JSON-breaking characters are correctly escaped so the contract criterion holds, and h11 rejects bare control characters with a 400, but there is no length cap or charset allow-list. Security-reviewer territory; not a functional failure of any group-A check or AC." },
-    { "id": "WARN-3", "severity": "warn", "subject": "observability", "finding": "observability.enabled is true with metrics_path /metrics, but GET /metrics returns 404 and no group-A story, AC or feature owns a metrics endpoint. SLO error-rate sensor recorded untested. Orchestrator/manifest gap, not a group-A code defect." },
-    { "id": "WARN-4", "severity": "warn", "subject": "backend/src/config/logging.py", "finding": "PII redaction is opt-in via an explicit redact_values(...) scope, guarded by an architecture test rather than being ambient. Green today; fragile for the groups that will actually handle applicant payloads." },
-    { "id": "WARN-5", "severity": "warn", "subject": "E9-S1-AC1", "finding": "The AC says 'a schedule is computed' but E9-S1's own scope excludes interest/EMI rules, so no schedule exists in group A. Verified at the Money-arithmetic level over 200 random triples; the literal form should be re-verified when the schedule story lands." }
+  "slo": {
+    "enabled": true,
+    "metrics_path": "/metrics",
+    "error_rate_pct_budget": 1,
+    "observed_5xx": 0,
+    "verdict": "warn",
+    "warn_reason": "0 5xx observed, but G3-F1 makes the counters feeding this sensor attacker-writable, so the measurement cannot be trusted until it is fixed"
+  },
+  "not_applicable": [
+    { "layer": "playwright", "reason": "contract A declares no playwright_checks" },
+    { "layer": "accessibility", "reason": "contract A declares no accessibility_checks" },
+    { "layer": "design", "reason": "contract A declares no design_checks" }
   ],
-  "notes": [
-    "features.json still reads passes:false for F002 and F003 from the superseded tree; this evidence supports true for both. Instance 1 owns features.json; this instance did not write it.",
-    "No stored verdict under specs/reviews/ was read for its verdict or evidence. Every result above was produced in this session against HEAD f4abd41.",
-    "Temporary capture directory backend/.eval-i3/ was removed and the uvicorn process on port 8002 killed at the end of the run; verbatim log lines are embedded above and in the report instead of cited as a path.",
-    "The overall /gate verdict remains subject to the security reviewer's judgement of WARN-2; this functional PASS does not pre-empt it."
+  "findings": [
+    {
+      "id": "G3-F1",
+      "severity": "high",
+      "status": "new",
+      "title": "Prometheus exposition injection and unbounded cardinality via the raw request path",
+      "files": ["backend/src/api/middleware.py:75", "backend/src/api/middleware.py:91", "backend/src/api/platform/routes.py:77-81"],
+      "evidence": "One unauthenticated GET to /x%22%7D%20999999%0Ahttp_requests_total%7B...%22500%22%7D%20424242%0A%23%20x (404) made GET /metrics emit the well-formed forged sample http_requests_total{method=\"GET\",route=\"/health\",status=\"500\"} 424242, and swallowed the genuine 404 sample into a comment line. A separate probe produced a duplicate 'status' label, which makes the whole scrape unparseable. 150 distinct 404 paths produced 154 permanent series and a 13696-byte body.",
+      "impact": "Integrity loss on the channel that observability.slo.error_rate_pct is computed from (fabricate or mask a 5xx rate), plus unbounded process memory growth from unauthenticated 404 traffic. /metrics is public per api-contracts.md:38.",
+      "related_prior": ["SEC-015"]
+    },
+    {
+      "id": "G3-F2",
+      "severity": "medium",
+      "status": "confirmed_open",
+      "title": "decimal.Overflow escapes Money.multiply",
+      "files": ["backend/src/types/money.py:72-76", "backend/src/types/money.py:91-101"],
+      "evidence": "Money(2).multiply(Decimal('1E+999999999')) raises decimal.Overflow in 0.0 ms (not InvalidMoneyAmountError) because _quantize catches only InvalidOperation and the multiplication applies the context first. Money(2).multiply(10**999999) raises the right type but costs 9708.5 ms of CPU; 10**500000 costs 2430.5 ms. The constructor path is safe.",
+      "impact": "A raw decimal exception escapes a Types-layer value object, becoming a 500 instead of a 422; and a 9.7 s blocking computation on the event loop.",
+      "related_prior": ["SEC-008"],
+      "correction": "The prior finding's mechanism was partly wrong: the integer-scalar shape does NOT leak Overflow; only the Decimal-scalar shape does."
+    },
+    {
+      "id": "G3-F3",
+      "severity": "medium",
+      "status": "confirmed_open",
+      "title": "Registered PII outlives its request scope as lru_cache keys",
+      "files": ["backend/src/config/logging.py:102-119"],
+      "evidence": "_redaction_pattern is @lru_cache(maxsize=256) keyed by the sensitive value. After request 1 closed its scope: CacheInfo(hits=0, misses=2, currsize=2); request 2 registering the same PAN/Aadhaar gave hits=2 - a cache hit is only possible if request 1's PII was still stored as a key. An unrelated third request left currsize=3.",
+      "impact": "Up to 256 applicants' PAN/Aadhaar stay resident in process memory indefinitely (cache keys and compiled pattern objects), visible in a core dump. Contradicts the module docstring's 'Registration is request-scoped'.",
+      "related_prior": ["SEC-014"]
+    },
+    {
+      "id": "G3-F4",
+      "severity": "medium",
+      "status": "confirmed_open",
+      "title": "X-Request-ID accepted unvalidated and unbounded",
+      "files": ["backend/src/api/middleware.py:86-87"],
+      "evidence": "200000-char id accepted -> 200, echoed in full in the response header, 200146-byte log line. 10000-char id -> 10146-byte line. 'a\", \"level\": \"CRITICAL\", \"x\": \"\\' reflected verbatim into the response header and the request_id field. latin-1 bytes (0xff 0xfe) echoed raw in a response header. No length cap, charset check or format gate.",
+      "impact": "Attacker-controlled unbounded value written to every log line and echoed in a response header; hostile to any downstream pipeline that greps or re-serialises. Fails open.",
+      "related_prior": ["SEC-004", "SEC-005"]
+    },
+    {
+      "id": "G3-F5",
+      "severity": "low",
+      "status": "confirmed_open",
+      "title": "Money wire parser silently accepts non-wire-format strings",
+      "files": ["backend/src/types/money.py:59-69", "backend/src/api/serializers.py:20-26"],
+      "evidence": "Money('12_34') -> 1234.00 (silent 100x misread, Python Decimal accepts underscores); Money('  12.34  ') -> 12.34; Money('1e-999999') -> 0.00.",
+      "impact": "D-G specifies a quoted 2dp string; there is no format gate, so a malformed input is coerced rather than rejected.",
+      "related_prior": ["SEC-007"]
+    },
+    {
+      "id": "G3-F6",
+      "severity": "low",
+      "status": "confirmed_open",
+      "title": "Redaction coverage is a one-shot enumeration at configure time",
+      "files": ["backend/src/config/logging.py:241-250"],
+      "evidence": "Negative control: a logger created after configure_logging has no RedactionFilter (has_filter=False). It is still scrubbed in practice because it propagates to the root handler, which carries its own RedactionFilter.",
+      "impact": "Residual risk is a future library logger with propagate=False or its own handler - exactly what uvicorn does, and why _JSON_ROUTED_LOGGERS is a hardcoded three-name list.",
+      "related_prior": ["SEC-016"]
+    },
+    {
+      "id": "G3-F7",
+      "severity": "low",
+      "status": "new",
+      "title": "Money's magnitude ceiling and multiply rounding depend on the ambient decimal context",
+      "files": ["backend/src/types/money.py:71-76"],
+      "evidence": "With decimal.getcontext().prec = 6, Money('123456789.99') raises InvalidMoneyAmountError; at the default prec=28 it is fine. Money never opens a localcontext. Undocumented ceiling ~1e26: Money('1'+'0'*26) raises.",
+      "impact": "Third-party code lowering the thread-local precision silently changes the ceiling and intermediate rounding of a type whose purpose is that money never drifts. Fails closed (exception, not a wrong number)."
+    },
+    {
+      "id": "G3-F8",
+      "severity": "low",
+      "status": "new",
+      "title": "HEAD /health returns 405",
+      "files": ["backend/src/api/platform/routes.py:59-67"],
+      "evidence": "HEAD /health -> 405 {\"error\":\"HTTPError\",\"detail\":\"Method Not Allowed\"}. FastAPI's @router.get does not register HEAD.",
+      "impact": "Load balancers and uptime monitors defaulting to HEAD read the service as unhealthy. Not an AC violation (AC5 and the contract specify GET); operational note for E15-S2."
+    },
+    {
+      "id": "G3-F9",
+      "severity": "low",
+      "status": "new",
+      "title": "DPD classifier has no runtime type guard",
+      "files": ["backend/src/config/delinquency.py:31-44"],
+      "evidence": "classify_by_days_past_due(29.9) -> CURRENT; (True) -> CURRENT; ('35') -> bare TypeError; classify(datetime, date) -> bare TypeError.",
+      "impact": "Signature says int and mypy covers first-party callers; negative cases raise TypeError rather than the module's own ValueError contract."
+    }
+  ],
+  "refuted_candidates": [
+    { "id": "R1", "candidate": "CRLF in X-Request-ID splits the response or injects a response header", "result": "refuted", "evidence": "Raw socket 'X-Request-ID: req\\r\\nfake: injected' -> h11 parses two request headers; response 200 with x-request-id: req and no injected response header." },
+    { "id": "R2", "candidate": "Bare LF in the header value is accepted", "result": "refuted", "evidence": "400 Bad Request - request never reaches the app." },
+    { "id": "R3", "candidate": "obs-fold continuation smuggles a value", "result": "refuted", "evidence": "400 Bad Request." },
+    { "id": "R4", "candidate": "ANSI/terminal escapes in the id reach the log sink", "result": "refuted", "evidence": "X-Request-ID with \\x1b[31m and \\x1b]0;pwned\\x07 -> 400 Bad Request." },
+    { "id": "R5", "candidate": "NUL byte in the id is accepted", "result": "refuted", "evidence": "400 Bad Request." },
+    { "id": "R6", "candidate": "A quote or backslash in the id or path corrupts the JSON log line", "result": "refuted", "evidence": "36/36 log lines across every probe parsed as valid JSON, including the 200000-char id line and a path containing a literal newline; json.dumps escapes them and the payload stays inert inside the string value." },
+    { "id": "R7", "candidate": "Correlation id bleeds across concurrent requests", "result": "refuted", "evidence": "30 simultaneous distinct ids: all_200=True, echo_mismatches=0, distinct_echoed_ids=30; log cross-check expected_ids=30 logged_ids=30 missing=[] unexpected=[] ids_logged_more_than_once=[]." },
+    { "id": "R8", "candidate": "PII leaks on the sync (def / threadpool) handler path", "result": "refuted", "evidence": "Sync route added to the real create_app(): PAN_in_logs=0 AADHAAR_in_logs=0 PAN_in_body=0, traceback shows [REDACTED], stack confirms run_in_threadpool -> context.run. CR-002 / SEC-002 confirmed fixed on the exact path the fix was reasoned about.", "instrumented": true },
+    { "id": "R9", "candidate": "The 500 path loses the correlation id", "result": "refuted", "evidence": "500 carries X-Request-ID; access line and ERROR traceback line share it; body is the frozen envelope with no path/SQL/message leakage. CR-001 / CR-003 / SEC-006 confirmed fixed.", "instrumented": true },
+    { "id": "R10", "candidate": "Framework non-2xx bypasses the frozen envelope", "result": "refuted", "evidence": "404 -> {\"error\":\"NotFound\",\"detail\":\"Not Found\",\"context\":{}}; 405 -> {\"error\":\"HTTPError\",...}; both application/json and both stamped with x-request-id. CR-001 / SEC-020 confirmed fixed." },
+    { "id": "R11", "candidate": "Money accepts NaN / sNaN / Infinity / float / bool", "result": "refuted", "evidence": "All raise InvalidMoneyAmountError; multiply(Decimal('NaN')) too; the wire path rejects 'NaN', 'Infinity', a JSON float and a JSON int." },
+    { "id": "R12", "candidate": "SEC-008 as written - an integer scalar leaks decimal.Overflow", "result": "refuted", "evidence": "multiply(10**999999) raises InvalidMoneyAmountError. Only the Decimal-scalar shape leaks; recorded corrected as G3-F2." },
+    { "id": "R13", "candidate": "SEC-009 - frontend money rendering hangs on a pathological exponent", "result": "refuted", "evidence": "decimal.js live: 1e10000 toFixed(2) = 1 ms, 1e100000 = 4 ms, 1e1000000 = 40 ms (linear in digits, no hang); 1e9000000000000000 stays finite; NaN rejected by isFinite. Downgrade to informational." },
+    { "id": "R14", "candidate": "QA-VM-003 passes only because the denominator is 1 at INFO level", "result": "refuted", "evidence": "Rebooted at TRUELEND_LOG_LEVEL=DEBUG (asyncio DEBUG line confirms it applied); still exactly one request-scoped line, still request_id == req-abc." },
+    { "id": "R15", "candidate": "SEC-001 ReDoS reachable via a different backtracking shape", "result": "refuted", "evidence": "Probed both branches of _redaction_pattern (literal re.escape for separator-bearing values, joined bounded run otherwise); sub-millisecond on every shape sent, and the 200000-char id path returned in normal time. No new shape found." },
+    { "id": "R16", "candidate": "Malformed-request log lines break AC3's 100% JSON", "result": "refuted", "evidence": "The three 400 probes each logged valid JSON with request_id \"\"; an empty id is correct because parsing failed, so there was no request and no inbound id to honour." }
+  ],
+  "evidence_gaps": [
+    "The served app has no route that raises, so the unhandled-500 path is not reachable black-box; R8/R9 used a throwaway route added to the real create_app() (evaluator instrumentation, not product code).",
+    "E15-S1-AC1's salary-document fixture was exercised with synthetic PAN/Aadhaar values via register_sensitive rather than a real upload, because no upload endpoint exists in group A."
+  ],
+  "files_not_modified": ["features.json", "sprint-contracts/A.json", "specs/reviews/security-verdict.json"],
+  "artifacts": [
+    ".claude/state/g3eval3-uvicorn.log",
+    ".claude/state/g3eval3-uvicorn-debug.log",
+    ".claude/state/g3eval3-expected-ids.json",
+    "specs/reviews/evaluator-report-instance3.md"
   ]
 }

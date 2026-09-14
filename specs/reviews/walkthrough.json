@@ -1,8 +1,8 @@
 {
   "gate": "pr-walkthrough",
-  "generated_at": "2026-09-14T11:05:15.107Z",
+  "generated_at": "2026-09-14T12:15:23.638Z",
   "base": "14e9487",
-  "file_count": 153,
+  "file_count": 162,
   "slices": [
     {
       "story": "E15-S1",
@@ -11,9 +11,8 @@
           "path": "backend/src/api/app.py",
           "findings": [
             {
-              "id": "CR-022",
-              "level": "WARN",
-              "confidence": "medium",
+              "id": "CR2-W08",
+              "confidence": "high",
               "axis": "standards",
               "summary": ""
             }
@@ -23,8 +22,25 @@
           "path": "backend/src/api/errors.py",
           "findings": [
             {
-              "id": "CR-001",
-              "level": "BLOCK",
+              "id": "CR2-002",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I02",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I04",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I05",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
@@ -35,10 +51,21 @@
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR-010",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
+              "id": "CR2-001",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W06",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I01",
+              "confidence": "high",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -47,17 +74,33 @@
           "path": "backend/src/api/platform/routes.py",
           "findings": [
             {
-              "id": "CR-004",
-              "level": "WARN",
+              "id": "CR2-W01",
               "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W07",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W12",
+              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-005",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "spec",
+              "id": "CR2-W13",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I03",
+              "confidence": "high",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -66,44 +109,26 @@
           "path": "backend/src/config/logging.py",
           "findings": [
             {
-              "id": "CR-002",
-              "level": "BLOCK",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-008",
-              "level": "WARN",
+              "id": "CR2-W02",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-009",
-              "level": "WARN",
+              "id": "CR2-W09",
               "confidence": "medium",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-011",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-012",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-024",
-              "level": "INFO",
+              "id": "CR2-W10",
               "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W16",
+              "confidence": "medium",
               "axis": "standards",
               "summary": ""
             }
@@ -111,15 +136,7 @@
         },
         {
           "path": "backend/src/config/settings.py",
-          "findings": [
-            {
-              "id": "CR-007",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/src/types/errors.py",
@@ -130,48 +147,44 @@
           "findings": []
         },
         {
+          "path": "backend/tests/unit/test_correlation_id.py",
+          "findings": [
+            {
+              "id": "CR2-I06",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
+        },
+        {
+          "path": "backend/tests/unit/test_error_envelope.py",
+          "findings": []
+        },
+        {
+          "path": "backend/tests/unit/test_health_probe.py",
+          "findings": [
+            {
+              "id": "CR2-W05",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
+        },
+        {
           "path": "backend/tests/unit/test_log_redaction.py",
           "findings": [
             {
-              "id": "CR-017",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-018",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-019",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-020",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-023",
-              "level": "WARN",
+              "id": "CR2-W03",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-031",
-              "level": "INFO",
+              "id": "CR2-W04",
               "confidence": "high",
-              "axis": "spec",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -199,67 +212,34 @@
           "path": "backend/src/api/serializers.py",
           "findings": [
             {
-              "id": "CR-027",
-              "level": "INFO",
+              "id": "CR2-W11",
               "confidence": "high",
-              "axis": "standards",
+              "axis": "spec",
               "summary": ""
             }
           ]
         },
         {
           "path": "backend/src/types/money.py",
-          "findings": [
-            {
-              "id": "CR-006",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-016",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-025",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-026",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/tests/architecture/test_no_float_money.py",
-          "findings": [
-            {
-              "id": "CR-003",
-              "level": "BLOCK",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR-015",
-              "level": "WARN",
-              "confidence": "medium",
+              "id": "CR2-W15",
+              "confidence": "high",
               "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I08",
+              "confidence": "medium",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -270,15 +250,7 @@
         },
         {
           "path": "frontend/tests/unit/money.test.ts",
-          "findings": [
-            {
-              "id": "CR-014",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         }
       ],
       "program_design": [
@@ -293,22 +265,7 @@
       "files": [
         {
           "path": "backend/src/config/delinquency.py",
-          "findings": [
-            {
-              "id": "CR-013",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-028",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/src/types/delinquency.py",
@@ -425,6 +382,14 @@
           "findings": []
         },
         {
+          "path": ".claude/state/task-envelope-history/eda892d10c64151b32bbc2480478f10210ff8346da6a9d222f34b97ad71a715d.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/task-envelope.json",
           "findings": []
         },
@@ -434,15 +399,7 @@
         },
         {
           "path": "backend/src/__init__.py",
-          "findings": [
-            {
-              "id": "CR-021",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/tests/__init__.py",
@@ -470,15 +427,7 @@
         },
         {
           "path": "frontend/tsconfig.json",
-          "findings": [
-            {
-              "id": "CR-030",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "frontend/vite.config.ts",
@@ -609,7 +558,15 @@
           "findings": []
         },
         {
+          "path": "specs/design/amendments/group-a-gate-remediation.md",
+          "findings": []
+        },
+        {
           "path": "specs/design/amendments/group-a-implementation-sync.md",
+          "findings": []
+        },
+        {
+          "path": "specs/design/component-map.md",
           "findings": []
         },
         {
@@ -638,6 +595,10 @@
         },
         {
           "path": "specs/reviews/contract-freeze.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/design-approval.json",
           "findings": []
         },
         {
@@ -706,6 +667,10 @@
         },
         {
           "path": "specs/reviews/quality-card.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/regression-gate-verdict-nobaseline.json",
           "findings": []
         },
         {
@@ -886,15 +851,7 @@
         },
         {
           "path": "specs/stories/E9-S1.md",
-          "findings": [
-            {
-              "id": "CR-029",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "specs/stories/E9-S2.md",
@@ -946,9 +903,8 @@
           "path": "backend/src/api/app.py",
           "findings": [
             {
-              "id": "CR-022",
-              "level": "WARN",
-              "confidence": "medium",
+              "id": "CR2-W08",
+              "confidence": "high",
               "axis": "standards",
               "summary": ""
             }
@@ -958,8 +914,25 @@
           "path": "backend/src/api/errors.py",
           "findings": [
             {
-              "id": "CR-001",
-              "level": "BLOCK",
+              "id": "CR2-002",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I02",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I04",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I05",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
@@ -970,10 +943,21 @@
           "path": "backend/src/api/middleware.py",
           "findings": [
             {
-              "id": "CR-010",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
+              "id": "CR2-001",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W06",
+              "confidence": "high",
+              "axis": "spec",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I01",
+              "confidence": "high",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -982,17 +966,33 @@
           "path": "backend/src/api/platform/routes.py",
           "findings": [
             {
-              "id": "CR-004",
-              "level": "WARN",
+              "id": "CR2-W01",
               "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W07",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W12",
+              "confidence": "medium",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-005",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "spec",
+              "id": "CR2-W13",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I03",
+              "confidence": "high",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -1001,10 +1001,9 @@
           "path": "backend/src/api/serializers.py",
           "findings": [
             {
-              "id": "CR-027",
-              "level": "INFO",
+              "id": "CR2-W11",
               "confidence": "high",
-              "axis": "standards",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -1017,65 +1016,32 @@
       "files": [
         {
           "path": "backend/src/config/delinquency.py",
-          "findings": [
-            {
-              "id": "CR-013",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-028",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/src/config/logging.py",
           "findings": [
             {
-              "id": "CR-002",
-              "level": "BLOCK",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-008",
-              "level": "WARN",
+              "id": "CR2-W02",
               "confidence": "high",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-009",
-              "level": "WARN",
+              "id": "CR2-W09",
               "confidence": "medium",
               "axis": "standards",
               "summary": ""
             },
             {
-              "id": "CR-011",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-012",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-024",
-              "level": "INFO",
+              "id": "CR2-W10",
               "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-W16",
+              "confidence": "medium",
               "axis": "standards",
               "summary": ""
             }
@@ -1083,15 +1049,7 @@
         },
         {
           "path": "backend/src/config/settings.py",
-          "findings": [
-            {
-              "id": "CR-007",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "frontend/eslint.config.js",
@@ -1103,15 +1061,7 @@
         },
         {
           "path": "frontend/tsconfig.json",
-          "findings": [
-            {
-              "id": "CR-030",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "frontend/vite.config.ts",
@@ -1125,15 +1075,7 @@
       "files": [
         {
           "path": "frontend/tests/unit/money.test.ts",
-          "findings": [
-            {
-              "id": "CR-014",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         }
       ]
     },
@@ -1278,7 +1220,15 @@
           "findings": []
         },
         {
+          "path": "specs/design/amendments/group-a-gate-remediation.md",
+          "findings": []
+        },
+        {
           "path": "specs/design/amendments/group-a-implementation-sync.md",
+          "findings": []
+        },
+        {
+          "path": "specs/design/component-map.md",
           "findings": []
         },
         {
@@ -1307,6 +1257,10 @@
         },
         {
           "path": "specs/reviews/contract-freeze.json",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/design-approval.json",
           "findings": []
         },
         {
@@ -1375,6 +1329,10 @@
         },
         {
           "path": "specs/reviews/quality-card.md",
+          "findings": []
+        },
+        {
+          "path": "specs/reviews/regression-gate-verdict-nobaseline.json",
           "findings": []
         },
         {
@@ -1555,15 +1513,7 @@
         },
         {
           "path": "specs/stories/E9-S1.md",
-          "findings": [
-            {
-              "id": "CR-029",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "specs/stories/E9-S2.md",
@@ -1648,6 +1598,14 @@
           "findings": []
         },
         {
+          "path": ".claude/state/task-envelope-history/eda892d10c64151b32bbc2480478f10210ff8346da6a9d222f34b97ad71a715d.json",
+          "findings": []
+        },
+        {
+          "path": ".claude/state/task-envelope-history/fb41b097c331594e1807274e9ee9b47320e6a57f83ca3cd62ba155ba90598404.json",
+          "findings": []
+        },
+        {
           "path": ".claude/state/task-envelope.json",
           "findings": []
         },
@@ -1657,15 +1615,7 @@
         },
         {
           "path": "backend/src/__init__.py",
-          "findings": [
-            {
-              "id": "CR-021",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/src/types/delinquency.py",
@@ -1677,36 +1627,7 @@
         },
         {
           "path": "backend/src/types/money.py",
-          "findings": [
-            {
-              "id": "CR-006",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "spec",
-              "summary": ""
-            },
-            {
-              "id": "CR-016",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-025",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-026",
-              "level": "INFO",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/tests/__init__.py",
@@ -1714,15 +1635,7 @@
         },
         {
           "path": "backend/tests/architecture/test_no_float_money.py",
-          "findings": [
-            {
-              "id": "CR-003",
-              "level": "BLOCK",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            }
-          ]
+          "findings": []
         },
         {
           "path": "backend/tests/conftest.py",
@@ -1733,48 +1646,44 @@
           "findings": []
         },
         {
+          "path": "backend/tests/unit/test_correlation_id.py",
+          "findings": [
+            {
+              "id": "CR2-I06",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
+        },
+        {
+          "path": "backend/tests/unit/test_error_envelope.py",
+          "findings": []
+        },
+        {
+          "path": "backend/tests/unit/test_health_probe.py",
+          "findings": [
+            {
+              "id": "CR2-W05",
+              "confidence": "high",
+              "axis": "standards",
+              "summary": ""
+            }
+          ]
+        },
+        {
           "path": "backend/tests/unit/test_log_redaction.py",
           "findings": [
             {
-              "id": "CR-017",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-018",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-019",
-              "level": "WARN",
-              "confidence": "medium",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-020",
-              "level": "WARN",
-              "confidence": "high",
-              "axis": "standards",
-              "summary": ""
-            },
-            {
-              "id": "CR-023",
-              "level": "WARN",
+              "id": "CR2-W03",
               "confidence": "high",
               "axis": "spec",
               "summary": ""
             },
             {
-              "id": "CR-031",
-              "level": "INFO",
+              "id": "CR2-W04",
               "confidence": "high",
-              "axis": "spec",
+              "axis": "standards",
               "summary": ""
             }
           ]
@@ -1791,10 +1700,15 @@
           "path": "frontend/src/types/money.ts",
           "findings": [
             {
-              "id": "CR-015",
-              "level": "WARN",
-              "confidence": "medium",
+              "id": "CR2-W15",
+              "confidence": "high",
               "axis": "standards",
+              "summary": ""
+            },
+            {
+              "id": "CR2-I08",
+              "confidence": "medium",
+              "axis": "spec",
               "summary": ""
             }
           ]
@@ -1814,11 +1728,7 @@
       ]
     }
   ],
-  "review_summary": {
-    "block": 3,
-    "warn": 20,
-    "info": 8
-  },
+  "review_summary": "All three prior code-review BLOCKs (CR-001 error envelope, CR-002 request-scoped PII redaction, CR-003 money-guard exemption) are independently verified CLOSED by executing the code at HEAD, not by reading its comments. Two NEW BLOCKs found, both introduced by the remediation commits themselves: (1) the /metrics RED counter is keyed on the raw request path instead of the matched route template, giving unbounded attacker-controlled counter cardinality (500 unknown paths -> 500 permanent series, 37 KB /metrics body) and destroying per-route aggregation as soon as a path-param route lands; (2) the new global HTTPException handler discards exc.headers, so 405 responses lose the RFC-required Allow header and a future 401 loses its WWW-Authenticate challenge - a regression against the FastAPI default handler it replaced. Four of the six reviewer hypotheses supplied in the spawn prompt were refuted with evidence (contextvar non-unwind, bare asserts under -O, per-request Settings(), and the loggerDict-once gap for the common propagating case). E11-S1 and the Money type are clean; no file exceeds 300 lines and no function exceeds 24.",
   "review_pass": false,
   "blast_radius": {
     "callers": [],
@@ -1828,170 +1738,9 @@
     "E15-S1",
     "E9-S1",
     "E11-S1",
+    "E1-S1",
     "E15-S2"
   ],
-  "intent": "# Review Context Pack — /gate --group A (fresh re-run) **This pack supersedes the 2026-09-14T09:37 pack.** That pack described commit `e147f7e`. Every BLOCK it produced has since been fixed in three commits, and the stored verdicts (`code-review-verdict.json`, `security-verdict.json`, `evaluator-report.md`, `quality-card.json`, `.claude/state/gate-receipt.json`) all predate those fixes and read `p",
-  "high_signal": [
-    {
-      "id": "CR-001",
-      "level": "BLOCK",
-      "confidence": "high",
-      "file": "backend/src/api/errors.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-002",
-      "level": "BLOCK",
-      "confidence": "high",
-      "file": "backend/src/config/logging.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-003",
-      "level": "BLOCK",
-      "confidence": "high",
-      "file": "backend/tests/architecture/test_no_float_money.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-004",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/api/platform/routes.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-005",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/api/platform/routes.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-006",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/types/money.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-007",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/config/settings.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-008",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/config/logging.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-009",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/config/logging.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-010",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/api/middleware.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-011",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/config/logging.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-012",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/config/logging.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-013",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/src/config/delinquency.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-014",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "frontend/tests/unit/money.test.ts",
-      "summary": ""
-    },
-    {
-      "id": "CR-015",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "frontend/src/types/money.ts",
-      "summary": ""
-    },
-    {
-      "id": "CR-016",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/types/money.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-017",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/tests/unit/test_log_redaction.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-018",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/tests/unit/test_log_redaction.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-019",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/tests/unit/test_log_redaction.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-020",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/tests/unit/test_log_redaction.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-021",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/__init__.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-022",
-      "level": "WARN",
-      "confidence": "medium",
-      "file": "backend/src/api/app.py",
-      "summary": ""
-    },
-    {
-      "id": "CR-023",
-      "level": "WARN",
-      "confidence": "high",
-      "file": "backend/tests/unit/test_log_redaction.py",
-      "summary": ""
-    }
-  ]
+  "intent": "# Review Context Pack — /gate --group A (round 2) / **Gate lane:** on-demand pre-merge (`/gate`) / **Generated:** 2026-09-14 (session 5) ## 1. Request / scope | Field | Value | |---|---| | Group | A | | Stories | E15-S1 (platform logging + health), E9-S1 (Money value type), E11-S1 (delinquency bucket) | | Sprint contract | `sprint-contracts/A.json` (FROZEN — do not edit) |",
+  "high_signal": []
 }

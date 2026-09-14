@@ -1,0 +1,5 @@
+{"timestamp": "2026-09-14T11:40:48.848334+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "req-abc"}
+{"timestamp": "2026-09-14T11:40:48.872804+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "req-abc"}
+{"timestamp": "2026-09-14T11:40:48.899797+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "req-abc"}
+{"timestamp": "2026-09-14T11:40:48.929026+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "req-abc"}
+{"timestamp": "2026-09-14T11:40:48.956231+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "req-abc"}

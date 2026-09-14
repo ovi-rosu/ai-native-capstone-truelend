@@ -27,6 +27,13 @@
       "reason": "Relocation, not deletion. The guard counts test definitions per file, so a file split reads as lost coverage. The 7 moved blocks were transplanted verbatim into three new files that component-map.md now lists for E15-S1: test_correlation_id.py (5), test_error_envelope.py (3) and test_health_probe.py (1). Verified: 9+5+3+1 = 18 test definitions across the four files versus 16 in the one before, and pytest --collect-only reports 77 tests collected versus 73 before the change, so total coverage rose rather than fell. No assertion was weakened and nothing was skipped. The split was forced by the 500-line hard limit, which pre-write-gate applied correctly to a 519-line file carrying six responsibilities. Expires in two days: this covers one commit and must not shelter a later real deletion.",
       "expires": "2026-09-16",
       "approved_by": "ovi-rosu"
+    },
+    {
+      "sensor_id": "impact-scoped-regression",
+      "scope": "Group A remediation commits only: the 4 remaining findings are group B's api_checks (QA-VM-012 through QA-VM-015)",
+      "reason": "Scoping artifact, not a regression. The gate grades every sprint contract rather than the group in flight -- the same flaw /gate itself recorded when regression-suite-full graded 12 unbuilt groups against a dead server. Verified directly: with no server listening it reported 7 findings, all 'got 0' (no HTTP response at all). With uvicorn up on the configured port it reports 4, and group A's QA-VM-003/004/005 PASS and drop off the list entirely. The 4 that remain are group B's endpoints returning 404 because E1-S1 has not been implemented yet -- an unbuilt group cannot satisfy its contract, and that is the plan working, not a defect. Expires in two days: it covers the group A remediation commits and must not shelter a real regression once group B lands.",
+      "expires": "2026-09-16",
+      "approved_by": "ovi-rosu"
     }
   ]
 }

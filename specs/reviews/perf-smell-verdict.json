@@ -1,7 +1,7 @@
 {
   "gate": "perf-smell",
   "pass": true,
-  "checked": 21,
+  "checked": 13,
   "summary": {
     "block": 0,
     "warn": 0

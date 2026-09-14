@@ -1,0 +1,13 @@
+{
+  "verdict": "fail",
+  "error_rate_pct": 99.90250932519498,
+  "p95_ms": null,
+  "budgets": {
+    "error_rate_pct": 1,
+    "p95_ms": 500
+  },
+  "breaches": [
+    "error_rate"
+  ],
+  "scraped": "http://127.0.0.1:8020/metrics"
+}

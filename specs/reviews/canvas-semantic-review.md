@@ -2,7 +2,7 @@
 
 Changed governed files:
 
-- backend/src/__init__.py
+- backend/src/api/errors.py
 
 For each claim below, judge against the diff of those files whether it STILL holds.
 If a claim no longer describes the code, fix the Canvas prose in `specs\design\reasons-canvas.md` first (fix-the-prompt-first), then the code.
@@ -189,6 +189,6 @@ Non-negotiable boundaries. A reviewer checks the diff against these.
 
 ## Claim — Operations
 
-- TODO(canvas-sync): document the operation that lands in `backend/src/__init__.py`
-- TODO(canvas-sync): document the operation that lands in `backend/tests/__init__.py`
+- TODO(canvas-sync): document the operation that lands in `backend/src/api/errors.py`
+- TODO(canvas-sync): document the operation that lands in `backend/src/types/errors.py`
 

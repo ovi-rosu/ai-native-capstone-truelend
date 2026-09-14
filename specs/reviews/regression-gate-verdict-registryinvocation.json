@@ -1,0 +1,278 @@
+{
+  "verdict": "blocked",
+  "findings": [
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\A.json",
+      "line": 25,
+      "detail": "api_check \"QA-VM-003\" (GET /health): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\A.json",
+      "line": 35,
+      "detail": "api_check \"QA-VM-004\" (GET /health): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\A.json",
+      "line": 45,
+      "detail": "api_check \"QA-VM-005\" (GET /health): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 19,
+      "detail": "api_check \"QA-VM-012\" (POST /auth/login): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 29,
+      "detail": "api_check \"QA-VM-013\" (GET /products): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 39,
+      "detail": "api_check \"QA-VM-014\" (POST /products/{product_code}/policy-versions): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 49,
+      "detail": "api_check \"QA-VM-015\" (GET /products/{product_code}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\C.json",
+      "line": 20,
+      "detail": "api_check \"QA-VM-016\" (GET /documents/queue): expected status 401, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\C.json",
+      "line": 30,
+      "detail": "api_check \"QA-VM-017\" (GET /documents/queue): expected status 403, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\C.json",
+      "line": 40,
+      "detail": "api_check \"QA-VM-018\" (GET /openapi.json): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\C.json",
+      "line": 50,
+      "detail": "api_check \"QA-VM-019\" (GET /audit-entries): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\D.json",
+      "line": 19,
+      "detail": "api_check \"QA-VM-024\" (GET /products): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\D.json",
+      "line": 29,
+      "detail": "api_check \"QA-VM-025\" (GET /products): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\D.json",
+      "line": 39,
+      "detail": "api_check \"QA-VM-026\" (GET /products/{product_code}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\E.json",
+      "line": 23,
+      "detail": "api_check \"QA-VM-035\" (POST /applications): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\E.json",
+      "line": 33,
+      "detail": "api_check \"QA-VM-036\" (POST /applications): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\E.json",
+      "line": 43,
+      "detail": "api_check \"QA-VM-037\" (POST /applications): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\E.json",
+      "line": 53,
+      "detail": "api_check \"QA-VM-105\" (GET /products): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\F.json",
+      "line": 15,
+      "detail": "api_check \"QA-VM-038\" (POST /applications): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\F.json",
+      "line": 25,
+      "detail": "api_check \"QA-VM-039\" (GET /applications/{application_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\F.json",
+      "line": 35,
+      "detail": "api_check \"QA-VM-040\" (GET /applications/{application_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\F.json",
+      "line": 45,
+      "detail": "api_check \"QA-VM-041\" (GET /applications/{application_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 27,
+      "detail": "api_check \"QA-VM-045\" (POST /applications): expected status 422, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 37,
+      "detail": "api_check \"QA-VM-046\" (POST /applications): expected status 422, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 47,
+      "detail": "api_check \"QA-VM-047\" (GET /applications): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 57,
+      "detail": "api_check \"QA-VM-048\" (POST /applications): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 67,
+      "detail": "api_check \"QA-VM-049\" (POST /applications): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 77,
+      "detail": "api_check \"QA-VM-055\" (POST /applications/{application_id}/documents/{document_id}/verification): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 87,
+      "detail": "api_check \"QA-VM-056\" (POST /applications/{application_id}/documents/{document_id}/verification): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 97,
+      "detail": "api_check \"QA-VM-057\" (POST /applications/{application_id}/documents/{document_id}/verification): expected status 422, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\G.json",
+      "line": 107,
+      "detail": "api_check \"QA-VM-058\" (GET /documents/queue): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\H.json",
+      "line": 19,
+      "detail": "api_check \"QA-VM-051\" (POST /applications/{application_id}/decision): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\H.json",
+      "line": 29,
+      "detail": "api_check \"QA-VM-052\" (POST /applications/{application_id}/decision): expected status 409, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\H.json",
+      "line": 39,
+      "detail": "api_check \"QA-VM-053\" (GET /applications/{application_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\H.json",
+      "line": 49,
+      "detail": "api_check \"QA-VM-054\" (POST /applications/{application_id}/decision): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\I.json",
+      "line": 28,
+      "detail": "api_check \"QA-VM-074\" (GET /loans/{loan_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\I.json",
+      "line": 38,
+      "detail": "api_check \"QA-VM-075\" (POST /loans/{loan_id}/disbursement): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\I.json",
+      "line": 48,
+      "detail": "api_check \"QA-VM-076\" (POST /loans/{loan_id}/repayments): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\J.json",
+      "line": 16,
+      "detail": "api_check \"QA-VM-077\" (GET /loans/{loan_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\J.json",
+      "line": 26,
+      "detail": "api_check \"QA-VM-078\" (GET /loans/{loan_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\J.json",
+      "line": 36,
+      "detail": "api_check \"QA-VM-079\" (GET /loans/{loan_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\J.json",
+      "line": 46,
+      "detail": "api_check \"QA-VM-080\" (GET /loans/{loan_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 20,
+      "detail": "api_check \"QA-VM-082\" (POST /loans/{loan_id}/disbursement): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 30,
+      "detail": "api_check \"QA-VM-083\" (GET /loans/{loan_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 40,
+      "detail": "api_check \"QA-VM-084\" (POST /loans/{loan_id}/disbursement): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 50,
+      "detail": "api_check \"QA-VM-085\" (POST /loans/{loan_id}/disbursement): expected status 409, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 60,
+      "detail": "api_check \"QA-VM-090\" (POST /operations/end-of-day): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 70,
+      "detail": "api_check \"QA-VM-091\" (POST /operations/end-of-day): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 80,
+      "detail": "api_check \"QA-VM-092\" (POST /operations/end-of-day): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\K.json",
+      "line": 90,
+      "detail": "api_check \"QA-VM-093\" (POST /operations/end-of-day): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\L.json",
+      "line": 15,
+      "detail": "api_check \"QA-VM-086\" (POST /loans/{loan_id}/repayments): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\L.json",
+      "line": 25,
+      "detail": "api_check \"QA-VM-087\" (GET /loans/{loan_id}): expected status 200, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\L.json",
+      "line": 35,
+      "detail": "api_check \"QA-VM-088\" (POST /loans/{loan_id}/repayments): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\L.json",
+      "line": 45,
+      "detail": "api_check \"QA-VM-089\" (POST /loans/{loan_id}/repayments): expected status 201, got 0"
+    }
+  ],
+  "notes": [
+    "e2e/ exists but has no *.spec.(ts|js) files — nothing to run"
+  ]
+}

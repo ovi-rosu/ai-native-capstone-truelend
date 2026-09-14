@@ -1,0 +1,5 @@
+# HELP http_requests_total Total HTTP requests served.
+# TYPE http_requests_total counter
+http_requests_total{method="GET",route="/health",status="200"} 18
+http_requests_total{method="GET",route="/nonexistent",status="404"} 1
+http_requests_total{method="POST",route="/health",status="405"} 1

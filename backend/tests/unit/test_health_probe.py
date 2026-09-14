@@ -88,3 +88,62 @@ def test_metrics_endpoint_exposes_red_counters() -> None:
     assert 'method="GET"' in body
     assert 'route="/health"' in body
     assert 'status="200"' in body
+
+
+def test_metrics_labels_cannot_be_injected_from_a_request_path() -> None:
+    """A crafted path must not forge a counter line.
+
+    The route label was rendered from `scope["path"]` verbatim, so one
+    percent-encoded GET closed the label quote and appended a fully-formed
+    series. Running this project's own SLO sensor against the poisoned
+    endpoint reported a 99.90% error rate against a 1% budget -- and the same
+    trick masks a real outage. Prometheus label values must be escaped.
+    """
+    from src.api.app import create_app
+    from src.api.middleware import reset_request_counters
+
+    reset_request_counters()
+    forged = (
+        "/x%22%201%0Ahttp_requests_total%7Bmethod%3D%22GET%22%2C"
+        "route%3D%22/forged%22%2Cstatus%3D%22500%22%7D%20999999"
+    )
+    with TestClient(create_app()) as test_client:
+        test_client.get(forged)
+        body = test_client.get("/metrics").text
+
+    assert 'route="/forged"' not in body, "a forged series was injected"
+    assert "999999" not in body, "an attacker-supplied counter value was rendered"
+    for line in body.splitlines():
+        if line.startswith("http_requests_total"):
+            assert line.count("{") == 1 and line.count("}") == 1
+
+
+def test_metrics_cardinality_is_bounded_by_route_not_path() -> None:
+    """Unmatched paths must collapse to one series.
+
+    Keying on the raw path let 60,000 requests from a single keep-alive
+    connection retain 28.2 MB permanently. The matched route template is the
+    bounded key; anything unrouted shares one bucket.
+    """
+    from src.api.app import create_app
+    from src.api.middleware import request_counter_snapshot, reset_request_counters
+
+    reset_request_counters()
+    with TestClient(create_app()) as test_client:
+        for index in range(25):
+            test_client.get(f"/no-such-route-{index}")
+
+    routes = {route for _, route, _ in request_counter_snapshot()}
+    assert len(routes) == 1, f"unmatched paths created {len(routes)} series: {routes}"
+
+
+def test_metrics_uses_the_route_template_for_matched_requests() -> None:
+    """A matched request is labelled with its route template."""
+    from src.api.app import create_app
+    from src.api.middleware import request_counter_snapshot, reset_request_counters
+
+    reset_request_counters()
+    with TestClient(create_app()) as test_client:
+        test_client.get("/health")
+
+    assert any(route == "/health" for _, route, _ in request_counter_snapshot())

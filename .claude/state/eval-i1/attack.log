@@ -1,0 +1,10 @@
+{"timestamp": "2026-09-14T11:50:18.173613+00:00", "level": "INFO", "logger": "uvicorn.error", "message": "Started server process [69240]", "request_id": ""}
+{"timestamp": "2026-09-14T11:50:18.173815+00:00", "level": "INFO", "logger": "uvicorn.error", "message": "Waiting for application startup.", "request_id": ""}
+{"timestamp": "2026-09-14T11:50:18.174006+00:00", "level": "INFO", "logger": "uvicorn.error", "message": "Application startup complete.", "request_id": ""}
+{"timestamp": "2026-09-14T11:50:18.176478+00:00", "level": "INFO", "logger": "uvicorn.error", "message": "Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)", "request_id": ""}
+{"timestamp": "2026-09-14T11:50:29.866128+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "d48f41700dc443e591d38763178d2024"}
+{"timestamp": "2026-09-14T11:50:29.923399+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /metrics -> 200", "request_id": "307a998922164c22806c5bf95d1b2853"}
+{"timestamp": "2026-09-14T11:50:29.955653+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /x\",status=\"200\"} 1\nhttp_requests_total{method=\"GET\",route=\"/health\",status=\"500\"} 99999\n# -> 404", "request_id": "a49847a11e954d218804d62634b7f64b"}
+{"timestamp": "2026-09-14T11:50:29.979626+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /metrics -> 200", "request_id": "76f0b764fbdf4202b50d331a4f711d9e"}
+{"timestamp": "2026-09-14T11:50:30.006872+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /metrics -> 200", "request_id": "b50be23ecd9146688b89047d27a42a21"}
+{"timestamp": "2026-09-14T11:50:30.105312+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /metrics -> 200", "request_id": "471ebb572b604c52a8385b152384a8c8"}

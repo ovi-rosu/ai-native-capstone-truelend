@@ -1,23 +1,44 @@
 {
   "gate": "observability",
   "pass": true,
-  "checked": 21,
+  "checked": 13,
   "summary": {
     "block": 0,
-    "warn": 3
+    "warn": 6
   },
   "findings": [
     {
       "id": "OBS-BOUNDARY-NO-LOGGER",
       "level": "WARN",
-      "file": "backend/src/api/app.py",
+      "file": "backend/src/api/errors.py",
       "line": 1,
       "message": "Likely service boundary without structured logger usage"
     },
     {
-      "id": "OBS-BOUNDARY-NO-LOGGER",
+      "id": "OBS-MIDDLEWARE-NO-REQUEST-ID",
       "level": "WARN",
       "file": "backend/src/api/errors.py",
+      "line": 1,
+      "message": "HTTP middleware without request_id / X-Request-ID correlation"
+    },
+    {
+      "id": "OBS-BOUNDARY-NO-LOGGER",
+      "level": "WARN",
+      "file": "backend/src/api/platform/routes.py",
+      "line": 1,
+      "message": "Likely service boundary without structured logger usage"
+    },
+    {
+      "id": "OBS-MIDDLEWARE-NO-REQUEST-ID",
+      "level": "WARN",
+      "file": "backend/src/api/platform/routes.py",
+      "line": 1,
+      "message": "HTTP middleware without request_id / X-Request-ID correlation"
+    },
+    {
+      "id": "OBS-BOUNDARY-NO-LOGGER",
+      "level": "WARN",
+      "file": "backend/src/api/app.py",
       "line": 1,
       "message": "Likely service boundary without structured logger usage"
     },

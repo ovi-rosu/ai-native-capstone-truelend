@@ -302,3 +302,30 @@ def test_redaction_survives_an_exception_escaping_the_registration_scope() -> No
     assert "rejected application" in joined, "the handler exception never reached a sink"
     assert "[REDACTED]" in joined, "the registered value was not scrubbed"
     assert pan not in joined, "PAN leaked after the registration scope exited"
+
+
+def test_hostile_log_input_cannot_forge_a_log_line() -> None:
+    """Attacker-supplied text must not become a second log record.
+
+    The redaction design is registration-based, so it structurally cannot
+    sanitise arbitrary hostile input -- and /metrics proved attacker-controlled
+    data does reach an output plane verbatim. For log sinks the vector turns out
+    to be closed already, not by redaction but by the JSON encoding: `json.dumps`
+    escapes control characters, so a newline in a message cannot split the
+    record. This test pins that property, because it is currently a side effect
+    of the encoder rather than a stated requirement -- swap the formatter for a
+    plain-text one and log forging becomes live.
+    """
+    from src.config.logging import JSONLogFormatter
+
+    hostile = (
+        'user said: x"}\n{"level": "ERROR", "logger": "audit", '
+        '"message": "forged audit entry"}'
+    )
+    record = logging.LogRecord("app.origination", logging.INFO, "t.py", 1, hostile, (), None)
+
+    rendered = JSONLogFormatter().format(record)
+
+    assert len(rendered.splitlines()) == 1, "hostile input split the record into two lines"
+    assert "\n" not in rendered, "a raw control character reached the log line"
+    assert json.loads(rendered)["logger"] == "app.origination", "the real fields survived"

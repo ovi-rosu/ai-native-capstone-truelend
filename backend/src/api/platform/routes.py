@@ -67,6 +67,18 @@ async def get_health() -> dict[str, str]:
     }
 
 
+# Prometheus label values escape backslash, double quote and newline. Without
+# this a crafted request path closed the label quote and appended a complete
+# forged series: one unauthenticated GET made the SLO sensor report a 99.90%
+# error rate against a 1% budget, and the same trick masks a real outage.
+_LABEL_ESCAPES = str.maketrans({"\\": r"\\", '"': r"\"", "\n": r"\n"})
+
+
+def _escape_label(value: str) -> str:
+    """Escape a label value per the Prometheus exposition format."""
+    return value.translate(_LABEL_ESCAPES)
+
+
 @router.get("/metrics", response_class=PlainTextResponse)
 async def get_metrics() -> PlainTextResponse:
     """RED request counters in Prometheus text exposition format."""
@@ -76,7 +88,7 @@ async def get_metrics() -> PlainTextResponse:
     ]
     for (method, route, status), count in sorted(request_counter_snapshot().items()):
         lines.append(
-            f'http_requests_total{{method="{method}",route="{route}",'
-            f'status="{status}"}} {count}'
+            f'http_requests_total{{method="{_escape_label(method)}",'
+            f'route="{_escape_label(route)}",status="{status:d}"}} {count:d}'
         )
     return PlainTextResponse("\n".join(lines) + "\n")

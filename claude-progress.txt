@@ -1,45 +1,115 @@
-=== Session 0 ===
-date: 2026-09-14T10:45:00.000Z
-mode: full
+=== Session 5 ===
+date: 2026-09-14T12:20:00.000Z
+mode: /gate --group A (round 2, on-demand pre-merge)
 groups_completed: []
-groups_remaining: [A (code-review BLOCKs all closed; awaiting a fresh /gate verdict), B, C, D, E, F, G, H, I, J, K, L, M]
-current_group: none
-current_stories: []
-sprint_contract: sprint-contracts/A.json
-last_commit: f4abd41 "fix: close CR-003 and align the error envelope with the frozen contract"
-features_passing: 10 / 107 (features.json; the 2 group A rows still marked failing, F002/F003, were fixed in 5c13f54 and need a fresh evaluator run)
-coverage: backend 73 tests pass, frontend 18 tests pass, ruff/mypy/eslint/tsc clean
+groups_remaining: [A (GATE = BLOCK), B, C, D, E, F, G, H, I, J, K, L, M]
+current_group: A (gated, not merged)
+current_stories: [E15-S1, E9-S1, E11-S1]
+sprint_contract: sprint-contracts/A.json (frozen, untouched)
+last_commit: 9112495 "fix: complete the frozen error envelope, sanitise context, ship /health and /metrics"
+features_passing: 12 / 107 (last_evaluated refreshed by evaluator 1; no status field changed)
+coverage: backend 88 tests pass, frontend 18 tests pass, ruff/mypy/eslint/tsc clean
 learned_rules: 0
 blocked_stories: none
 
-ALL FOUR GROUP A CODE-REVIEW BLOCKS ARE NOW CLOSED.
-  CR-001 Money accepts NaN                     -> FIXED (is_finite guard)
-  CR-002 float guard ignores arithmetic        -> FIXED (Div/FloorDiv + math, per-line exemption)
-  CR-003 500 path loses X-Request-ID           -> FIXED (pure-ASGI middleware outside ServerErrorMiddleware)
-  CR-004 uvicorn loggers bypass JSON formatter -> FIXED (_route_server_loggers_through_root)
-  Design defect 1 (error envelope drift) also closed: AppError carries a context
-  mapping and reports its class name; the handler emits {error, detail, context}
-  per api-contracts.md. The test that pinned the old shape was updated.
+GATE VERDICT: BLOCK. See .claude/state/handoff/gate-group-A.md for the full
+record, and specs/reviews/reverify-votes.json for the vote trail.
 
-OPEN ITEMS BEFORE / DURING GROUP B
-  1. Docker Desktop is still not installed. verification.mode is `local` so the
-     evaluator boots, but E15-S2-AC1 asserts `docker compose up ... all three report
-     healthy` and stays unverifiable until Docker exists. E15-S2 is IN group B.
-  2. E1-S2 step 7 (group C) retrofits require_roles onto E1-S1's
-     backend/src/api/policy/routes.py. component-map.md's "Modifies" table does not
-     authorize that pair, so ownership-check will block at group C. component-map.md is
-     a design-approval artifact, so amending it invalidates the design receipt and needs
-     a re-record. Decide before group C, not during it.
-  3. Design defects 2 and 4-7 from Session 4 are still open; see that entry.
-  4. The 26 agent-authored Operations are committed. Group B's two (E1-S1, E1-S2) have
-     now been reviewed: one real defect found and fixed (E1-S1 step 10 did not specify
-     status_code=201, which QA-VM-014 requires and FastAPI does not default to).
-     Groups C-M remain unreviewed; review each as its wave is reached.
+All five prior BLOCKs (CR-001/002/003, SEC-001/002) are genuinely CLOSED,
+verified by execution. The frozen contract passes: QA-VM-003/004/005 live in
+3/3 evaluator instances, all 12 story ACs pass.
 
-next_action: Run /auto
-  code-review-verdict.json and gate-receipt.json both predate every fix above and read
-  pass:false. Once A passes, group B is ready (sprint-contracts/B.json is coherent; all
-  4 api_checks are served by E1-S1's own owned files), subject to item 1.
+But the two remediation commits introduced FOUR new BLOCKs:
+  1. /metrics Prometheus exposition INJECTION — one unauthenticated GET forges
+     counters and flips this project's own SLO sensor to 99.9% error rate
+     (budget 1%). Also works in reverse to mask a real outage.
+  2. /metrics unbounded cardinality — process-global Counter keyed on the raw
+     path, never evicted: 60k paths from one connection = +28.2 MB retained.
+  3. errors.py:107 discards HTTPException.headers — 405 loses Allow, 401 loses
+     WWW-Authenticate (RFC 9110). One-line fix.
+  4. frontend money.ts:78 quadratic separator regex — 9 bytes freezes the thread
+     for >100 s. Latent (no frontend entry point yet).
+
+Axes: security BLOCK (unanimous 3/3), functional FAIL (2/3), code-review BLOCK
+(out-of-vote, sufficient alone). Task lifecycle left `active`;
+finalize-task-evidence.js correctly refused completion.
+
+HARNESS DEFECT worth remembering: security-scan.js reported a clean pass having
+scanned ZERO files (`--staged` with an empty index → no SAST targets, self-reports
+ran:true, no skip warning; and runDeps() only looks for package.json in the repo
+ROOT so npm audit never ran against frontend/). Always pass explicit --files.
+Also: no dependency lockfile is tracked at all (.gitignore:48-49).
+
+next_action: Return group A to the generator for the four new BLOCKs (fix 1+2
+  together, plus the sanitise_context int/bool/key gap). THREE SPEC DECISIONS
+  NEEDED FIRST because /metrics has no AC and api-contracts.md is frozen:
+  (a) may /metrics require auth? (b) add an AC for a duration metric so
+  slo.p95_ms is measurable? (c) add an AC for log-input sanitisation?
+  Then re-run /gate --group A. Do NOT build group B on this substrate.
+
+=== Session 0 ===
+date: 2026-09-14T12:10:00.000Z
+mode: full
+groups_remaining: [A (SUPERSEDED — see Session 5: the fresh /gate verdict is BLOCK), B, C, D, E, F, G, H, I, J, K, L, M]
+groups_completed: []
+current_group: none
+current_stories: []
+sprint_contract: sprint-contracts/A.json
+last_commit: 9112495 "fix: complete the frozen error envelope, sanitise context, ship /health and /metrics"
+features_passing: 12 / 107
+coverage: backend 88 tests pass, frontend 18 tests pass, ruff/mypy/eslint/tsc clean
+learned_rules: 0
+blocked_stories: none
+
+GROUP A — every /gate finding is now closed across commits 5c13f54, f4abd41,
+9558cc5 and 9112495. The stored code-review-verdict.json and gate-receipt.json
+read pass:false and PREDATE all of them. That fresh /gate has now RUN; see Session 5
+for the real verdict (BLOCK). Do not build group B yet.
+  CR-001 Money accepts NaN                -> FIXED (is_finite guard)
+  CR-002 float guard ignores arithmetic   -> FIXED (Div/FloorDiv + math)
+  CR-003 500 loses X-Request-ID           -> FIXED (pure-ASGI middleware mounted
+                                             outside ServerErrorMiddleware)
+  CR-004 uvicorn loggers bypass JSON      -> FIXED (_route_server_loggers_through_root)
+  SEC-001 ReDoS in the redaction pattern  -> FIXED (bounded {0,4}; separator-bearing
+                                             values matched literally). Note: the gate's
+                                             timings were not reproducible here across
+                                             three constructed inputs; the construction
+                                             was unsound regardless.
+  PII leak on exception scope-escape      -> FIXED (request-scoped registration owned by
+                                             the middleware, which unwinds neither
+                                             contextvar on the failure path and logs the
+                                             traceback itself). Root cause was deeper than
+                                             reported: FastAPI runs a sync `def` handler in
+                                             a threadpool on a COPY of the context, so
+                                             ContextVar.set there was invisible and silently
+                                             lost every value a sync handler registered. The
+                                             holding var is now a mutable set.
+  AppError.context egress channel         -> FIXED (scalars only, Decimal -> str,
+                                             credential URIs dropped, scrubbed via a
+                                             scrub_text helper shared with the log filter)
+  Envelope only covered AppError          -> FIXED (404/422/500 handlers; a 422 reports the
+                                             field location only, never the rejected value)
+  /health missing database + version      -> FIXED as a PORT. E15-S1 owns no database
+                                             access, so the field reads "unconfigured"
+                                             until a probe is registered rather than
+                                             hardcoding an unobservable "ok". E1-S1 step 4
+                                             wires the real probe.
+  /metrics 404                            -> FIXED (RED counters, method/route/status)
+  money-guard whole-line mute             -> FIXED (exempts only the category it names)
+
+OPEN — HUMAN ONLY
+  1. Docker Desktop is not installed. E15-S2 is IN group B and AC1 asserts
+     `docker compose up ... all three report healthy`. verification.mode is `local`
+     so the evaluator boots, but that AC stays unverifiable.
+  2. MoneyField has no JSON-schema hook, so /openapi.json and /docs break on the
+     first money-bearing route -- also group B. Fix before that wave, not during.
+  3. E1-S2 step 7's Modifies authorisation is now in place (design round 3), so
+     group C no longer blocks on ownership-check for it.
+  4. Session 4 design defects 2 and 4-7 remain open; each is decided at the group
+     that reaches it.
+
+next_action: Await the in-flight /gate verdict for group A, then run /auto --group B
+  subject to items 1 and 2 above.
 
 === Session 1 ===
 date: 2026-09-13T18:05:00.000Z

@@ -1,162 +1,206 @@
-# Review Context Pack — /gate --group A (fresh re-run)
+# Review Context Pack — /gate --group A (round 2)
 
-**This pack supersedes the 2026-09-14T09:37 pack.** That pack described commit
-`e147f7e`. Every BLOCK it produced has since been fixed in three commits, and the
-stored verdicts (`code-review-verdict.json`, `security-verdict.json`,
-`evaluator-report.md`, `quality-card.json`, `.claude/state/gate-receipt.json`) all
-predate those fixes and read `pass: false`. They are snapshots of a superseded tree —
-do **not** read a verdict from them. Review the tree at HEAD.
+/ **Gate lane:** on-demand pre-merge (`/gate`)
+/ **Generated:** 2026-09-14 (session 5)
 
-## Request
+## 1. Request / scope
 
 | Field | Value |
 |---|---|
-| Request | `/gate --group A` — fresh pre-merge verdict for story group A |
+| Group | A |
+| Stories | E15-S1 (platform logging + health), E9-S1 (Money value type), E11-S1 (delinquency bucket) |
+| Sprint contract | `sprint-contracts/A.json` (FROZEN — do not edit) |
+| Features | F001–F005, F009–F011, F070–F073 |
+| Review range | `14e9487..HEAD` |
+| HEAD | `9112495` |
+| Base | `14e9487` (planning-artefacts commit, last commit with no product source) |
 | Branch | `feat/harness-scaffold-and-planning` |
-| HEAD | `f4abd41` "fix: close CR-003 and align the error envelope with the frozen contract" |
-| Base | `14e9487` (scaffold + approved planning artefacts; no source existed) |
-| Range | `14e9487..HEAD` — production/test scope: 24 files, +1835/-0 net of the base |
-| Sprint contract | `sprint-contracts/A.json` (frozen — 3 api_checks, all `GET /health`) |
-| Stories | E15-S1, E9-S1, E11-S1 |
 
-## Stories and acceptance criteria
+**This is a re-run, not a first pass.** A previous `/gate` reviewed `f4abd41` and
+returned **BLOCK** on 5 findings (3 code-review, 2 security). Two remediation
+commits then landed:
 
-| Story | Title | Layer | ACs |
+- `9558cc5` — "fix(security): bound the redaction pattern and make PII redaction request-scoped" (targets SEC-001, SEC-002 / CR-002)
+- `9112495` — "fix: complete the frozen error envelope, sanitise context, ship /health and /metrics" (targets CR-001, SEC-003)
+
+Every verdict file in `specs/reviews/` older than `9112495` describes the
+**pre-fix** tree and is stale. They were committed *by* the fix commits, which is
+why their mtimes look current. Do not treat them as the current verdict; they are
+included below only as the list of claims to re-test.
+
+## 2. Prior BLOCK findings to re-verify
+
+Each must be independently re-tested against HEAD. Do not accept the commit
+message as evidence.
+
+| ID | Axis | Claim | File |
 |---|---|---|---|
-| E15-S1 | Structured JSON logging, correlation-id propagation, PII redaction, health endpoint | Config / API | E15-S1-AC1..AC5 |
-| E9-S1 | Money value type with fixed-point decimal arithmetic | Types | E9-S1-AC1..AC3 |
-| E11-S1 | Delinquency bucket ladder over days past due | Types | E11-S1-AC1..AC4 |
+| CR-001 | code-review | Frozen non-2xx error envelope applied only to `AppError`; framework 401/403/404/409, 422 and unhandled 500 bypassed it | `backend/src/api/errors.py` |
+| CR-002 | code-review | Registered PII leaks unredacted, with an empty `request_id`, when the exception carrying it escapes the `redact_values` scope | `backend/src/config/logging.py` |
+| CR-003 | code-review | Per-line money-guard exemption silenced *every* float category, not just division | `backend/tests/architecture/test_no_float_money.py` |
+| SEC-001 | security (high) | Catastrophic regex backtracking (ReDoS) in the PII redaction pattern — measured 199,326 ms at haystack length 40 | `backend/src/config/logging.py` |
+| SEC-002 | security (high) | PII in an exception message bypasses redaction and is logged at ERROR | `backend/src/config/logging.py`, `backend/src/api/middleware.py` |
 
-Full AC text: `specs/stories/E15-S1.md`, `specs/stories/E9-S1.md`, `specs/stories/E11-S1.md`.
-Per-story execution contracts (owned files + Generation Contract Operations):
-`specs/bundles/E15-S1.json`, `specs/bundles/E9-S1.json`, `specs/bundles/E11-S1.json`.
+Open non-BLOCK findings carried forward (SEC-003…SEC-020) are in
+`specs/reviews/security-verdict.json`; re-judge severity against HEAD rather than
+re-deriving them from scratch.
 
-## What changed since the superseded review (read these diffs closely)
+## 3. Acceptance criteria in scope
 
-| Commit | Closes | Change |
+From `sprint-contracts/A.json` — the frozen contract is **three `GET /health`
+api_checks**. It is deliberately narrow: contracts referencing `/products` and
+`POST /applications` were retargeted in session 3 because those endpoints belong
+to groups B and E and group A could otherwise never pass.
+
+| Check | Matrix | Assertion |
 |---|---|---|
-| `d0b5c94` | — | repaired the group A sprint contract; removed unratified gate waivers |
-| `5c13f54` | CR-001, CR-002 | `Money` rejects non-finite input (`is_finite` guard); the no-float architecture test now also walks `Div`/`FloorDiv` and `math.*` calls, with a per-line exemption mechanism |
-| `f4abd41` | CR-003, CR-004, design defect 1 | correlation id survives the 500 path (pure-ASGI middleware installed **outside** `ServerErrorMiddleware`); uvicorn own loggers are routed through the root JSON formatter; `AppError` carries a `context` mapping and reports its class name, and the handler emits `{error, detail, context}` per `specs/design/api-contracts.md` |
+| QA-VM-003 | VM-003 | `GET /health` → 200 with header `X-Request-ID: req-abc`; 100% of log lines emitted while serving parse as JSON and each carries `request_id == req-abc` |
+| QA-VM-004 | VM-004 | `GET /health` → 200 with no `X-Request-ID`; every request-scoped log line carries the same generated non-empty `request_id`, and the response echoes it |
+| QA-VM-005 | VM-005 | `GET /health` → 200, JSON body, measured response time < 1 s |
 
-The four closed BLOCKs were CR-001 (Money accepted NaN), CR-002 (the float guard
-ignored arithmetic), CR-003 (the 500 path lost `X-Request-ID`) and CR-004 (uvicorn
-loggers bypassed the JSON formatter). **Verify each fix on its merits rather than
-trusting this table** — a claimed fix is not a verified fix, and the WARN/INFO
-findings from the prior round were not all addressed.
+Story ACs (`specs/stories/E15-S1.md`, `E9-S1.md`, `E11-S1.md`) remain the
+authority for unit-level criteria; E15-S1-AC3/AC4 (JSON logs, correlated 500)
+and E9-S1-AC1/AC2 (2dp quantization, zero float arithmetic) are the ones the
+prior BLOCKs touched.
 
-## Changed production files (13)
+## 4. Changed files
 
+### Production source (review these)
 ```
-backend/src/__init__.py            (empty package marker)
-backend/src/api/app.py
-backend/src/api/errors.py
-backend/src/api/middleware.py
-backend/src/api/platform/routes.py
+backend/src/__init__.py
+backend/src/api/app.py                     # app factory; CorrelationIdMiddleware mounted outside ServerErrorMiddleware
+backend/src/api/errors.py                  # CR-001 + SEC-003 fix: 4 handlers, sanitise_context()
+backend/src/api/middleware.py              # SEC-002 fix: pure-ASGI, owns redaction scope lifetime
+backend/src/api/platform/routes.py         # /health {status,database,version}; /metrics RED counters
 backend/src/api/serializers.py
 backend/src/config/delinquency.py
-backend/src/config/logging.py
+backend/src/config/logging.py              # SEC-001 fix: bounded separator run; register_sensitive()
 backend/src/config/settings.py
 backend/src/types/delinquency.py
-backend/src/types/errors.py
+backend/src/types/errors.py                # AppError carries error name + context mapping
 backend/src/types/money.py
 frontend/src/types/money.ts
 frontend/src/ui/components/MoneyText.tsx
 ```
 
-## Changed test files (5) and tooling (4)
-
+### Tests
 ```
-backend/tests/__init__.py  backend/tests/conftest.py
-backend/tests/architecture/test_no_float_money.py
+backend/tests/conftest.py
+backend/tests/architecture/test_no_float_money.py   # CR-003 fix + regression test
 backend/tests/unit/test_bucket_ladder.py
+backend/tests/unit/test_correlation_id.py
+backend/tests/unit/test_error_envelope.py
+backend/tests/unit/test_health_probe.py
 backend/tests/unit/test_log_redaction.py
 frontend/tests/unit/money.test.ts
-frontend/package.json  frontend/tsconfig.json  frontend/vite.config.ts  frontend/eslint.config.js
 ```
 
-## Deterministic evidence — re-run by the gate orchestrator at HEAD, not self-reported
+### Config / non-source
+```
+frontend/package.json  frontend/tsconfig.json  frontend/vite.config.ts  frontend/eslint.config.js
+specs/design/amendments/group-a-gate-remediation.md
+specs/design/component-map.md   (1 line)
+specs/stories/E1-S1.md          (group B story, Operations detail)
+```
 
-| Command | Result |
-|---|---|
-| `cd backend && uv run pytest -q` | exit 0 — **73 passed**, 2 warnings, 0.10s |
-| `cd backend && uv run ruff check .` | exit 0 — all checks passed |
-| `cd backend && uv run mypy src/` | exit 0 — no issues in 12 source files (`strict = true`) |
-| `cd frontend && npm test` | exit 0 — **18 passed** (1 file) |
-| `cd frontend && npm run lint` | exit 0 — eslint clean |
-| `cd frontend && npm run typecheck` | exit 0 — `tsc --noEmit` clean |
+## 5. Deterministic results at HEAD (`9112495`)
 
-Test counts rose 42 to 73 (backend) and 11 to 18 (frontend) across the three fix
-commits. Coverage is not yet instrumented in this project; judge test *adequacy* from
-the suites themselves, not from a coverage number.
+All run fresh for this gate. **All green.**
 
-## Runtime evidence the evaluator must produce (not reuse)
-
-`verification.mode` is `local` (not `docker` — Docker Desktop is not installed on this
-machine, and `docker-compose.yml` does not exist until E15-S2 in group B). Boot the
-backend yourself with uvicorn and drive the three frozen api_checks live.
-
-**Port assignment — instances must not collide.** Each evaluator instance boots its own
-uvicorn on its own port and uses that port as the api base url:
-
-| Instance | Port | Base URL |
+| Check | Command | Result |
 |---|---|---|
-| 1 | 8000 | `http://localhost:8000` |
-| 2 | 8001 | `http://localhost:8001` |
-| 3 | 8002 | `http://localhost:8002` |
+| Backend tests | `cd backend && uv run pytest -q` | **88 passed**, 2 warnings, 0.15 s |
+| Backend lint | `uv run ruff check .` | All checks passed |
+| Backend types | `uv run mypy src/` | Success: no issues in 12 source files |
+| Frontend tests | `cd frontend && npm test` | **18 passed** (1 file) |
+| Frontend lint | `npm run lint` | clean |
+| Frontend types | `npm run typecheck` | clean |
 
-The contract criteria are path- and header-based, so a non-default port does not
-weaken them. Capture the process stdout/stderr: two of the three checks are
-assertions about the *log stream*, not about the response body.
+Test count moved 73 → 88 across the two fix commits (new files
+`test_correlation_id.py`, `test_error_envelope.py`, `test_health_probe.py`).
 
-`sprint-contracts/A.json` (frozen, read-only):
-- **QA-VM-003 / VM-003** — `GET /health` with header `X-Request-ID: req-abc` to 200; 100% of the log lines emitted while serving parse as JSON and each carries `request_id == "req-abc"`.
-- **QA-VM-004 / VM-004** — `GET /health` with no `X-Request-ID` to 200; every request-scoped log line carries the same generated non-empty `request_id`, and the response echoes that id.
-- **QA-VM-005 / VM-005** — `GET /health` to 200, JSON body, measured response time under 1 second.
+### Registry gate checks (`run-gate-checks.js --lane gate`)
 
-Runtime SLO for the project: `{"error_rate_pct": 1, "p95_ms": 500}`.
+`7 passed, 2 blocked, 0 warn, 0 skipped` → `specs/reviews/gate-checks.json`
 
-No sprint contract in this repo declares Playwright checks, and `e2e/` is empty — there
-is no browser evidence to produce for group A, and none may be claimed.
+Passing: canvas-semantic, ownership-check, evidence-integrity, observability-gate,
+perf-smell, sensor-waivers, dead-path.
 
-## Security-relevant surface in this diff (the security trigger fires)
+Two BLOCKs, both under orchestrator investigation as **invocation artefacts, not
+product defects** — reviewers should not spend effort on them:
 
-- `backend/src/api/middleware.py` — accepts a **caller-supplied** `X-Request-ID` header, echoes it in the response header and threads it into every log line. Untrusted input reflected into both logs and headers: log injection (CR/LF, ANSI, JSON-breaking), header injection / response splitting, unbounded length, and control characters. Now a pure-ASGI middleware installed outside `ServerErrorMiddleware` — re-check the ordering claim and the 500 path.
-- `backend/src/config/logging.py` — PII redaction over structured log output. A redaction miss leaks PII; check nesting depth, key-name matching, non-dict payloads, `extra=` fields, exception messages/tracebacks, and the uvicorn access logger now routed through the root formatter.
-- `backend/src/api/errors.py`, `backend/src/types/errors.py` — the error envelope. `AppError` now carries a `context` mapping that reaches the client as `{error, detail, context}`. **That mapping is a new outbound channel: confirm nothing internal (paths, SQL, stack frames, config, PII) can ride out in it, and that the class name it reports is not an information leak.**
-- `backend/src/api/platform/routes.py` — `GET /health`; must not disclose config, versions, or secrets, and must remain safe unauthenticated.
-- `backend/src/config/settings.py` — configuration loading; hardcoded secrets, insecure defaults, secrets reachable from a log line or the new error `context`.
-- `backend/src/api/serializers.py` — the single money wire serializer (decision D-G).
+1. **canvas-sync** — sole missing entry is `.claude/state/red-phase-presnap.json`,
+   a harness state file in the working tree. No product file is unsynced.
+2. **regression-suite-full** — 54 findings, all `expected status N, got 0`,
+   across contracts `A.json`…`M.json`. `discoverPriorContracts()` treats *every*
+   file in `sprint-contracts/` as a prior baseline unless `--exclude-group` is
+   passed; the registry passes none. Group A is the **first** group
+   (`groups_completed: []`), so groups B–M describe unbuilt endpoints, and `got 0`
+   means no server was listening. The sibling
+   `regression-gate-verdict-nobaseline.json` records the semantically correct
+   reading: *"sprint-contracts/ exists but has no prior contracts to re-validate"*.
 
-Not in this diff: authn/authz, persistence/migrations, outbound network calls, file
-uploads, payment execution. Do not review for them; do not pad the report with their absence.
+### Orchestrator measurement of SEC-001 at HEAD
 
-## Architecture constraints the diff must honor
+Direct timing of `backend/src/config/logging.py::_scrub`, same probe shape the
+prior gate used to confirm the BLOCK (value `'-'*n + 'Z'` against an all-hyphen
+haystack):
 
-- Strict layered architecture, one-way dependencies: Types to Config to Repository to Service to API to UI (`.claude/architecture.md`).
-- **Decision D-G:** money is `NUMERIC(14,2)` in Postgres, `Decimal` in Python, a **quoted 2dp string** in JSON, parsed with a decimal library in TypeScript. No float touches a monetary value at any hop. No integer minor units. The Pydantic serializer lives in exactly one module.
-- **Decision D-J:** the frontend money value is held as a decimal value, never a float; a static check must report 0 float arithmetic operations in that module.
-- Functions <= 30 lines, files <= 300 lines, static typing everywhere, zero `any`.
-- No pass-through modules: where a story has no business rule, the router uses the repository contract directly.
-- Domain vocabulary is enforced from `specs/design/CONTEXT.md`.
+| value length | 13 | 17 | 21 | 25 | 27 | 31 | 41 | 61 |
+|---|---|---|---|---|---|---|---|---|
+| pre-fix (prior gate) | 0.58 ms @16 | — | 7.74 ms @20 | 100.66 ms @24 | 314.66 ms @26 | — | 199,326 ms @40 | — |
+| **at HEAD** | 0.037 | 0.027 | 0.025 | 0.026 | 0.026 | 0.028 | 0.034 | 0.044 |
 
-## Frozen / out-of-scope paths
+Growth is flat/linear, not exponential. Two further adversarial shapes
+(non-separator value against a separator-heavy 200-char haystack; value of
+alternating `A-` against a 200-char all-dash haystack) stay under 0.2 ms.
+Redaction still fires for spaced PAN, lowercase PAN, dashed document ids and
+grouped Aadhaar. One deliberate behaviour narrowing: a gap of **5+** separators
+between characters no longer matches (`_SEPARATOR_RUN = [ \t\-]{0,4}`).
 
-`specs/design/architecture.md`, `specs/design/api-contracts.md`, `specs/design/data-models.md`,
-`specs/design/component-map.md`, `specs/test_artefacts/**`, `sprint-contracts/**`,
-`project-manifest.json`. Do not propose edits to these — report the conflict instead.
-`specs/design/component-map.md` in particular is covered by a design-approval receipt;
-amending it invalidates that receipt and needs a human re-record.
+Treat SEC-001 as **independently confirmed fixed**. Re-test if you can find a
+different backtracking shape; do not re-litigate this one from the description.
 
-## Known open items — in scope to judge, not to re-discover
+## 6. Risk triggers → security review IS required
 
-1. **`ownership-check` blocks:** `backend/src/__init__.py` (0 bytes, package marker) has no row in `component-map.md`. The map is frozen, so this needs a human decision (amend the map and re-record the design receipt, vs. ratify a waiver, vs. delete the file if it is unnecessary). Judge whether the file is needed at all.
-2. **`canvas-sync` blocks:** harness state files and `features.json` are missing from the REASONS Canvas Governs/Operations sections. `specs/reviews/canvas-sync-check.md` carries the deterministic patch.
-3. **`regression-suite-full` blocks:** it treats *every* non-current `sprint-contracts/*.json` as a "prior" contract that must still pass. All 13 contracts (A..M) were authored up-front at plan time, so B..M are re-validated against an app that has not implemented them yet and return 404. Nothing regressed — group A is the first group, so there is no baseline. Flagged for the orchestrator; not a code defect in this diff.
-4. Design defects 2 and 4-7 recorded in `claude-progress.txt` session 4 are still open and are **not** group A code defects.
+The diff crosses these boundaries, so `security-reviewer` and
+`security-scan.js` both run, and the 3-instance bounded re-verification applies:
 
-## Review scope discipline
+- **User input handling** — `X-Request-ID` read from an inbound header and
+  reflected into the response and every log line (`middleware.py`).
+- **PII / data handling** — the entire PII redaction subsystem (`logging.py`):
+  PAN, Aadhaar, salary-document content.
+- **API routes / middleware** — `api/app.py`, `api/middleware.py`,
+  `api/platform/routes.py`, `api/errors.py`.
+- **Outbound error channel** — `AppError.context` and `detail` are serialised to
+  clients (`errors.py::sanitise_context`); prior SEC-003 said this was unfiltered.
+- **Dependency manifest** — `frontend/package.json` is new; prior SEC-010/SEC-011
+  flagged advisories and a missing committed lockfile.
+- **Observability surface** — `GET /metrics` is newly exposed and unauthenticated.
 
-Read this pack, the range diff, and the files it touches. Do **not** read the builder
-conversation, the full build transcript, raw test logs, or unrelated repo files. Do not
-re-litigate the planning artefacts.
+`security_review: required` (not `skipped_no_boundary`).
+
+## 7. Architecture constraints
+
+`Types → Config → Repository → Service → API → UI`, one-way only
+(`.claude/architecture.md`). Group A has no Repository or Service layer.
+
+Relevant invariants:
+- No float in any money path (E9-S1-AC2) — enforced by the AST guard in
+  `backend/tests/architecture/test_no_float_money.py`.
+- Errors are typed in Types and mapped **once** at the API boundary.
+- `api/errors.py` importing `src.config.logging.scrub_text` is API → Config,
+  which is allowed.
+- File ownership is `specs/design/component-map.md`; ownership-check passes.
+
+## 8. Reviewer instructions
+
+Read **only**: this pack, the diff (`git diff 14e9487..HEAD -- backend frontend`),
+and the files it touches. Do **not** read the build transcript, the prior verdict
+files as authority, `.claude/state/uvicorn.log` (36 MB), or unrelated repo source.
+
+Evaluator instances: `verification.mode` is `local` (Docker Desktop is not
+installed; `docker-compose.yml` does not exist until E15-S2 in group B). Boot with
+`cd backend && uv run uvicorn src.api.app:app --port <8000|8001|8002>` and use a
+distinct port per instance. Serve `src.api.app:app` (or `create_app()`) — never
+`build_fastapi_app()`, which omits the correlation middleware.

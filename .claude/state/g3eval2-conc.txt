@@ -1,0 +1,12 @@
+{"timestamp": "2026-09-14T11:41:15.377160+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-1"}
+{"timestamp": "2026-09-14T11:41:15.388389+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-2"}
+{"timestamp": "2026-09-14T11:41:15.403062+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-3"}
+{"timestamp": "2026-09-14T11:41:15.428546+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-4"}
+{"timestamp": "2026-09-14T11:41:15.445596+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-5"}
+{"timestamp": "2026-09-14T11:41:15.459755+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-6"}
+{"timestamp": "2026-09-14T11:41:15.473925+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-7"}
+{"timestamp": "2026-09-14T11:41:15.490422+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-8"}
+{"timestamp": "2026-09-14T11:41:15.514244+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-9"}
+{"timestamp": "2026-09-14T11:41:15.530125+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-10"}
+{"timestamp": "2026-09-14T11:41:15.545542+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-11"}
+{"timestamp": "2026-09-14T11:41:15.568605+00:00", "level": "INFO", "logger": "truelend.access", "message": "GET /health -> 200", "request_id": "conc-12"}

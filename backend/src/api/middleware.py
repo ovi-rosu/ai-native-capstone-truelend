@@ -49,6 +49,19 @@ _access_logger = logging.getLogger("truelend.access")
 _request_counts: Counter[tuple[str, str, int]] = Counter()
 
 
+# Every unrouted request shares one series. Keying on the raw path let a
+# single keep-alive connection mint 60,000 label values and retain 28.2 MB
+# permanently -- unbounded cardinality is a denial-of-service on the metrics
+# store, and the raw path is attacker-controlled besides.
+_UNMATCHED_ROUTE = "<unmatched>"
+
+
+def route_label(scope: Scope) -> str:
+    """The matched route template, or one shared bucket when nothing matched."""
+    template = getattr(scope.get("route"), "path", None)
+    return template if isinstance(template, str) else _UNMATCHED_ROUTE
+
+
 def request_counter_snapshot() -> dict[tuple[str, str, int], int]:
     """A copy of the RED counters, for the metrics endpoint to render."""
     return dict(_request_counts)
@@ -66,13 +79,17 @@ class CorrelationIdMiddleware:
         self.app = app
 
     @staticmethod
-    def _stamping_send(send: Send, request_id: str, method: str, path: str) -> Send:
-        """Wrap `send` so the response start carries the id and is logged."""
+    def _stamping_send(send: Send, request_id: str, scope: Scope) -> Send:
+        """Wrap `send` so the response start carries the id and is counted."""
+        method = str(scope.get("method", "-"))
+        path = str(scope.get("path", "-"))
 
         async def send_with_correlation_id(message: Message) -> None:
             if message["type"] == "http.response.start":
                 MutableHeaders(scope=message)[_REQUEST_ID_HEADER] = request_id
-                _request_counts[method, path, int(message["status"])] += 1
+                # Read at response time, not call time: the router has run by
+                # now, so the matched template is available.
+                _request_counts[method, route_label(scope), int(message["status"])] += 1
                 _access_logger.info("%s %s -> %s", method, path, message["status"])
             await send(message)
 
@@ -87,9 +104,7 @@ class CorrelationIdMiddleware:
         request_id = inbound or uuid4().hex
         token = request_id_var.set(request_id)
         redaction_token = begin_redaction_scope()
-        wrapped_send = self._stamping_send(
-            send, request_id, scope.get("method", "-"), scope.get("path", "-")
-        )
+        wrapped_send = self._stamping_send(send, request_id, scope)
 
         try:
             await self.app(scope, receive, wrapped_send)

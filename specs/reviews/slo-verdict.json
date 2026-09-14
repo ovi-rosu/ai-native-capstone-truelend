@@ -1,7 +1,11 @@
 {
-  "verdict": "unreachable",
-  "error_rate_pct": null,
+  "verdict": "pass",
+  "error_rate_pct": 0,
   "p95_ms": null,
-  "scraped": "http://localhost:8000/metrics",
-  "breaches": []
+  "budgets": {
+    "error_rate_pct": 1,
+    "p95_ms": 500
+  },
+  "breaches": [],
+  "scraped": "http://127.0.0.1:8021/metrics"
 }

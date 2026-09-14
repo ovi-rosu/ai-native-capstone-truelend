@@ -1,0 +1,2 @@
+http_requests_total{method="GET",route="/hx",status="500"} 424242
+#",status="404"} 1

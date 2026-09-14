@@ -1,0 +1,2099 @@
+[
+  {
+    "id": "F001",
+    "category": "functional",
+    "story": "E15-S1",
+    "group": "A",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S1-AC1",
+    "description": "the captured buffer contains 0 occurrences of each of those three values",
+    "steps": [
+      "Given an application payload carrying synthetic PAN, Aadhaar and salary-document content",
+      "When the request is served and every emitted log record is captured",
+      "Assert the captured buffer contains 0 occurrences of each of those three values"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F002",
+    "category": "functional",
+    "story": "E15-S1",
+    "group": "A",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S1-AC2",
+    "description": "the redaction filter is installed on 100% of them and a logger registered without it fails the assertion",
+    "steps": [
+      "Given the application's logging configuration",
+      "When every configured logger is enumerated",
+      "Assert the redaction filter is installed on 100% of them",
+      "Assert a logger registered without it fails the assertion"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F003",
+    "category": "functional",
+    "story": "E15-S1",
+    "group": "A",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S1-AC3",
+    "description": "100% of the lines parse as JSON and each carries request_id equal to req-abc",
+    "steps": [
+      "Given a request carrying the header X-Request-ID with value req-abc",
+      "When every log line emitted while serving that request is parsed",
+      "Assert 100% of the lines parse as JSON",
+      "Assert each carries request_id equal to req-abc"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F004",
+    "category": "functional",
+    "story": "E15-S1",
+    "group": "A",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S1-AC4",
+    "description": "every request-scoped log line carries the same generated non-empty request_id and the response echoes that id",
+    "steps": [
+      "Given a request with no X-Request-ID header",
+      "When the response is returned",
+      "Assert every request-scoped log line carries the same generated non-empty request_id",
+      "Assert the response echoes that id"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F005",
+    "category": "functional",
+    "story": "E15-S1",
+    "group": "A",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S1-AC5",
+    "description": "the response is 200 with a JSON body and the measured response time is under 1 second",
+    "steps": [
+      "Given the backend reporting a successful startup",
+      "When GET /health is called",
+      "Assert the response is 200 with a JSON body",
+      "Assert the measured response time is under 1 second"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F006",
+    "category": "functional",
+    "story": "E15-S2",
+    "group": "B",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S2-AC1",
+    "description": "exactly one Postgres service, the Python 3.12 FastAPI backend and the TypeScript React-Vite frontend are running and all three report healthy",
+    "steps": [
+      "Given a clean checkout with no prior containers",
+      "When docker compose up runs to completion",
+      "Assert exactly one Postgres service, the Python 3.12 FastAPI backend",
+      "Assert the TypeScript React-Vite frontend are running",
+      "Assert all three report healthy"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F007",
+    "category": "functional",
+    "story": "E15-S2",
+    "group": "B",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S2-AC2",
+    "description": "it reports 0 violations of the one-way rule across Types, Config, Repository, Service, API and UI",
+    "steps": [
+      "Given the running stack",
+      "When the layer-dependency architecture test executes",
+      "Assert it reports 0 violations of the one-way rule across Types, Config, Repository, Service, API",
+      "Assert UI"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F008",
+    "category": "functional",
+    "story": "E15-S2",
+    "group": "B",
+    "cluster": "C1",
+    "acceptance_criterion": "E15-S2-AC3",
+    "description": "no second database engine and no external provider endpoint is configured",
+    "steps": [
+      "Given the compose service inventory",
+      "When it is asserted against the declared stack",
+      "Assert no second database engine",
+      "Assert no external provider endpoint is configured"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F009",
+    "category": "functional",
+    "story": "E9-S1",
+    "group": "A",
+    "cluster": "C6",
+    "acceptance_criterion": "E9-S1-AC1",
+    "description": "every money field on the result is a Decimal quantized to exactly 2 decimal places",
+    "steps": [
+      "Given randomly generated principal, rate and tenure triples",
+      "When a schedule is computed from each triple",
+      "Assert every money field on the result is a Decimal quantized to exactly 2 decimal places"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F010",
+    "category": "functional",
+    "story": "E9-S1",
+    "group": "A",
+    "cluster": "C6",
+    "acceptance_criterion": "E9-S1-AC2",
+    "description": "it reports 0 float arithmetic operations in those paths",
+    "steps": [
+      "Given the backend money code paths",
+      "When the static arithmetic check runs over them",
+      "Assert it reports 0 float arithmetic operations in those paths"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F011",
+    "category": "functional",
+    "story": "E9-S1",
+    "group": "A",
+    "cluster": "C6",
+    "acceptance_criterion": "E9-S1-AC3",
+    "description": "the value is held as a decimal value and never a float, and the static check reports 0 float arithmetic operations in that module",
+    "steps": [
+      "Given the frontend money module",
+      "When a monetary amount is carried and formatted",
+      "Assert the value is held as a decimal value and never a float",
+      "Assert the static check reports 0 float arithmetic operations in that module"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F012",
+    "category": "functional",
+    "story": "E1-S1",
+    "group": "B",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S1-AC1",
+    "description": "a session is issued naming exactly one role and that role's landing surface loads",
+    "steps": [
+      "Given seeded users for CUSTOMER, UNDERWRITER and ADMIN",
+      "When each logs in with valid credentials",
+      "Assert a session is issued naming exactly one role",
+      "Assert that role's landing surface loads"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F013",
+    "category": "functional",
+    "story": "E1-S1",
+    "group": "B",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S1-AC2",
+    "description": "at least one product is returned and it carries a policy version id",
+    "steps": [
+      "Given the seeded product catalog",
+      "When a CUSTOMER requests the product list",
+      "Assert at least one product is returned",
+      "Assert it carries a policy version id"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F014",
+    "category": "functional",
+    "story": "E1-S1",
+    "group": "B",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S1-AC3",
+    "description": "a new policy version id is returned in the response",
+    "steps": [
+      "Given an ADMIN session and a product with a minimum-income threshold",
+      "When that threshold is saved with a new value",
+      "Assert a new policy version id is returned in the response"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F015",
+    "category": "functional",
+    "story": "E1-S1",
+    "group": "B",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S1-AC4",
+    "description": "the read cites the new policy version id with no process restart",
+    "steps": [
+      "Given the newly saved policy version",
+      "When the product is read again inside the same running process",
+      "Assert the read cites the new policy version id with no process restart"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F016",
+    "category": "security",
+    "story": "E1-S2",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S2-AC1",
+    "description": "the response is 401 and no handler body executes",
+    "steps": [
+      "Given any underwriter or admin route",
+      "When it is called with no session",
+      "Assert the response is 401",
+      "Assert no handler body executes"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F017",
+    "category": "functional",
+    "story": "E1-S2",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S2-AC2",
+    "description": "the response is 403, while each role reaches its own surfaces with 200",
+    "steps": [
+      "Given a CUSTOMER session",
+      "When an underwriter or admin route is called with it",
+      "Assert the response is 403, while each role reaches its own surfaces with 200"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F018",
+    "category": "security",
+    "story": "E1-S2",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S2-AC3",
+    "description": "it reports 100% of those routes covered by both the no-session and wrong-role cases and fails when a new route is unguarded",
+    "steps": [
+      "Given the underwriter and admin routes enumerated from the OpenAPI schema",
+      "When the generated authorization suite runs",
+      "Assert it reports 100% of those routes covered by both the no-session",
+      "Assert wrong-role cases",
+      "Assert fails when a new route is unguarded"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F019",
+    "category": "security",
+    "story": "E1-S2",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E1-S2-AC4",
+    "description": "an audit_event row exists carrying the acting user id and a timestamp",
+    "steps": [
+      "Given an authenticated underwriter or admin action",
+      "When the action completes",
+      "Assert an audit_event row exists carrying the acting user id",
+      "Assert a timestamp"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F020",
+    "category": "functional",
+    "story": "E3-S1",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S1-AC1",
+    "description": "no update method and no delete method is exposed",
+    "steps": [
+      "Given the policy_version repository interface",
+      "When its public methods are enumerated",
+      "Assert no update method",
+      "Assert no delete method is exposed"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F021",
+    "category": "functional",
+    "story": "E3-S1",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S1-AC2",
+    "description": "it reports 0 UPDATE statements, 0 DELETE statements and 0 ORM mutations targeting policy_version",
+    "steps": [
+      "Given the contents of src/ and migrations/",
+      "When the immutability architecture test scans them",
+      "Assert it reports 0 UPDATE statements, 0 DELETE statements",
+      "Assert 0 ORM mutations targeting policy_version"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F022",
+    "category": "functional",
+    "story": "E3-S1",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S1-AC3",
+    "description": "it reports 0 DROP TABLE, 0 DROP COLUMN and 0 destructive ALTER statements",
+    "steps": [
+      "Given every file under migrations/",
+      "When the migration lint parses them",
+      "Assert it reports 0 DROP TABLE, 0 DROP COLUMN",
+      "Assert 0 destructive ALTER statements"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F023",
+    "category": "functional",
+    "story": "E3-S1",
+    "group": "C",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S1-AC4",
+    "description": "it is held to the identical zero-destructive-statement assertion as a schema migration",
+    "steps": [
+      "Given a policy migration file",
+      "When it is parsed by that same lint",
+      "Assert it is held to the identical zero-destructive-statement assertion as a schema migration"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F024",
+    "category": "functional",
+    "story": "E2-S1",
+    "group": "D",
+    "cluster": "C1",
+    "acceptance_criterion": "E2-S1-AC1",
+    "description": "at least 3 products are returned and Personal, Vehicle and Education are among them",
+    "steps": [
+      "Given the seeded catalog",
+      "When GET /products is called",
+      "Assert at least 3 products are returned",
+      "Assert Personal, Vehicle",
+      "Assert Education are among them"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F025",
+    "category": "functional",
+    "story": "E2-S1",
+    "group": "D",
+    "cluster": "C1",
+    "acceptance_criterion": "E2-S1-AC2",
+    "description": "each carries its own policy version id and no two products reference the same one",
+    "steps": [
+      "Given the returned product list",
+      "When each entry is inspected",
+      "Assert each carries its own policy version id",
+      "Assert no two products reference the same one"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F026",
+    "category": "functional",
+    "story": "E2-S1",
+    "group": "D",
+    "cluster": "C1",
+    "acceptance_criterion": "E2-S1-AC3",
+    "description": "the minimum income, age, score, tenure and rate values differ between the three versions",
+    "steps": [
+      "Given the three referenced policy versions",
+      "When their stored threshold values are compared",
+      "Assert the minimum income, age, score, tenure",
+      "Assert rate values differ between the three versions"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F027",
+    "category": "security",
+    "story": "E3-S2",
+    "group": "E",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S2-AC1",
+    "description": "a new policy version row is appended and becomes the product's active version",
+    "steps": [
+      "Given an authorised user editing a product's income, age, score, tenure and rate thresholds",
+      "When the editor form is saved",
+      "Assert a new policy version row is appended",
+      "Assert becomes the product's active version"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F028",
+    "category": "functional",
+    "story": "E3-S2",
+    "group": "E",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S2-AC2",
+    "description": "its stored values are byte-identical to their pre-save state",
+    "steps": [
+      "Given the policy version that was active before the save",
+      "When it is re-read afterwards",
+      "Assert its stored values are byte-identical to their pre-save state"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F029",
+    "category": "functional",
+    "story": "E3-S2",
+    "group": "E",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S2-AC3",
+    "description": "the decision cites the new policy version id with no process restart",
+    "steps": [
+      "Given the newly activated policy version",
+      "When a subsequent application is decided in the same running process",
+      "Assert the decision cites the new policy version id with no process restart"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F030",
+    "category": "functional",
+    "story": "E3-S2",
+    "group": "E",
+    "cluster": "C1",
+    "acceptance_criterion": "E3-S2-AC4",
+    "description": "the response is 403 and no policy version row is appended",
+    "steps": [
+      "Given a CUSTOMER session",
+      "When the Policy Editor save endpoint is called with it",
+      "Assert the response is 403",
+      "Assert no policy version row is appended"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F031",
+    "category": "functional",
+    "story": "E16-S1",
+    "group": "D",
+    "cluster": "C1",
+    "acceptance_criterion": "E16-S1-AC1",
+    "description": "at least one test exists and executes for every registered invariant",
+    "steps": [
+      "Given a registry naming policy-version immutability, the EMI principal/rate/tenure invariant and the six-layer one-way dependency rule",
+      "When the architecture suite runs",
+      "Assert at least one test exists",
+      "Assert executes for every registered invariant"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F032",
+    "category": "functional",
+    "story": "E16-S1",
+    "group": "D",
+    "cluster": "C1",
+    "acceptance_criterion": "E16-S1-AC2",
+    "description": "the suite fails and names the orphaned invariant",
+    "steps": [
+      "Given a registered invariant with no corresponding test",
+      "When the architecture suite runs",
+      "Assert the suite fails",
+      "Assert names the orphaned invariant"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F033",
+    "category": "security",
+    "story": "E16-S1",
+    "group": "D",
+    "cluster": "C1",
+    "acceptance_criterion": "E16-S1-AC3",
+    "description": "each carries agent co-authorship and a passing record from the standard pre-commit gate set",
+    "steps": [
+      "Given every production commit on the branch",
+      "When the provenance check inspects them",
+      "Assert each carries agent co-authorship",
+      "Assert a passing record from the standard pre-commit gate set"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F034",
+    "category": "functional",
+    "story": "E16-S1",
+    "group": "D",
+    "cluster": "C1",
+    "acceptance_criterion": "E16-S1-AC4",
+    "description": "it is present and records 0 hand-written production lines as the NFR-11 evidence",
+    "steps": [
+      "Given the /gate attestation record",
+      "When it is read for the head commit",
+      "Assert it is present",
+      "Assert records 0 hand-written production lines as the NFR-11 evidence"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F035",
+    "category": "functional",
+    "story": "E4-S1",
+    "group": "E",
+    "cluster": "C1",
+    "acceptance_criterion": "E4-S1-AC1",
+    "description": "a persisted application in SUBMITTED state is returned carrying the product's current policy version id",
+    "steps": [
+      "Given a chosen product and a CUSTOMER session",
+      "When an application is submitted",
+      "Assert a persisted application in SUBMITTED state is returned carrying the product's current policy version id"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F036",
+    "category": "functional",
+    "story": "E4-S1",
+    "group": "E",
+    "cluster": "C1",
+    "acceptance_criterion": "E4-S1-AC2",
+    "description": "a numeric credit score is returned and stored against the application",
+    "steps": [
+      "Given that application's age, income and credit-history flags",
+      "When the scoring stub is called for it",
+      "Assert a numeric credit score is returned",
+      "Assert stored against the application"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F037",
+    "category": "functional",
+    "story": "E4-S1",
+    "group": "E",
+    "cluster": "C1",
+    "acceptance_criterion": "E4-S1-AC3",
+    "description": "the response carries one of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW together with at least one reason code",
+    "steps": [
+      "Given the scored application",
+      "When it is decided",
+      "Assert the response carries one of AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW together with at least one reason code"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F038",
+    "category": "functional",
+    "story": "E4-S2",
+    "group": "F",
+    "cluster": "C1",
+    "acceptance_criterion": "E4-S2-AC1",
+    "description": "the generated checklist matches that policy version's list item for item",
+    "steps": [
+      "Given a selected product with a required-document list on its policy version",
+      "When an application is submitted against it",
+      "Assert the generated checklist matches that policy version's list item for item"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F039",
+    "category": "functional",
+    "story": "E4-S2",
+    "group": "F",
+    "cluster": "C1",
+    "acceptance_criterion": "E4-S2-AC2",
+    "description": "it is in SUBMITTED state and stores the policy_version_id resolved at submission",
+    "steps": [
+      "Given a submitted application",
+      "When it is read back from storage",
+      "Assert it is in SUBMITTED state",
+      "Assert stores the policy_version_id resolved at submission"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F040",
+    "category": "functional",
+    "story": "E4-S2",
+    "group": "F",
+    "cluster": "C1",
+    "acceptance_criterion": "E4-S2-AC3",
+    "description": "its stored policy_version_id and checklist are unchanged",
+    "steps": [
+      "Given a policy version activated after that submission",
+      "When the application is re-read",
+      "Assert its stored policy_version_id",
+      "Assert checklist are unchanged"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F041",
+    "category": "functional",
+    "story": "E4-S2",
+    "group": "F",
+    "cluster": "C1",
+    "acceptance_criterion": "E4-S2-AC4",
+    "description": "it carries its document type and an unverified status",
+    "steps": [
+      "Given a generated checklist item",
+      "When it is inspected",
+      "Assert it carries its document type",
+      "Assert an unverified status"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F042",
+    "category": "functional",
+    "story": "E4-S3",
+    "group": "G",
+    "cluster": "C4",
+    "acceptance_criterion": "E4-S3-AC1",
+    "description": "the confirmation shows the newly created application in SUBMITTED state",
+    "steps": [
+      "Given the Apply screen with a product selected",
+      "When the applicant submits valid details",
+      "Assert the confirmation shows the newly created application in SUBMITTED state"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F043",
+    "category": "functional",
+    "story": "E4-S3",
+    "group": "G",
+    "cluster": "C4",
+    "acceptance_criterion": "E4-S3-AC2",
+    "description": "every required-document checklist item for the chosen product is listed",
+    "steps": [
+      "Given the submitted application",
+      "When the Apply screen renders its confirmation",
+      "Assert every required-document checklist item for the chosen product is listed"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F044",
+    "category": "functional",
+    "story": "E4-S3",
+    "group": "G",
+    "cluster": "C4",
+    "acceptance_criterion": "E4-S3-AC3",
+    "description": "no co-applicant or guarantor field is present",
+    "steps": [
+      "Given the Apply form",
+      "When it is rendered",
+      "Assert no co-applicant or guarantor field is present"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F045",
+    "category": "functional",
+    "story": "E4-S4",
+    "group": "G",
+    "cluster": "C5",
+    "acceptance_criterion": "E4-S4-AC1",
+    "description": "the error response identifies PolicyViolationException",
+    "steps": [
+      "Given declared income below the selected product's minimum income threshold",
+      "When the application is submitted",
+      "Assert the error response identifies PolicyViolationException"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F046",
+    "category": "functional",
+    "story": "E4-S4",
+    "group": "G",
+    "cluster": "C5",
+    "acceptance_criterion": "E4-S4-AC2",
+    "description": "it names the breached threshold and the configured value it was checked against",
+    "steps": [
+      "Given that refused submission",
+      "When the error body is inspected",
+      "Assert it names the breached threshold",
+      "Assert the configured value it was checked against"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F047",
+    "category": "functional",
+    "story": "E4-S4",
+    "group": "G",
+    "cluster": "C5",
+    "acceptance_criterion": "E4-S4-AC3",
+    "description": "no application row was persisted for it",
+    "steps": [
+      "Given that refused submission",
+      "When the application table is queried afterwards",
+      "Assert no application row was persisted for it"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F048",
+    "category": "functional",
+    "story": "E5-S1",
+    "group": "G",
+    "cluster": "C1",
+    "acceptance_criterion": "E5-S1-AC1",
+    "description": "every call returns the identical score",
+    "steps": [
+      "Given one set of age, income and credit-history-flag values",
+      "When the scoring stub is called repeatedly with it",
+      "Assert every call returns the identical score"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F049",
+    "category": "functional",
+    "story": "E5-S1",
+    "group": "G",
+    "cluster": "C1",
+    "acceptance_criterion": "E5-S1-AC2",
+    "description": "the two returned scores differ",
+    "steps": [
+      "Given two inputs differing only in their credit-history flags",
+      "When both are scored",
+      "Assert the two returned scores differ"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F050",
+    "category": "functional",
+    "story": "E5-S1",
+    "group": "G",
+    "cluster": "C1",
+    "acceptance_criterion": "E5-S1-AC3",
+    "description": "no external credit-bureau call and no live provider credential is used",
+    "steps": [
+      "Given the scoring stub under test",
+      "When its outbound collaborators are inspected",
+      "Assert no external credit-bureau call",
+      "Assert no live provider credential is used"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F051",
+    "category": "functional",
+    "story": "E5-S2",
+    "group": "H",
+    "cluster": "C1",
+    "acceptance_criterion": "E5-S2-AC1",
+    "description": "the response carries AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code",
+    "steps": [
+      "Given a scored application",
+      "When it is decided",
+      "Assert the response carries AUTO_APPROVE, AUTO_REJECT or MANUAL_REVIEW plus at least one reason code"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F052",
+    "category": "functional",
+    "story": "E5-S2",
+    "group": "H",
+    "cluster": "C1",
+    "acceptance_criterion": "E5-S2-AC2",
+    "description": "it exists in the policy version pinned on the application",
+    "steps": [
+      "Given the reason codes on that decision",
+      "When each is looked up",
+      "Assert it exists in the policy version pinned on the application"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F053",
+    "category": "functional",
+    "story": "E5-S2",
+    "group": "H",
+    "cluster": "C1",
+    "acceptance_criterion": "E5-S2-AC3",
+    "description": "a new decision_record row is appended and the application's current decision is its latest record",
+    "steps": [
+      "Given a decided application",
+      "When the decision is recorded",
+      "Assert a new decision_record row is appended",
+      "Assert the application's current decision is its latest record"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F054",
+    "category": "functional",
+    "story": "E5-S2",
+    "group": "H",
+    "cluster": "C1",
+    "acceptance_criterion": "E5-S2-AC4",
+    "description": "the re-decision still cites the policy version pinned at submission",
+    "steps": [
+      "Given a MANUAL_REVIEW application re-decided after a newer policy version was activated",
+      "When its decision is read",
+      "Assert the re-decision still cites the policy version pinned at submission"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F055",
+    "category": "functional",
+    "story": "E6-S1",
+    "group": "G",
+    "cluster": "C1",
+    "acceptance_criterion": "E6-S1-AC1",
+    "description": "its stored status reads VERIFIED",
+    "steps": [
+      "Given a checklist document in the verification queue",
+      "When an underwriter marks it VERIFIED",
+      "Assert its stored status reads VERIFIED"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F056",
+    "category": "functional",
+    "story": "E6-S1",
+    "group": "G",
+    "cluster": "C1",
+    "acceptance_criterion": "E6-S1-AC2",
+    "description": "the stored row reads REJECTED and carries that non-empty reason",
+    "steps": [
+      "Given a checklist document in the verification queue",
+      "When an underwriter marks it REJECTED with a reason",
+      "Assert the stored row reads REJECTED",
+      "Assert carries that non-empty reason"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F057",
+    "category": "functional",
+    "story": "E6-S1",
+    "group": "G",
+    "cluster": "C1",
+    "acceptance_criterion": "E6-S1-AC3",
+    "description": "it is refused and the document's stored status is unchanged",
+    "steps": [
+      "Given a document being rejected with an empty reason",
+      "When the transition is attempted",
+      "Assert it is refused",
+      "Assert the document's stored status is unchanged"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F058",
+    "category": "functional",
+    "story": "E6-S1",
+    "group": "G",
+    "cluster": "C1",
+    "acceptance_criterion": "E6-S1-AC4",
+    "description": "those documents are absent from the returned queue",
+    "steps": [
+      "Given documents that have already been actioned",
+      "When the verification queue is listed",
+      "Assert those documents are absent from the returned queue"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F059",
+    "category": "functional",
+    "story": "E6-S2",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E6-S2-AC1",
+    "description": "it contains exactly those applications in SUBMITTED or MANUAL_REVIEW state",
+    "steps": [
+      "Given applications spread across every lifecycle state",
+      "When the workbench queue is listed",
+      "Assert it contains exactly those applications in SUBMITTED or MANUAL_REVIEW state"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F060",
+    "category": "functional",
+    "story": "E6-S2",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E6-S2-AC2",
+    "description": "the screen shows its credit score, its decision reason codes and the verification state of each checklist document",
+    "steps": [
+      "Given a MANUAL_REVIEW application",
+      "When its review screen is opened",
+      "Assert the screen shows its credit score, its decision reason codes",
+      "Assert the verification state of each checklist document"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F061",
+    "category": "functional",
+    "story": "E6-S2",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E6-S2-AC3",
+    "description": "the application's latest decision record reflects that decision and the case leaves the queue",
+    "steps": [
+      "Given an underwriter deciding a MANUAL_REVIEW case from the review screen",
+      "When the decision is saved",
+      "Assert the application's latest decision record reflects that decision",
+      "Assert the case leaves the queue"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F062",
+    "category": "functional",
+    "story": "E7-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E7-S1-AC1",
+    "description": "only the matching rows are returned",
+    "steps": [
+      "Given applications across several statuses and products",
+      "When the list is filtered to one status and one product",
+      "Assert only the matching rows are returned"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F063",
+    "category": "functional",
+    "story": "E7-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E7-S1-AC2",
+    "description": "a new decision_record is appended and the application's current decision is the override",
+    "steps": [
+      "Given an application decided AUTO_REJECT",
+      "When an admin overrides it with a comment and a reason code",
+      "Assert a new decision_record is appended",
+      "Assert the application's current decision is the override"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F064",
+    "category": "functional",
+    "story": "E7-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E7-S1-AC3",
+    "description": "it contains an entry carrying the comment, the reason code, the acting user id and a timestamp",
+    "steps": [
+      "Given that override",
+      "When the audit trail is read",
+      "Assert it contains an entry carrying the comment, the reason code, the acting user id",
+      "Assert a timestamp"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F065",
+    "category": "functional",
+    "story": "E7-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E7-S1-AC4",
+    "description": "it exists in the policy version pinned on the application",
+    "steps": [
+      "Given the reason code supplied with the override",
+      "When it is looked up",
+      "Assert it exists in the policy version pinned on the application"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F066",
+    "category": "functional",
+    "story": "E8-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E8-S1-AC1",
+    "description": "the view shows the application's current status",
+    "steps": [
+      "Given a submitted application belonging to the signed-in customer",
+      "When its tracking view is opened",
+      "Assert the view shows the application's current status"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F067",
+    "category": "functional",
+    "story": "E8-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E8-S1-AC2",
+    "description": "every unverified required document is listed",
+    "steps": [
+      "Given an application with documents still unverified",
+      "When the tracking view renders",
+      "Assert every unverified required document is listed"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F068",
+    "category": "functional",
+    "story": "E8-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E8-S1-AC3",
+    "description": "the decision and each of its reason codes are shown",
+    "steps": [
+      "Given a decided application",
+      "When the tracking view renders",
+      "Assert the decision",
+      "Assert each of its reason codes are shown"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F069",
+    "category": "functional",
+    "story": "E8-S1",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E8-S1-AC4",
+    "description": "no decision section is shown and no notification was dispatched to the customer",
+    "steps": [
+      "Given an application that has not been decided yet",
+      "When the tracking view renders",
+      "Assert no decision section is shown",
+      "Assert no notification was dispatched to the customer"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F070",
+    "category": "functional",
+    "story": "E11-S1",
+    "group": "A",
+    "cluster": "C2",
+    "acceptance_criterion": "E11-S1-AC1",
+    "description": "the returned bucket is DPD-30",
+    "steps": [
+      "Given the floors CURRENT 0-29, DPD-30 30-59, DPD-60 60-89, DPD-90 90-179 and NPA at 180 or more days past due",
+      "When a loan whose oldest unpaid installment is 35 days past due is classified",
+      "Assert the returned bucket is DPD-30"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F071",
+    "category": "functional",
+    "story": "E11-S1",
+    "group": "A",
+    "cluster": "C2",
+    "acceptance_criterion": "E11-S1-AC2",
+    "description": "exactly one of the five buckets is returned for every value, with no gap and no overlap",
+    "steps": [
+      "Given days-past-due values sampled across 0 through 400",
+      "When each value is classified",
+      "Assert exactly one of the five buckets is returned for every value, with no gap",
+      "Assert no overlap"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F072",
+    "category": "functional",
+    "story": "E11-S1",
+    "group": "A",
+    "cluster": "C2",
+    "acceptance_criterion": "E11-S1-AC3",
+    "description": "the returned bucket is CURRENT",
+    "steps": [
+      "Given a loan with no installment past its due date as of a given date",
+      "When it is classified as of that date",
+      "Assert the returned bucket is CURRENT"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F073",
+    "category": "functional",
+    "story": "E11-S1",
+    "group": "A",
+    "cluster": "C2",
+    "acceptance_criterion": "E11-S1-AC4",
+    "description": "it carries a bucket only, with no fee, penal interest or charge of any kind",
+    "steps": [
+      "Given any classification result",
+      "When it is inspected",
+      "Assert it carries a bucket only, with no fee, penal interest or charge of any kind"
+    ],
+    "verification": "default",
+    "passes": true,
+    "last_evaluated": "2026-09-14T10:43:47Z",
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F074",
+    "category": "functional",
+    "story": "E9-S2",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S2-AC1",
+    "description": "a repayment schedule exists with one installment row per month of the product tenure",
+    "steps": [
+      "Given an application with an approved decision",
+      "When its loan is created",
+      "Assert a repayment schedule exists with one installment row per month of the product tenure"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F075",
+    "category": "functional",
+    "story": "E9-S2",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S2-AC2",
+    "description": "it is in DISBURSED state holding the released amount and a funding-source identifier",
+    "steps": [
+      "Given that loan",
+      "When it is disbursed",
+      "Assert it is in DISBURSED state holding the released amount",
+      "Assert a funding-source identifier"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F076",
+    "category": "functional",
+    "story": "E9-S2",
+    "group": "I",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S2-AC3",
+    "description": "the loan's outstanding principal is lower than it was before the posting",
+    "steps": [
+      "Given the disbursed loan",
+      "When a repayment is posted against it",
+      "Assert the loan's outstanding principal is lower than it was before the posting"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F077",
+    "category": "functional",
+    "story": "E9-S3",
+    "group": "J",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S3-AC1",
+    "description": "the sum equals the disbursed amount exactly, with no residual",
+    "steps": [
+      "Given a generated repayment schedule",
+      "When the principal column across its rows is summed",
+      "Assert the sum equals the disbursed amount exactly, with no residual"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F078",
+    "category": "functional",
+    "story": "E9-S3",
+    "group": "J",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S3-AC2",
+    "description": "total payable equals the sum of principal plus interest over the stored rows and the installment count equals the product tenure",
+    "steps": [
+      "Given that same schedule",
+      "When total payable is read and the installments are counted",
+      "Assert total payable equals the sum of principal plus interest over the stored rows",
+      "Assert the installment count equals the product tenure"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F079",
+    "category": "functional",
+    "story": "E9-S3",
+    "group": "J",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S3-AC3",
+    "description": "its principal equals the balance remaining after all preceding rows",
+    "steps": [
+      "Given a schedule whose rounded EMI leaves a residual",
+      "When the final installment row is inspected",
+      "Assert its principal equals the balance remaining after all preceding rows"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F080",
+    "category": "functional",
+    "story": "E9-S3",
+    "group": "J",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S3-AC4",
+    "description": "it is derived from the period's opening balance at the rate on the application's pinned policy version",
+    "steps": [
+      "Given each period of the schedule",
+      "When that period's interest is computed",
+      "Assert it is derived from the period's opening balance at the rate on the application's pinned policy version"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F081",
+    "category": "functional",
+    "story": "E9-S3",
+    "group": "J",
+    "cluster": "C1",
+    "acceptance_criterion": "E9-S3-AC5",
+    "description": "no update or delete method is exposed and 0 UPDATE or DELETE statements target schedule_installment",
+    "steps": [
+      "Given the schedule_installment repository together with src/ and migrations/",
+      "When they are scanned by the immutability architecture test",
+      "Assert no update or delete method is exposed",
+      "Assert 0 UPDATE or DELETE statements target schedule_installment"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F082",
+    "category": "functional",
+    "story": "E10-S1",
+    "group": "K",
+    "cluster": "C1",
+    "acceptance_criterion": "E10-S1-AC1",
+    "description": "the loan record holds the released amount",
+    "steps": [
+      "Given an approved loan with a generated schedule",
+      "When it is disbursed",
+      "Assert the loan record holds the released amount"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F083",
+    "category": "functional",
+    "story": "E10-S1",
+    "group": "K",
+    "cluster": "C1",
+    "acceptance_criterion": "E10-S1-AC2",
+    "description": "it holds a funding-source identifier and is in DISBURSED state with its schedule attached",
+    "steps": [
+      "Given that disbursement",
+      "When the loan is read back",
+      "Assert it holds a funding-source identifier",
+      "Assert is in DISBURSED state with its schedule attached"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F084",
+    "category": "functional",
+    "story": "E10-S1",
+    "group": "K",
+    "cluster": "C1",
+    "acceptance_criterion": "E10-S1-AC3",
+    "description": "no external payment rail is called and no signed agreement artifact is produced",
+    "steps": [
+      "Given the stub funding source",
+      "When the disbursement executes",
+      "Assert no external payment rail is called",
+      "Assert no signed agreement artifact is produced"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F085",
+    "category": "functional",
+    "story": "E10-S1",
+    "group": "K",
+    "cluster": "C1",
+    "acceptance_criterion": "E10-S1-AC4",
+    "description": "the attempt is refused and the recorded released amount is unchanged",
+    "steps": [
+      "Given a loan already in DISBURSED state",
+      "When disbursement is attempted a second time",
+      "Assert the attempt is refused",
+      "Assert the recorded released amount is unchanged"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F086",
+    "category": "functional",
+    "story": "E11-S2",
+    "group": "L",
+    "cluster": "C1",
+    "acceptance_criterion": "E11-S2-AC1",
+    "description": "outstanding principal falls by exactly the applied principal portion of that payment",
+    "steps": [
+      "Given a disbursed loan with a known outstanding principal",
+      "When a repayment is posted against it",
+      "Assert outstanding principal falls by exactly the applied principal portion of that payment"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F087",
+    "category": "functional",
+    "story": "E11-S2",
+    "group": "L",
+    "cluster": "C1",
+    "acceptance_criterion": "E11-S2-AC2",
+    "description": "a new immutable row records the payment and no pre-existing row was updated",
+    "steps": [
+      "Given a posted repayment",
+      "When the repayment_posting table is read",
+      "Assert a new immutable row records the payment",
+      "Assert no pre-existing row was updated"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F088",
+    "category": "functional",
+    "story": "E11-S2",
+    "group": "L",
+    "cluster": "C1",
+    "acceptance_criterion": "E11-S2-AC3",
+    "description": "the stored delinquency bucket reads DPD-30",
+    "steps": [
+      "Given a loan whose oldest unpaid installment is 35 days past due",
+      "When its bucket is recalculated after the posting",
+      "Assert the stored delinquency bucket reads DPD-30"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F089",
+    "category": "functional",
+    "story": "E11-S2",
+    "group": "L",
+    "cluster": "C1",
+    "acceptance_criterion": "E11-S2-AC4",
+    "description": "the stored bucket reads CURRENT and no late fee or penal interest was charged",
+    "steps": [
+      "Given a posting that clears every overdue installment",
+      "When the bucket is recalculated",
+      "Assert the stored bucket reads CURRENT",
+      "Assert no late fee or penal interest was charged"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F090",
+    "category": "functional",
+    "story": "E12-S1",
+    "group": "K",
+    "cluster": "C2",
+    "acceptance_criterion": "E12-S1-AC1",
+    "description": "each loan's stored bucket matches its days past due at that date",
+    "steps": [
+      "Given seeded active loans with differing days past due",
+      "When the end-of-day operation runs for a given as-of date",
+      "Assert each loan's stored bucket matches its days past due at that date"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F091",
+    "category": "functional",
+    "story": "E12-S1",
+    "group": "K",
+    "cluster": "C2",
+    "acceptance_criterion": "E12-S1-AC2",
+    "description": "every bucket and every stored row is byte-identical to the first run's result",
+    "steps": [
+      "Given a completed end-of-day run",
+      "When the operation runs a second time for the same as-of date",
+      "Assert every bucket",
+      "Assert every stored row is byte-identical to the first run's result"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F092",
+    "category": "functional",
+    "story": "E12-S1",
+    "group": "K",
+    "cluster": "C2",
+    "acceptance_criterion": "E12-S1-AC3",
+    "description": "that loan's stored bucket reads CURRENT",
+    "steps": [
+      "Given an as-of date earlier than a loan's first installment due date",
+      "When the operation runs for that date",
+      "Assert that loan's stored bucket reads CURRENT"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F093",
+    "category": "functional",
+    "story": "E12-S1",
+    "group": "K",
+    "cluster": "C2",
+    "acceptance_criterion": "E12-S1-AC4",
+    "description": "no fee, penal interest or collections record was created",
+    "steps": [
+      "Given the completed run",
+      "When the loan records are compared against their pre-run state",
+      "Assert no fee, penal interest or collections record was created"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F094",
+    "category": "functional",
+    "story": "E13-S1",
+    "group": "M",
+    "cluster": "C3",
+    "acceptance_criterion": "E13-S1-AC1",
+    "description": "every installment is listed with its due date and amount",
+    "steps": [
+      "Given a disbursed loan belonging to the signed-in customer",
+      "When its loan view is opened",
+      "Assert every installment is listed with its due date",
+      "Assert amount"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F095",
+    "category": "functional",
+    "story": "E13-S1",
+    "group": "M",
+    "cluster": "C3",
+    "acceptance_criterion": "E13-S1-AC2",
+    "description": "the current outstanding principal and the current delinquency bucket are both shown",
+    "steps": [
+      "Given that same loan view",
+      "When it renders",
+      "Assert the current outstanding principal",
+      "Assert the current delinquency bucket are both shown"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F096",
+    "category": "functional",
+    "story": "E13-S1",
+    "group": "M",
+    "cluster": "C3",
+    "acceptance_criterion": "E13-S1-AC3",
+    "description": "the displayed outstanding principal reflects that posting",
+    "steps": [
+      "Given a repayment posted from the loan view",
+      "When the page is reloaded",
+      "Assert the displayed outstanding principal reflects that posting"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F097",
+    "category": "functional",
+    "story": "E13-S1",
+    "group": "M",
+    "cluster": "C3",
+    "acceptance_criterion": "E13-S1-AC4",
+    "description": "it offers no early settlement, foreclosure or prepayment quote",
+    "steps": [
+      "Given the loan view for a delinquent loan",
+      "When it renders",
+      "Assert it offers no early settlement, foreclosure or prepayment quote"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F098",
+    "category": "functional",
+    "story": "E14-S1",
+    "group": "M",
+    "cluster": "C1",
+    "acceptance_criterion": "E14-S1-AC1",
+    "description": "the loan count and value are reported for every product and bucket combination",
+    "steps": [
+      "Given loans spread across products and delinquency buckets",
+      "When an admin opens the dashboard",
+      "Assert the loan count",
+      "Assert value are reported for every product",
+      "Assert bucket combination"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F099",
+    "category": "functional",
+    "story": "E14-S1",
+    "group": "M",
+    "cluster": "C1",
+    "acceptance_criterion": "E14-S1-AC2",
+    "description": "it equals the sum of overdue installment amounts across all active loans",
+    "steps": [
+      "Given those same loans",
+      "When the total overdue figure is read",
+      "Assert it equals the sum of overdue installment amounts across all active loans"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F100",
+    "category": "functional",
+    "story": "E14-S1",
+    "group": "M",
+    "cluster": "C1",
+    "acceptance_criterion": "E14-S1-AC3",
+    "description": "the response is 403 and no portfolio figures are returned",
+    "steps": [
+      "Given a CUSTOMER session",
+      "When the dashboard endpoint is called with it",
+      "Assert the response is 403",
+      "Assert no portfolio figures are returned"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F101",
+    "category": "functional",
+    "story": "E14-S1",
+    "group": "M",
+    "cluster": "C1",
+    "acceptance_criterion": "E14-S1-AC4",
+    "description": "the figures are served from stored loan bucket state without invoking the end-of-day job",
+    "steps": [
+      "Given the dashboard request",
+      "When its data source is traced",
+      "Assert the figures are served from stored loan bucket state without invoking the end-of-day job"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F102",
+    "category": "functional",
+    "story": "E17-S1",
+    "group": "H",
+    "cluster": "C4",
+    "acceptance_criterion": "E17-S1-AC1",
+    "description": "it reports 0 WCAG 2.1 AA violations with no rule suppressed, and asserts it covered 100% of registered screens",
+    "steps": [
+      "Given the customer-facing screen registry",
+      "When the automated axe-core scan runs against every registered screen",
+      "Assert it reports 0 WCAG 2.1 AA violations with no rule suppressed,",
+      "Assert asserts it covered 100% of registered screens"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F103",
+    "category": "functional",
+    "story": "E17-S1",
+    "group": "H",
+    "cluster": "C4",
+    "acceptance_criterion": "E17-S1-AC2",
+    "description": "the flow completes, no focus trap is encountered, and every interactive control exposes an accessible name and a visible focus indicator",
+    "steps": [
+      "Given each registered screen",
+      "When its primary flow is traversed using the keyboard only",
+      "Assert the flow completes, no focus trap is encountered,",
+      "Assert every interactive control exposes an accessible name",
+      "Assert a visible focus indicator"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F104",
+    "category": "functional",
+    "story": "E17-S1",
+    "group": "H",
+    "cluster": "C4",
+    "acceptance_criterion": "E17-S1-AC3",
+    "description": "the suite fails, so Apply, Track and Repay are each held to WCAG 2.1 AA by the story that lands them",
+    "steps": [
+      "Given a route that renders a customer-facing screen and is absent from the registry",
+      "When the accessibility suite runs",
+      "Assert the suite fails, so Apply, Track",
+      "Assert Repay are each held to WCAG 2.1 AA by the story that lands them"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F105",
+    "category": "performance",
+    "story": "E15-S3",
+    "group": "E",
+    "cluster": "C3",
+    "acceptance_criterion": "E15-S3-AC1",
+    "description": "the measured p95 latency is under 500 ms and the error rate is under 1% across all of them",
+    "steps": [
+      "Given the read-heavy endpoint registry, which contains GET /products, GET /applications, GET /loans/{id} and GET /dashboard",
+      "When the load run executes against every registered endpoint",
+      "Assert the measured p95 latency is under 500 ms",
+      "Assert the error rate is under 1% across all of them"
+    ],
+    "verification": "characterization",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F106",
+    "category": "performance",
+    "story": "E15-S3",
+    "group": "E",
+    "cluster": "C3",
+    "acceptance_criterion": "E15-S3-AC2",
+    "description": "it records the measured p95 and error-rate figures for each registered endpoint",
+    "steps": [
+      "Given the completed load run",
+      "When the evaluation report is written",
+      "Assert it records the measured p95",
+      "Assert error-rate figures for each registered endpoint"
+    ],
+    "verification": "characterization",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  },
+  {
+    "id": "F107",
+    "category": "functional",
+    "story": "E15-S3",
+    "group": "E",
+    "cluster": "C3",
+    "acceptance_criterion": "E15-S3-AC3",
+    "description": "the suite fails, so a read surface added later is measured by the story that adds it",
+    "steps": [
+      "Given a read-heavy endpoint absent from the registry",
+      "When the SLO suite runs",
+      "Assert the suite fails, so a read surface added later is measured by the story that adds it"
+    ],
+    "verification": "default",
+    "passes": false,
+    "last_evaluated": null,
+    "failure_reason": null,
+    "failure_layer": null
+  }
+]

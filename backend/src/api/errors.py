@@ -83,6 +83,7 @@ def _envelope(
     error: str,
     detail: str,
     context: Mapping[str, object] | None = None,
+    headers: Mapping[str, str] | None = None,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
@@ -91,6 +92,11 @@ def _envelope(
             "detail": scrub_text(detail),
             "context": sanitise_context(context or {}),
         },
+        # Rebuilding the response from status and detail alone dropped these,
+        # so a 401 lost `WWW-Authenticate` and a 405 lost `Allow` -- both
+        # required by the HTTP specs, and the 401 case becomes the single
+        # enforcement point for every guarded route at group C.
+        headers=dict(headers) if headers else None,
     )
 
 
@@ -104,7 +110,7 @@ async def handle_http_error(request: Request, exc: Exception) -> JSONResponse:
     """The framework's own 401/403/404/409 take the same shape."""
     assert isinstance(exc, StarletteHTTPException)
     name = _STATUS_ERROR_NAMES.get(exc.status_code, "HTTPError")
-    return _envelope(exc.status_code, name, str(exc.detail))
+    return _envelope(exc.status_code, name, str(exc.detail), headers=exc.headers)
 
 
 async def handle_validation_error(request: Request, exc: Exception) -> JSONResponse:
