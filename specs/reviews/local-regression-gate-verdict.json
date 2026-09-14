@@ -2,34 +2,67 @@
   "verdict": "blocked",
   "findings": [
     {
-      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\A.json",
-      "line": 28,
-      "detail": "api_check \"QA-VM-003\" (GET /health): expected status 200, got 0"
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 19,
+      "detail": "api_check \"QA-VM-012\" (POST /auth/login): expected status 200, got 0"
     },
     {
-      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\A.json",
-      "line": 38,
-      "detail": "api_check \"QA-VM-004\" (GET /health): expected status 200, got 0"
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 29,
+      "detail": "api_check \"QA-VM-013\" (GET /products): expected status 200, got 0"
     },
     {
-      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\A.json",
-      "line": 48,
-      "detail": "api_check \"QA-VM-005\" (GET /health): expected status 200, got 0"
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 39,
+      "detail": "api_check \"QA-VM-014\" (POST /products/{product_code}/policy-versions): expected status 201, got 0"
+    },
+    {
+      "file": "C:\\Users\\rosuo\\WORK\\ai-native-capstone-truelend\\sprint-contracts\\B.json",
+      "line": 49,
+      "detail": "api_check \"QA-VM-015\" (GET /products/{product_code}): expected status 200, got 0"
     }
   ],
   "notes": [
     "changed file not found in code-graph: .claude/state/phase-cost-cursor.json",
     "changed file not found in code-graph: .claude/state/phase-cost.json",
     "changed file not found in code-graph: .claude/state/red-phase-presnap.json",
-    "changed file not found in code-graph: backend/src/api/serializers.py",
-    "changed file not found in code-graph: backend/tests/architecture/test_no_float_money.py",
+    "changed file not found in code-graph: backend/pyproject.toml",
+    "changed file not found in code-graph: backend/src/types/enums.py",
+    "changed file not found in code-graph: backend/src/types/identity.py",
+    "changed file not found in code-graph: backend/tests/unit/test_identity_types.py",
+    "changed file not found in code-graph: backend/uv.lock",
+    "changed file not found in code-graph: claude-progress.txt",
+    "changed file not found in code-graph: specs/bundles/E1-S1.json",
+    "changed file not found in code-graph: specs/bundles/E4-S1.json",
+    "changed file not found in code-graph: specs/design/amendments/e1-s1-types-canvas-sync.md",
+    "changed file not found in code-graph: specs/design/reasons-canvas.md",
+    "changed file not found in code-graph: specs/reviews/design-approval.json",
+    "changed file not found in code-graph: specs/reviews/local-regression-gate-verdict.json",
+    "changed file not found in code-graph: specs/reviews/plan-seal.json",
+    "changed file not found in code-graph: specs/reviews/sensor-checks.json",
+    "changed file not found in code-graph: specs/reviews/spdd-sync.json",
+    "changed file not found in code-graph: specs/stories/E1-S1.md",
+    "changed file not found in code-graph: specs/stories/E4-S1.md",
     "no owning story-group resolved for .claude/state/phase-cost-cursor.json",
     "no owning story-group resolved for .claude/state/phase-cost.json",
     "no owning story-group resolved for .claude/state/red-phase-presnap.json",
-    "no e2e spec found for story \"E15-S1\"",
-    "no e2e spec found for story \"E9-S1\"",
-    "no e2e spec found for story \"E11-S1\"",
-    "no e2e spec found for story \"E15-S4\"",
+    "no owning story-group resolved for backend/pyproject.toml",
+    "no owning story-group resolved for backend/tests/unit/test_identity_types.py",
+    "no owning story-group resolved for backend/uv.lock",
+    "no owning story-group resolved for claude-progress.txt",
+    "no owning story-group resolved for specs/bundles/E1-S1.json",
+    "no owning story-group resolved for specs/bundles/E4-S1.json",
+    "no owning story-group resolved for specs/design/amendments/e1-s1-types-canvas-sync.md",
+    "no owning story-group resolved for specs/design/reasons-canvas.md",
+    "no owning story-group resolved for specs/reviews/design-approval.json",
+    "no owning story-group resolved for specs/reviews/local-regression-gate-verdict.json",
+    "no owning story-group resolved for specs/reviews/plan-seal.json",
+    "no owning story-group resolved for specs/reviews/sensor-checks.json",
+    "no owning story-group resolved for specs/reviews/spdd-sync.json",
+    "no owning story-group resolved for specs/stories/E1-S1.md",
+    "no owning story-group resolved for specs/stories/E4-S1.md",
+    "no e2e spec found for story \"E15-S2\"",
+    "no e2e spec found for story \"E1-S1\"",
     "0 golden paths configured (project-manifest.json#verification.golden_paths) — no unconditional e2e safety net beyond impact analysis",
     "no e2e specs in scope (impact analysis + golden paths) — nothing to run"
   ],
@@ -38,12 +71,27 @@
       ".claude/state/phase-cost-cursor.json",
       ".claude/state/phase-cost.json",
       ".claude/state/red-phase-presnap.json",
-      "backend/src/api/serializers.py",
-      "backend/tests/architecture/test_no_float_money.py"
+      "backend/pyproject.toml",
+      "backend/src/types/enums.py",
+      "backend/src/types/identity.py",
+      "backend/tests/unit/test_identity_types.py",
+      "backend/uv.lock",
+      "claude-progress.txt",
+      "specs/bundles/E1-S1.json",
+      "specs/bundles/E4-S1.json",
+      "specs/design/amendments/e1-s1-types-canvas-sync.md",
+      "specs/design/reasons-canvas.md",
+      "specs/reviews/design-approval.json",
+      "specs/reviews/local-regression-gate-verdict.json",
+      "specs/reviews/plan-seal.json",
+      "specs/reviews/sensor-checks.json",
+      "specs/reviews/spdd-sync.json",
+      "specs/stories/E1-S1.md",
+      "specs/stories/E4-S1.md"
     ],
     "blastRadiusFiles": [],
     "impactedGroups": [
-      "A"
+      "B"
     ]
   }
 }

@@ -44,10 +44,22 @@ Implemented as designed, with three choices worth recording:
   `ownership-check` only because the ratified `ownership-check` waiver is
   broader than its scope text describes. That is worth tightening rather than
   relying on.
-- **Password hashing is still unspecified** anywhere in the design, though
-  SQLAlchEmy, Alembic and PyJWT are all named. Step 8 needs it. Proceeding on
-  stdlib `hashlib.scrypt` — no new dependency, sound defaults, and swapping to
-  bcrypt or argon2 later is one contained function — recorded here so the
-  choice is visible rather than buried in code.
+- **Password hashing WAS specified and I missed it.** I raised it seven times
+  as an open decision and defaulted to stdlib `hashlib.scrypt`. That was
+  wrong: `architecture.md:107` names **`passlib[bcrypt]`** for credential
+  hashing in its rendering-level library list, and `data-models.md:103`
+  specifies `password_hash` as "NOT NULL, bcrypt; no plaintext column exists".
+  I had read the story Operations and CONTEXT.md but never the architecture's
+  dependency paragraph. Corrected to `passlib[bcrypt]`.
+
+  One real constraint came with it. `passlib` 1.7.4 has been unmaintained
+  since 2020 and breaks against `bcrypt` 4.1 and newer: its backend detection
+  probes with a password longer than 72 bytes, which current bcrypt refuses
+  rather than truncating, so `CryptContext.hash` raises on any input at all.
+  `bcrypt` is therefore pinned below 4.1 (resolving to 4.0.1), which restores
+  correct hash, verify and reject. That pin is the cost of honouring the named
+  library rather than substituting the maintained `bcrypt` package directly.
+  If the pin is unacceptable, using `bcrypt` directly is the alternative, and
+  this is where that decision should be revisited.
 - **Dependencies added** per the Operations: `sqlalchemy`, `alembic`, `pyjwt`
   and `psycopg[binary]`. `uv.lock` is now tracked, so these are pinned.
